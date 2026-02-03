@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AutomationRulesManager } from "@/components/automation/AutomationRulesManager";
 import { BrandVoiceTraining } from "@/components/brand/BrandVoiceTraining";
 import { TeamManagement } from "@/components/settings/TeamManagement";
+import { ReviewPlatformConnections } from "@/components/settings/ReviewPlatformConnections";
 import {
   User,
   Building2,
@@ -253,11 +254,13 @@ export default function SettingsPage() {
 
           {/* Platforms Tab */}
           <TabsContent value="platforms" className="space-y-6">
+            <ReviewPlatformConnections />
+
             <Card>
               <CardHeader>
-                <CardTitle>Connected Platforms</CardTitle>
+                <CardTitle>Social Media Platforms</CardTitle>
                 <CardDescription>
-                  Manage your social media integrations (Simulation Mode)
+                  Manage your social media integrations
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

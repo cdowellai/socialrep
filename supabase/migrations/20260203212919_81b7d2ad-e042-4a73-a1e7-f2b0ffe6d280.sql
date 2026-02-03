@@ -1,0 +1,9 @@
+-- Add new review platforms to the interaction_platform enum
+ALTER TYPE public.interaction_platform ADD VALUE IF NOT EXISTS 'trustpilot';
+ALTER TYPE public.interaction_platform ADD VALUE IF NOT EXISTS 'g2';
+ALTER TYPE public.interaction_platform ADD VALUE IF NOT EXISTS 'capterra';
+ALTER TYPE public.interaction_platform ADD VALUE IF NOT EXISTS 'bbb';
+ALTER TYPE public.interaction_platform ADD VALUE IF NOT EXISTS 'glassdoor';
+ALTER TYPE public.interaction_platform ADD VALUE IF NOT EXISTS 'amazon';
+ALTER TYPE public.interaction_platform ADD VALUE IF NOT EXISTS 'appstore';
+ALTER TYPE public.interaction_platform ADD VALUE IF NOT EXISTS 'playstore';

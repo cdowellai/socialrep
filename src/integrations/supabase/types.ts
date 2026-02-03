@@ -576,6 +576,14 @@ export type Database = {
         | "yelp"
         | "tripadvisor"
         | "other"
+        | "trustpilot"
+        | "g2"
+        | "capterra"
+        | "bbb"
+        | "glassdoor"
+        | "amazon"
+        | "appstore"
+        | "playstore"
       interaction_status: "pending" | "responded" | "escalated" | "archived"
       interaction_type: "comment" | "dm" | "mention" | "review" | "post"
       lead_status: "new" | "contacted" | "qualified" | "converted" | "lost"
@@ -717,6 +725,14 @@ export const Constants = {
         "yelp",
         "tripadvisor",
         "other",
+        "trustpilot",
+        "g2",
+        "capterra",
+        "bbb",
+        "glassdoor",
+        "amazon",
+        "appstore",
+        "playstore",
       ],
       interaction_status: ["pending", "responded", "escalated", "archived"],
       interaction_type: ["comment", "dm", "mention", "review", "post"],
