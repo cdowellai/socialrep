@@ -39,6 +39,14 @@ const platformColors: Record<Platform, string> = {
   linkedin: "bg-platform-linkedin",
   yelp: "bg-yellow-500",
   tripadvisor: "bg-green-600",
+  trustpilot: "bg-emerald-500",
+  g2: "bg-orange-500",
+  capterra: "bg-blue-600",
+  bbb: "bg-blue-800",
+  glassdoor: "bg-green-500",
+  amazon: "bg-yellow-500",
+  appstore: "bg-gray-800",
+  playstore: "bg-green-600",
   other: "bg-gray-500",
 };
 
