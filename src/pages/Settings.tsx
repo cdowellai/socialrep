@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { AutomationRulesManager } from "@/components/automation/AutomationRulesManager";
+import { BrandVoiceTraining } from "@/components/brand/BrandVoiceTraining";
 import {
   User,
   Building2,
@@ -28,6 +30,8 @@ import {
   Save,
   Check,
   Plus,
+  Zap,
+  Brain,
 } from "lucide-react";
 
 const connectedPlatforms = [
@@ -60,14 +64,18 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid grid-cols-5 w-full">
+          <TabsList className="grid grid-cols-6 w-full">
             <TabsTrigger value="profile">
               <User className="h-4 w-4 mr-2" />
               Profile
             </TabsTrigger>
             <TabsTrigger value="brand">
-              <Sparkles className="h-4 w-4 mr-2" />
-              Brand Voice
+              <Brain className="h-4 w-4 mr-2" />
+              Brand AI
+            </TabsTrigger>
+            <TabsTrigger value="automation">
+              <Zap className="h-4 w-4 mr-2" />
+              Automation
             </TabsTrigger>
             <TabsTrigger value="platforms">
               <Link2 className="h-4 w-4 mr-2" />
@@ -112,18 +120,20 @@ export default function SettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* Brand Voice Tab */}
+          {/* Brand AI Tab */}
           <TabsContent value="brand" className="space-y-6">
+            <BrandVoiceTraining />
+
             <Card>
               <CardHeader>
-                <CardTitle>Brand Voice Settings</CardTitle>
+                <CardTitle>Quick Settings</CardTitle>
                 <CardDescription>
-                  Configure how AI generates responses in your brand's tone
+                  Configure basic AI response preferences
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="tone">Communication Tone</Label>
+                  <Label htmlFor="tone">Default Communication Tone</Label>
                   <Select defaultValue="professional">
                     <SelectTrigger>
                       <SelectValue placeholder="Select tone" />
@@ -135,15 +145,6 @@ export default function SettingsPage() {
                       <SelectItem value="playful">Playful & Fun</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="guidelines">Brand Guidelines</Label>
-                  <Textarea
-                    id="guidelines"
-                    placeholder="Describe your brand voice, key phrases to use, things to avoid..."
-                    rows={5}
-                  />
                 </div>
 
                 <div className="space-y-2">
@@ -161,10 +162,80 @@ export default function SettingsPage() {
                   <Switch />
                 </div>
 
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Multi-language Support</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Automatically detect and respond in the customer's language
+                    </p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+
                 <Button onClick={handleSave} disabled={saving}>
                   <Save className="h-4 w-4 mr-2" />
                   {saving ? "Saving..." : "Save Brand Settings"}
                 </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Automation Tab */}
+          <TabsContent value="automation" className="space-y-6">
+            <AutomationRulesManager />
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Global Automation Settings</CardTitle>
+                <CardDescription>
+                  Configure default behaviors for automated actions
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Enable Auto-Responses</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Allow automation rules to send responses automatically
+                    </p>
+                  </div>
+                  <Switch />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Require Approval</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Review auto-responses before they are sent
+                    </p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Auto-Escalate Negative Sentiment</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Automatically flag interactions with strong negative sentiment
+                    </p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Escalation Threshold</Label>
+                  <Select defaultValue="0.3">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0.2">Very Sensitive (0.2)</SelectItem>
+                      <SelectItem value="0.3">Standard (0.3)</SelectItem>
+                      <SelectItem value="0.4">Moderate (0.4)</SelectItem>
+                      <SelectItem value="0.5">Relaxed (0.5)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -174,9 +245,17 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Connected Platforms</CardTitle>
-                <CardDescription>Manage your social media integrations</CardDescription>
+                <CardDescription>
+                  Manage your social media integrations (Simulation Mode)
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="p-3 rounded-lg bg-accent/50 border border-primary/20 mb-4">
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    Running in Sandbox Mode - No live API connections
+                  </p>
+                </div>
                 {connectedPlatforms.map((platform) => (
                   <div
                     key={platform.id}
@@ -199,7 +278,7 @@ export default function SettingsPage() {
                       <div className="flex items-center gap-2">
                         <Badge className="bg-sentiment-positive/10 text-sentiment-positive">
                           <Check className="h-3 w-3 mr-1" />
-                          Connected
+                          Simulated
                         </Badge>
                         <Button variant="outline" size="sm">
                           Disconnect
@@ -235,6 +314,10 @@ export default function SettingsPage() {
                     description: "Immediate alerts for negative reviews or comments",
                   },
                   {
+                    title: "Automation Triggers",
+                    description: "Notify when automation rules are executed",
+                  },
+                  {
                     title: "Weekly Reports",
                     description: "Receive weekly performance summary via email",
                   },
@@ -248,7 +331,7 @@ export default function SettingsPage() {
                       <Label>{item.title}</Label>
                       <p className="text-sm text-muted-foreground">{item.description}</p>
                     </div>
-                    <Switch defaultChecked={index < 2} />
+                    <Switch defaultChecked={index < 3} />
                   </div>
                 ))}
               </CardContent>
@@ -283,6 +366,29 @@ export default function SettingsPage() {
                   <Button variant="hero" className="w-full">
                     Upgrade to Pro
                   </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>AI Usage</CardTitle>
+                <CardDescription>Track your AI response generation</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="p-4 rounded-lg bg-muted/50 text-center">
+                    <p className="text-2xl font-bold">23</p>
+                    <p className="text-sm text-muted-foreground">AI Responses</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50 text-center">
+                    <p className="text-2xl font-bold">12</p>
+                    <p className="text-sm text-muted-foreground">Auto-Actions</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50 text-center">
+                    <p className="text-2xl font-bold">89%</p>
+                    <p className="text-sm text-muted-foreground">Acceptance Rate</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
