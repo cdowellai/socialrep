@@ -1,1 +1,13 @@
 project_id = "emtszbalffrreubybfek"
+
+[functions.ai-response]
+verify_jwt = false
+
+[functions.meta-integration]
+verify_jwt = false
+
+[functions.webhooks]
+verify_jwt = false
+
+[functions.analytics]
+verify_jwt = false
