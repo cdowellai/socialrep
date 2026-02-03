@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,6 +79,8 @@ export default function InboxPage() {
     loadingMore,
     hasMore,
     filters,
+    counts,
+    pendingRealtimeCount,
     refetch,
     loadMore,
     updateInteraction,
@@ -86,6 +88,7 @@ export default function InboxPage() {
     bulkDeleteInteractions,
     applyFilters,
     refetchWithFilters,
+    forceRealtimeFlush,
   } = useInfiniteInteractions();
   const { generateResponse, loading: aiLoading, error: aiError } = useAIResponse();
   const { evaluateRules, rules } = useAutomationRules();
@@ -102,13 +105,15 @@ export default function InboxPage() {
 
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Quick search filter (local)
-  const displayedInteractions = searchQuery
-    ? interactions.filter((i) =>
-        i.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        i.author_name?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : interactions;
+  // Quick search filter (local) - uses useMemo for large datasets
+  const displayedInteractions = useMemo(() => {
+    if (!searchQuery) return interactions;
+    const query = searchQuery.toLowerCase();
+    return interactions.filter((i) =>
+      i.content.toLowerCase().includes(query) ||
+      i.author_name?.toLowerCase().includes(query)
+    );
+  }, [interactions, searchQuery]);
 
   // Infinite scroll handler
   const handleScroll = useCallback(() => {
@@ -403,26 +408,49 @@ export default function InboxPage() {
               onBulkDelete={handleBulkDelete}
             />
 
-            {/* Active Rules Indicator */}
-            {rules.filter((r) => r.is_active).length > 0 && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Zap className="h-3 w-3 text-primary" />
-                <span>{rules.filter((r) => r.is_active).length} automation rules active</span>
+            {/* Scaling Stats & Status Indicators */}
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-3">
+                {/* Active Rules */}
+                {rules.filter((r) => r.is_active).length > 0 && (
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Zap className="h-3 w-3 text-primary" />
+                    <span>{rules.filter((r) => r.is_active).length} rules</span>
+                  </div>
+                )}
+                
+                {/* Realtime Updates Pending */}
+                {pendingRealtimeCount > 0 && (
+                  <button
+                    onClick={forceRealtimeFlush}
+                    className="flex items-center gap-1 text-primary hover:underline"
+                  >
+                    <RefreshCw className="h-3 w-3 animate-pulse" />
+                    <span>{pendingRealtimeCount} incoming</span>
+                  </button>
+                )}
               </div>
-            )}
+
+              {/* Volume Stats */}
+              {counts.total > 100 && (
+                <div className="text-muted-foreground">
+                  {counts.loaded.toLocaleString()} / {counts.total.toLocaleString()} loaded
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Tabs */}
           <Tabs defaultValue="all" className="flex-1 flex flex-col">
             <TabsList className="mx-4 mt-2">
               <TabsTrigger value="all" className="flex-1">
-                All ({interactions.length})
+                All ({counts.total > 0 ? counts.total.toLocaleString() : interactions.length})
               </TabsTrigger>
               <TabsTrigger value="pending" className="flex-1">
-                Pending ({interactions.filter((i) => i.status === "pending").length})
+                Pending ({counts.pending.toLocaleString()})
               </TabsTrigger>
               <TabsTrigger value="urgent" className="flex-1">
-                Urgent ({interactions.filter((i) => (i.urgency_score || 0) >= 7).length})
+                Urgent ({counts.urgent.toLocaleString()})
               </TabsTrigger>
             </TabsList>
 
