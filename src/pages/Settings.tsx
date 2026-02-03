@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { AutomationRulesManager } from "@/components/automation/AutomationRulesManager";
 import { BrandVoiceTraining } from "@/components/brand/BrandVoiceTraining";
+import { TeamManagement } from "@/components/settings/TeamManagement";
 import {
   User,
   Building2,
@@ -32,6 +33,7 @@ import {
   Plus,
   Zap,
   Brain,
+  Users,
 } from "lucide-react";
 
 const connectedPlatforms = [
@@ -64,10 +66,14 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid grid-cols-6 w-full">
+          <TabsList className="grid grid-cols-7 w-full">
             <TabsTrigger value="profile">
               <User className="h-4 w-4 mr-2" />
               Profile
+            </TabsTrigger>
+            <TabsTrigger value="team">
+              <Users className="h-4 w-4 mr-2" />
+              Team
             </TabsTrigger>
             <TabsTrigger value="brand">
               <Brain className="h-4 w-4 mr-2" />
@@ -118,6 +124,11 @@ export default function SettingsPage() {
                 </Button>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Team Tab */}
+          <TabsContent value="team" className="space-y-6">
+            <TeamManagement />
           </TabsContent>
 
           {/* Brand AI Tab */}
