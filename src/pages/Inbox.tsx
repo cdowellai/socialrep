@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,13 +6,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Search,
   Sparkles,
@@ -27,12 +27,18 @@ import {
   Minus,
   RefreshCw,
   Beaker,
+  Loader2,
+  Zap,
 } from "lucide-react";
-import { useInteractions } from "@/hooks/useInteractions";
+import { useInfiniteInteractions, InteractionFilters } from "@/hooks/useInfiniteInteractions";
 import { useAIResponse } from "@/hooks/useAIResponse";
+import { useAutomationRules } from "@/hooks/useAutomationRules";
+import { useBrandVoice } from "@/hooks/useBrandVoice";
 import { useAuth } from "@/hooks/useAuth";
 import { seedSampleData } from "@/lib/sampleData";
 import { useToast } from "@/hooks/use-toast";
+import { AdvancedFilters } from "@/components/inbox/AdvancedFilters";
+import { BulkActions } from "@/components/inbox/BulkActions";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
 type Interaction = Tables<"interactions">;
@@ -67,25 +73,51 @@ const statusIcons: Record<Status, typeof Clock> = {
 export default function InboxPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { interactions, loading, refetch, updateInteraction } = useInteractions();
+  const {
+    interactions,
+    loading,
+    loadingMore,
+    hasMore,
+    filters,
+    refetch,
+    loadMore,
+    updateInteraction,
+    bulkUpdateInteractions,
+    bulkDeleteInteractions,
+    applyFilters,
+    refetchWithFilters,
+  } = useInfiniteInteractions();
   const { generateResponse, loading: aiLoading, error: aiError } = useAIResponse();
-  
+  const { evaluateRules, rules } = useAutomationRules();
+  const { getBrandContext } = useBrandVoice();
+
   const [selectedInteraction, setSelectedInteraction] = useState<Interaction | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [platformFilter, setPlatformFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [response, setResponse] = useState("");
   const [suggestedResponse, setSuggestedResponse] = useState("");
+  const [responseConfidence, setResponseConfidence] = useState<number | null>(null);
   const [seeding, setSeeding] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [matchedRules, setMatchedRules] = useState<string[]>([]);
 
-  // Filter interactions
-  const filteredInteractions = interactions.filter((interaction) => {
-    if (platformFilter !== "all" && interaction.platform !== platformFilter) return false;
-    if (statusFilter !== "all" && interaction.status !== statusFilter) return false;
-    if (searchQuery && !interaction.content.toLowerCase().includes(searchQuery.toLowerCase()))
-      return false;
-    return true;
-  });
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Quick search filter (local)
+  const displayedInteractions = searchQuery
+    ? interactions.filter((i) =>
+        i.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        i.author_name?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : interactions;
+
+  // Infinite scroll handler
+  const handleScroll = useCallback(() => {
+    if (!listRef.current || loadingMore || !hasMore) return;
+    const { scrollTop, scrollHeight, clientHeight } = listRef.current;
+    if (scrollTop + clientHeight >= scrollHeight - 100) {
+      loadMore();
+    }
+  }, [loadMore, loadingMore, hasMore]);
 
   // Select first interaction when loaded
   useEffect(() => {
@@ -93,6 +125,11 @@ export default function InboxPage() {
       setSelectedInteraction(interactions[0]);
     }
   }, [interactions, selectedInteraction]);
+
+  // Refetch when filters change
+  useEffect(() => {
+    refetchWithFilters();
+  }, [filters, refetchWithFilters]);
 
   const handleLoadSampleData = async () => {
     if (!user) return;
@@ -122,6 +159,8 @@ export default function InboxPage() {
   const handleGenerateResponse = async () => {
     if (!selectedInteraction) return;
 
+    const brandContext = getBrandContext();
+
     const result = await generateResponse(
       selectedInteraction.content,
       selectedInteraction.platform,
@@ -131,10 +170,28 @@ export default function InboxPage() {
 
     if (result) {
       setSuggestedResponse(result.response);
+      setResponseConfidence((result as any).responseConfidence || 0.7);
+      
       if (result.sentiment !== selectedInteraction.sentiment) {
         await updateInteraction(selectedInteraction.id, {
           sentiment: result.sentiment,
           sentiment_score: result.sentimentScore,
+        });
+      }
+
+      // Check automation rules
+      const matched = await evaluateRules({
+        sentiment: result.sentiment,
+        sentiment_score: result.sentimentScore,
+        platform: selectedInteraction.platform,
+        content: selectedInteraction.content,
+      });
+
+      if (matched.length > 0) {
+        setMatchedRules(matched.map((r) => r.name));
+        toast({
+          title: "Automation rules matched",
+          description: `${matched.length} rule(s) apply to this interaction`,
         });
       }
     } else if (aiError) {
@@ -163,6 +220,8 @@ export default function InboxPage() {
 
       setResponse("");
       setSuggestedResponse("");
+      setResponseConfidence(null);
+      setMatchedRules([]);
       setSelectedInteraction({ ...selectedInteraction, status: "responded", response });
     } catch (err) {
       toast({
@@ -171,6 +230,69 @@ export default function InboxPage() {
         variant: "destructive",
       });
     }
+  };
+
+  // Bulk actions
+  const handleSelectAll = () => {
+    setSelectedIds(new Set(displayedInteractions.map((i) => i.id)));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkArchive = async () => {
+    try {
+      await bulkUpdateInteractions(Array.from(selectedIds), { status: "archived" });
+      toast({ title: "Archived", description: `${selectedIds.size} interactions archived` });
+      setSelectedIds(new Set());
+    } catch {
+      toast({ title: "Error", description: "Failed to archive", variant: "destructive" });
+    }
+  };
+
+  const handleBulkEscalate = async () => {
+    try {
+      await bulkUpdateInteractions(Array.from(selectedIds), { status: "escalated" });
+      toast({ title: "Escalated", description: `${selectedIds.size} interactions escalated` });
+      setSelectedIds(new Set());
+    } catch {
+      toast({ title: "Error", description: "Failed to escalate", variant: "destructive" });
+    }
+  };
+
+  const handleBulkMarkResponded = async () => {
+    try {
+      await bulkUpdateInteractions(Array.from(selectedIds), { 
+        status: "responded",
+        responded_at: new Date().toISOString(),
+      });
+      toast({ title: "Updated", description: `${selectedIds.size} interactions marked as responded` });
+      setSelectedIds(new Set());
+    } catch {
+      toast({ title: "Error", description: "Failed to update", variant: "destructive" });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await bulkDeleteInteractions(Array.from(selectedIds));
+      toast({ title: "Deleted", description: `${selectedIds.size} interactions deleted` });
+      setSelectedIds(new Set());
+      setSelectedInteraction(null);
+    } catch {
+      toast({ title: "Error", description: "Failed to delete", variant: "destructive" });
+    }
+  };
+
+  const toggleSelection = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
   };
 
   const getSentimentColor = (sentiment: Sentiment | null) => {
@@ -215,7 +337,7 @@ export default function InboxPage() {
     return (
       <DashboardLayout>
         <div className="h-[calc(100vh-8rem)] flex gap-6">
-          <div className="w-[400px] flex flex-col border rounded-lg bg-card p-4">
+          <div className="w-[420px] flex flex-col border rounded-lg bg-card p-4">
             <Skeleton className="h-10 w-full mb-3" />
             <div className="flex gap-2 mb-4">
               <Skeleton className="h-10 flex-1" />
@@ -238,65 +360,64 @@ export default function InboxPage() {
     <DashboardLayout>
       <div className="h-[calc(100vh-8rem)] flex gap-6">
         {/* Interactions List */}
-        <div className="w-[400px] flex flex-col border rounded-lg bg-card">
-          {/* Filters */}
+        <div className="w-[420px] flex flex-col border rounded-lg bg-card">
+          {/* Filters Bar */}
           <div className="p-4 border-b space-y-3">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search interactions..."
+                  placeholder="Quick search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
                 />
               </div>
+              <AdvancedFilters
+                filters={filters}
+                onFiltersChange={applyFilters}
+                onApply={refetchWithFilters}
+              />
               <Button variant="outline" size="icon" onClick={refetch} title="Refresh">
                 <RefreshCw className="h-4 w-4" />
               </Button>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={handleLoadSampleData} 
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleLoadSampleData}
                 disabled={seeding}
                 title="Load sample data"
               >
                 <Beaker className={`h-4 w-4 ${seeding ? "animate-pulse" : ""}`} />
               </Button>
             </div>
-            <div className="flex gap-2">
-              <Select value={platformFilter} onValueChange={setPlatformFilter}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Platform" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Platforms</SelectItem>
-                  <SelectItem value="instagram">Instagram</SelectItem>
-                  <SelectItem value="facebook">Facebook</SelectItem>
-                  <SelectItem value="twitter">Twitter</SelectItem>
-                  <SelectItem value="google">Google</SelectItem>
-                  <SelectItem value="linkedin">LinkedIn</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="responded">Responded</SelectItem>
-                  <SelectItem value="escalated">Escalated</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+
+            {/* Bulk Actions */}
+            <BulkActions
+              selectedCount={selectedIds.size}
+              onSelectAll={handleSelectAll}
+              onDeselectAll={handleDeselectAll}
+              onBulkArchive={handleBulkArchive}
+              onBulkEscalate={handleBulkEscalate}
+              onBulkMarkResponded={handleBulkMarkResponded}
+              onBulkDelete={handleBulkDelete}
+            />
+
+            {/* Active Rules Indicator */}
+            {rules.filter((r) => r.is_active).length > 0 && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Zap className="h-3 w-3 text-primary" />
+                <span>{rules.filter((r) => r.is_active).length} automation rules active</span>
+              </div>
+            )}
           </div>
 
           {/* Tabs */}
           <Tabs defaultValue="all" className="flex-1 flex flex-col">
             <TabsList className="mx-4 mt-2">
-              <TabsTrigger value="all" className="flex-1">All ({interactions.length})</TabsTrigger>
+              <TabsTrigger value="all" className="flex-1">
+                All ({interactions.length})
+              </TabsTrigger>
               <TabsTrigger value="pending" className="flex-1">
                 Pending ({interactions.filter((i) => i.status === "pending").length})
               </TabsTrigger>
@@ -305,8 +426,13 @@ export default function InboxPage() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="all" className="flex-1 overflow-auto p-2 m-0">
-              {filteredInteractions.length === 0 ? (
+            <TabsContent
+              value="all"
+              className="flex-1 overflow-auto p-2 m-0"
+              ref={listRef}
+              onScroll={handleScroll}
+            >
+              {displayedInteractions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                   <Beaker className="h-10 w-10 mb-3 opacity-50" />
                   <p className="mb-4">No interactions yet</p>
@@ -317,36 +443,59 @@ export default function InboxPage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {filteredInteractions.map((interaction) => (
+                  {displayedInteractions.map((interaction) => (
                     <InteractionCard
                       key={interaction.id}
                       interaction={interaction}
                       isSelected={selectedInteraction?.id === interaction.id}
+                      isChecked={selectedIds.has(interaction.id)}
+                      onCheck={() => toggleSelection(interaction.id)}
                       onClick={() => {
                         setSelectedInteraction(interaction);
                         setResponse("");
                         setSuggestedResponse("");
+                        setResponseConfidence(null);
+                        setMatchedRules([]);
                       }}
                       formatTime={formatTime}
                     />
                   ))}
+                  {loadingMore && (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                  {!hasMore && interactions.length > 0 && (
+                    <p className="text-center text-xs text-muted-foreground py-2">
+                      All {interactions.length} interactions loaded
+                    </p>
+                  )}
                 </div>
               )}
             </TabsContent>
 
-            <TabsContent value="pending" className="flex-1 overflow-auto p-2 m-0">
+            <TabsContent
+              value="pending"
+              className="flex-1 overflow-auto p-2 m-0"
+              ref={listRef}
+              onScroll={handleScroll}
+            >
               <div className="space-y-2">
-                {filteredInteractions
+                {displayedInteractions
                   .filter((i) => i.status === "pending")
                   .map((interaction) => (
                     <InteractionCard
                       key={interaction.id}
                       interaction={interaction}
                       isSelected={selectedInteraction?.id === interaction.id}
+                      isChecked={selectedIds.has(interaction.id)}
+                      onCheck={() => toggleSelection(interaction.id)}
                       onClick={() => {
                         setSelectedInteraction(interaction);
                         setResponse("");
                         setSuggestedResponse("");
+                        setResponseConfidence(null);
+                        setMatchedRules([]);
                       }}
                       formatTime={formatTime}
                     />
@@ -354,19 +503,28 @@ export default function InboxPage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="urgent" className="flex-1 overflow-auto p-2 m-0">
+            <TabsContent
+              value="urgent"
+              className="flex-1 overflow-auto p-2 m-0"
+              ref={listRef}
+              onScroll={handleScroll}
+            >
               <div className="space-y-2">
-                {filteredInteractions
+                {displayedInteractions
                   .filter((i) => (i.urgency_score || 0) >= 7)
                   .map((interaction) => (
                     <InteractionCard
                       key={interaction.id}
                       interaction={interaction}
                       isSelected={selectedInteraction?.id === interaction.id}
+                      isChecked={selectedIds.has(interaction.id)}
+                      onCheck={() => toggleSelection(interaction.id)}
                       onClick={() => {
                         setSelectedInteraction(interaction);
                         setResponse("");
                         setSuggestedResponse("");
+                        setResponseConfidence(null);
+                        setMatchedRules([]);
                       }}
                       formatTime={formatTime}
                     />
@@ -388,7 +546,9 @@ export default function InboxPage() {
                       {(selectedInteraction.author_name || "U")[0]}
                     </div>
                     <div>
-                      <h3 className="font-semibold">{selectedInteraction.author_name || "Unknown"}</h3>
+                      <h3 className="font-semibold">
+                        {selectedInteraction.author_name || "Unknown"}
+                      </h3>
                       <p className="text-sm text-muted-foreground">
                         {selectedInteraction.author_handle || "No handle"}
                       </p>
@@ -399,7 +559,8 @@ export default function InboxPage() {
                       className={getSentimentColor(selectedInteraction.sentiment)}
                       variant="secondary"
                     >
-                      {selectedInteraction.sentiment && sentimentIcons[selectedInteraction.sentiment] &&
+                      {selectedInteraction.sentiment &&
+                        sentimentIcons[selectedInteraction.sentiment] &&
                         (() => {
                           const Icon = sentimentIcons[selectedInteraction.sentiment!];
                           return <Icon className="h-3 w-3 mr-1" />;
@@ -410,7 +571,8 @@ export default function InboxPage() {
                       className={getStatusColor(selectedInteraction.status)}
                       variant="secondary"
                     >
-                      {selectedInteraction.status && statusIcons[selectedInteraction.status] &&
+                      {selectedInteraction.status &&
+                        statusIcons[selectedInteraction.status] &&
                         (() => {
                           const Icon = statusIcons[selectedInteraction.status!];
                           return <Icon className="h-3 w-3 mr-1" />;
@@ -445,6 +607,23 @@ export default function InboxPage() {
                   </div>
                 </div>
 
+                {/* Matched Rules */}
+                {matchedRules.length > 0 && (
+                  <div className="mb-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Zap className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">Automation Rules Matched</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {matchedRules.map((rule) => (
+                        <Badge key={rule} variant="secondary">
+                          {rule}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Previous Response */}
                 {selectedInteraction.response && (
                   <div className="mb-6">
@@ -458,12 +637,33 @@ export default function InboxPage() {
                   </div>
                 )}
 
-                {/* AI Suggested Response */}
+                {/* AI Suggested Response with Confidence */}
                 {suggestedResponse && (
                   <div className="mb-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Sparkles className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">AI Suggested Response</span>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium">AI Suggested Response</span>
+                      </div>
+                      {responseConfidence !== null && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">Confidence</span>
+                              <Progress
+                                value={responseConfidence * 100}
+                                className="w-20 h-2"
+                              />
+                              <span className="text-xs font-medium">
+                                {Math.round(responseConfidence * 100)}%
+                              </span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Higher confidence with more brand voice training data</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </div>
                     <div className="p-4 rounded-lg border border-primary/20 bg-accent/50">
                       <p className="text-sm">{suggestedResponse}</p>
@@ -504,7 +704,11 @@ export default function InboxPage() {
                     />
                     <div className="flex justify-end gap-2">
                       <Button variant="outline">Save Draft</Button>
-                      <Button variant="hero" disabled={!response} onClick={handleSendResponse}>
+                      <Button
+                        variant="hero"
+                        disabled={!response}
+                        onClick={handleSendResponse}
+                      >
                         <Send className="h-4 w-4 mr-2" />
                         Send Response
                       </Button>
@@ -527,17 +731,20 @@ export default function InboxPage() {
 function InteractionCard({
   interaction,
   isSelected,
+  isChecked,
+  onCheck,
   onClick,
   formatTime,
 }: {
   interaction: Interaction;
   isSelected: boolean;
+  isChecked: boolean;
+  onCheck: () => void;
   onClick: () => void;
   formatTime: (date: string) => string;
 }) {
   return (
     <div
-      onClick={onClick}
       className={`p-4 rounded-lg cursor-pointer transition-all ${
         isSelected
           ? "bg-accent border border-primary/20"
@@ -545,21 +752,28 @@ function InteractionCard({
       }`}
     >
       <div className="flex items-start gap-3">
-        <div
-          className={`w-2 h-2 rounded-full mt-2 ${
-            interaction.sentiment === "positive"
-              ? "bg-sentiment-positive"
-              : interaction.sentiment === "negative"
-              ? "bg-sentiment-negative"
-              : "bg-sentiment-neutral"
-          }`}
+        <Checkbox
+          checked={isChecked}
+          onCheckedChange={onCheck}
+          onClick={(e) => e.stopPropagation()}
+          className="mt-1"
         />
-        <div className="flex-1 min-w-0">
+        <div
+          onClick={onClick}
+          className="flex-1 min-w-0"
+        >
           <div className="flex items-center gap-2 mb-1">
             <span
               className={`w-2 h-2 rounded-full ${
-                platformColors[interaction.platform]
+                interaction.sentiment === "positive"
+                  ? "bg-sentiment-positive"
+                  : interaction.sentiment === "negative"
+                  ? "bg-sentiment-negative"
+                  : "bg-sentiment-neutral"
               }`}
+            />
+            <span
+              className={`w-2 h-2 rounded-full ${platformColors[interaction.platform]}`}
             />
             <span className="text-xs text-muted-foreground capitalize">
               {interaction.platform}
@@ -574,7 +788,9 @@ function InteractionCard({
               </Badge>
             )}
           </div>
-          <p className="font-medium text-sm mb-1">{interaction.author_name || "Unknown"}</p>
+          <p className="font-medium text-sm mb-1">
+            {interaction.author_name || "Unknown"}
+          </p>
           <p className="text-sm text-muted-foreground line-clamp-2">
             {interaction.content}
           </p>

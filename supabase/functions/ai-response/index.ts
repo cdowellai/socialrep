@@ -5,12 +5,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+interface BrandVoiceContext {
+  guidelines?: string;
+  phrases?: string[];
+  keywords?: string[];
+  responseExamples?: string;
+}
+
 interface AIRequestBody {
   content: string;
   platform: string;
   sentiment?: string;
   brandVoice?: string;
   interactionType?: string;
+  brandVoiceContext?: BrandVoiceContext;
+  language?: string;
 }
 
 serve(async (req) => {
@@ -19,7 +28,15 @@ serve(async (req) => {
   }
 
   try {
-    const { content, platform, sentiment, brandVoice, interactionType } = await req.json() as AIRequestBody;
+    const { 
+      content, 
+      platform, 
+      sentiment, 
+      brandVoice, 
+      interactionType,
+      brandVoiceContext,
+      language 
+    } = await req.json() as AIRequestBody;
     
     if (!content) {
       return new Response(
@@ -33,13 +50,15 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are an AI assistant helping a business manage their social media reputation. 
+    // Build enhanced system prompt with brand voice training
+    let systemPrompt = `You are an AI assistant helping a business manage their social media reputation. 
 Generate a professional, empathetic response to customer interactions.
 
 Brand Voice: ${brandVoice || "professional and friendly"}
 Platform: ${platform}
 Interaction Type: ${interactionType || "comment"}
 Detected Sentiment: ${sentiment || "neutral"}
+${language ? `Language: Respond in ${language}` : ""}
 
 Guidelines:
 - Keep responses concise (2-4 sentences for comments, longer for DMs)
@@ -48,7 +67,24 @@ Guidelines:
 - For positive sentiment: express gratitude, encourage continued engagement
 - For neutral sentiment: be helpful and informative
 - Never be defensive or dismissive
-- Include a call-to-action when appropriate`;
+- Include a call-to-action when appropriate
+- Use appropriate emojis for casual platforms (Instagram, Twitter) if the brand allows`;
+
+    // Add brand voice training data if available
+    if (brandVoiceContext) {
+      if (brandVoiceContext.guidelines) {
+        systemPrompt += `\n\nBrand Guidelines:\n${brandVoiceContext.guidelines}`;
+      }
+      if (brandVoiceContext.phrases?.length) {
+        systemPrompt += `\n\nPreferred Phrases to Use:\n- ${brandVoiceContext.phrases.join("\n- ")}`;
+      }
+      if (brandVoiceContext.keywords?.length) {
+        systemPrompt += `\n\nKey Terms to Include When Relevant:\n- ${brandVoiceContext.keywords.join(", ")}`;
+      }
+      if (brandVoiceContext.responseExamples) {
+        systemPrompt += `\n\nExample Responses from this Brand:\n${brandVoiceContext.responseExamples}`;
+      }
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -87,7 +123,7 @@ Guidelines:
     const data = await response.json();
     const generatedResponse = data.choices?.[0]?.message?.content || "";
 
-    // Analyze sentiment of the original content
+    // Analyze sentiment with confidence score
     const sentimentResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -97,7 +133,15 @@ Guidelines:
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: "Analyze the sentiment of the following text. Respond with ONLY one word: positive, neutral, or negative." },
+          { 
+            role: "system", 
+            content: `Analyze the sentiment of the following text. Respond with a JSON object containing:
+- sentiment: "positive", "neutral", or "negative"
+- confidence: a number between 0 and 1 indicating confidence
+- reason: a brief explanation (max 10 words)
+
+ONLY respond with the JSON object, no other text.` 
+          },
           { role: "user", content: content },
         ],
         stream: false,
@@ -106,28 +150,51 @@ Guidelines:
 
     let analyzedSentiment = "neutral";
     let sentimentScore = 0.5;
+    let sentimentReason = "";
 
     if (sentimentResponse.ok) {
       const sentimentData = await sentimentResponse.json();
-      const sentimentText = sentimentData.choices?.[0]?.message?.content?.toLowerCase().trim() || "neutral";
+      const sentimentText = sentimentData.choices?.[0]?.message?.content?.trim() || "";
       
-      if (sentimentText.includes("positive")) {
-        analyzedSentiment = "positive";
-        sentimentScore = 0.8;
-      } else if (sentimentText.includes("negative")) {
-        analyzedSentiment = "negative";
-        sentimentScore = 0.2;
-      } else {
-        analyzedSentiment = "neutral";
-        sentimentScore = 0.5;
+      try {
+        // Parse JSON response
+        const parsed = JSON.parse(sentimentText);
+        analyzedSentiment = parsed.sentiment || "neutral";
+        sentimentScore = parsed.confidence || 0.5;
+        sentimentReason = parsed.reason || "";
+      } catch {
+        // Fallback to simple text matching
+        if (sentimentText.toLowerCase().includes("positive")) {
+          analyzedSentiment = "positive";
+          sentimentScore = 0.8;
+        } else if (sentimentText.toLowerCase().includes("negative")) {
+          analyzedSentiment = "negative";
+          sentimentScore = 0.2;
+        } else {
+          analyzedSentiment = "neutral";
+          sentimentScore = 0.5;
+        }
       }
     }
+
+    // Calculate response confidence based on brand voice training availability
+    let responseConfidence = 0.7; // Base confidence
+    if (brandVoiceContext) {
+      if (brandVoiceContext.responseExamples) responseConfidence += 0.1;
+      if (brandVoiceContext.guidelines) responseConfidence += 0.05;
+      if (brandVoiceContext.phrases?.length) responseConfidence += 0.05;
+      if (brandVoiceContext.keywords?.length) responseConfidence += 0.03;
+    }
+    responseConfidence = Math.min(responseConfidence, 0.95);
 
     return new Response(
       JSON.stringify({
         response: generatedResponse,
         sentiment: analyzedSentiment,
         sentimentScore: sentimentScore,
+        sentimentReason: sentimentReason,
+        responseConfidence: responseConfidence,
+        brandVoiceApplied: !!brandVoiceContext,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

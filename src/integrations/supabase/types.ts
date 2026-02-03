@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      automation_rules: {
+        Row: {
+          action_config: Json
+          action_type: string
+          created_at: string
+          description: string | null
+          execution_count: number | null
+          id: string
+          is_active: boolean | null
+          last_executed_at: string | null
+          name: string
+          priority: number | null
+          trigger_conditions: Json
+          trigger_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_config?: Json
+          action_type: string
+          created_at?: string
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          name: string
+          priority?: number | null
+          trigger_conditions?: Json
+          trigger_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_config?: Json
+          action_type?: string
+          created_at?: string
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          name?: string
+          priority?: number | null
+          trigger_conditions?: Json
+          trigger_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      brand_voice_samples: {
+        Row: {
+          content: string
+          context: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          platform: string | null
+          sample_type: string
+          sentiment: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          context?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          platform?: string | null
+          sample_type: string
+          sentiment?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          context?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          platform?: string | null
+          sample_type?: string
+          sentiment?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       connected_platforms: {
         Row: {
           access_token: string | null
