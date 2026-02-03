@@ -1,202 +1,281 @@
+import { useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { useInteractions } from "@/hooks/useInteractions";
+import { useReviews } from "@/hooks/useReviews";
+import { useLeads } from "@/hooks/useLeads";
+import { seedSampleData } from "@/lib/sampleData";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   MessageSquare,
   Star,
+  Users,
   TrendingUp,
-  Clock,
   ArrowUpRight,
-  ArrowDownRight,
-  Zap,
+  Sparkles,
+  AlertCircle,
+  CheckCircle2,
+  RefreshCw,
+  Beaker,
 } from "lucide-react";
-
-const stats = [
-  {
-    title: "Total Interactions",
-    value: "2,847",
-    change: "+12.5%",
-    trend: "up",
-    icon: MessageSquare,
-  },
-  {
-    title: "Avg Rating",
-    value: "4.7",
-    change: "+0.3",
-    trend: "up",
-    icon: Star,
-  },
-  {
-    title: "Response Rate",
-    value: "94%",
-    change: "+5.2%",
-    trend: "up",
-    icon: TrendingUp,
-  },
-  {
-    title: "Avg Response Time",
-    value: "2.4h",
-    change: "-18%",
-    trend: "up",
-    icon: Clock,
-  },
-];
-
-const recentInteractions = [
-  {
-    id: 1,
-    platform: "instagram",
-    author: "@tech_lover",
-    content: "Amazing product! Absolutely love the quality 🔥",
-    sentiment: "positive",
-    time: "5m ago",
-  },
-  {
-    id: 2,
-    platform: "google",
-    author: "John D.",
-    content: "Great service but delivery took longer than expected",
-    sentiment: "neutral",
-    time: "12m ago",
-  },
-  {
-    id: 3,
-    platform: "twitter",
-    author: "@frustrated_user",
-    content: "Still waiting on my support ticket #5847...",
-    sentiment: "negative",
-    time: "25m ago",
-  },
-  {
-    id: 4,
-    platform: "facebook",
-    author: "Sarah M.",
-    content: "Can you tell me more about the Pro plan features?",
-    sentiment: "neutral",
-    time: "1h ago",
-  },
-];
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { interactions, loading: interactionsLoading, refetch: refetchInteractions } = useInteractions();
+  const { reviews, loading: reviewsLoading, refetch: refetchReviews } = useReviews();
+  const { leads, loading: leadsLoading, refetch: refetchLeads } = useLeads();
+  const [seeding, setSeeding] = useState(false);
+
+  const loading = interactionsLoading || reviewsLoading || leadsLoading;
+
+  // Calculate stats
+  const pendingInteractions = interactions.filter(i => i.status === "pending").length;
+  const respondedInteractions = interactions.filter(i => i.status === "responded").length;
+  const avgRating = reviews.length > 0 
+    ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
+    : "0.0";
+  const qualifiedLeads = leads.filter(l => l.status === "qualified").length;
+  const recentInteractions = interactions.slice(0, 5);
+
+  const handleSeedData = async () => {
+    if (!user) return;
+    
+    setSeeding(true);
+    const result = await seedSampleData(user.id);
+    
+    if (result.success) {
+      toast({
+        title: "Sample data loaded!",
+        description: "Your sandbox is ready with sample interactions, reviews, and leads.",
+      });
+      refetchInteractions();
+      refetchReviews();
+      refetchLeads();
+    } else {
+      toast({
+        title: "Error",
+        description: result.error,
+        variant: "destructive",
+      });
+    }
+    setSeeding(false);
+  };
+
+  const stats = [
+    {
+      title: "Pending Messages",
+      value: pendingInteractions,
+      icon: MessageSquare,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+      href: "/dashboard/inbox",
+    },
+    {
+      title: "Avg. Review Rating",
+      value: avgRating,
+      icon: Star,
+      color: "text-sentiment-positive",
+      bgColor: "bg-sentiment-positive/10",
+      href: "/dashboard/reviews",
+    },
+    {
+      title: "Qualified Leads",
+      value: qualifiedLeads,
+      icon: Users,
+      color: "text-blue-500",
+      bgColor: "bg-blue-500/10",
+      href: "/dashboard/leads",
+    },
+    {
+      title: "Response Rate",
+      value: interactions.length > 0 
+        ? `${Math.round((respondedInteractions / interactions.length) * 100)}%` 
+        : "0%",
+      icon: TrendingUp,
+      color: "text-sentiment-positive",
+      bgColor: "bg-sentiment-positive/10",
+      href: "/dashboard/analytics",
+    },
+  ];
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map(i => (
+              <Card key={i}>
+                <CardContent className="p-6">
+                  <Skeleton className="h-10 w-10 rounded-lg mb-4" />
+                  <Skeleton className="h-8 w-16 mb-2" />
+                  <Skeleton className="h-4 w-24" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const hasNoData = interactions.length === 0 && reviews.length === 0 && leads.length === 0;
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Welcome */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold">Welcome back! 👋</h2>
-            <p className="text-muted-foreground">
-              Here's what's happening with your social presence today.
-            </p>
-          </div>
-          <Button variant="hero">
-            <Zap className="h-4 w-4 mr-2" />
-            AI Auto-Respond
-          </Button>
-        </div>
+        {/* Sandbox Banner */}
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <Beaker className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold flex items-center gap-2">
+                    Sandbox Mode
+                    <Badge variant="outline" className="text-xs">Development</Badge>
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Working with sample data. No live integrations connected.
+                  </p>
+                </div>
+              </div>
+              {hasNoData && (
+                <Button onClick={handleSeedData} disabled={seeding}>
+                  {seeding ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-2" />
+                  )}
+                  Load Sample Data
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((stat, index) => (
-            <Card key={index}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center">
-                    <stat.icon className="h-5 w-5 text-accent-foreground" />
+          {stats.map((stat) => (
+            <Link key={stat.title} to={stat.href}>
+              <Card className="hover:border-primary/30 transition-colors cursor-pointer">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`h-10 w-10 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
+                      <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                    </div>
+                    <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
                   </div>
-                  <div
-                    className={`flex items-center gap-1 text-sm font-medium ${
-                      stat.trend === "up" ? "text-sentiment-positive" : "text-sentiment-negative"
-                    }`}
-                  >
-                    {stat.change}
-                    {stat.trend === "up" ? (
-                      <ArrowUpRight className="h-4 w-4" />
-                    ) : (
-                      <ArrowDownRight className="h-4 w-4" />
-                    )}
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <p className="text-sm text-muted-foreground">{stat.title}</p>
                   <p className="text-3xl font-bold">{stat.value}</p>
-                </div>
-              </CardContent>
-            </Card>
+                  <p className="text-sm text-muted-foreground">{stat.title}</p>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
 
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Interactions */}
-          <Card className="lg:col-span-2">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Recent Interactions</CardTitle>
-              <Button variant="outline" size="sm" asChild>
-                <a href="/dashboard/inbox">View All</a>
+              <CardTitle className="text-lg">Recent Interactions</CardTitle>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/dashboard/inbox">View All</Link>
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {recentInteractions.map((interaction) => (
-                  <div
-                    key={interaction.id}
-                    className="flex items-start gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
-                  >
+              {recentInteractions.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                  <p>No interactions yet</p>
+                  <Button variant="link" onClick={handleSeedData} disabled={seeding}>
+                    Load sample data to get started
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentInteractions.map((interaction) => (
                     <div
-                      className={`w-2 h-2 rounded-full mt-2 ${
-                        interaction.sentiment === "positive"
-                          ? "bg-sentiment-positive"
-                          : interaction.sentiment === "negative"
-                          ? "bg-sentiment-negative"
-                          : "bg-sentiment-neutral"
-                      }`}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-medium px-2 py-0.5 rounded bg-accent capitalize">
-                          {interaction.platform}
-                        </span>
-                        <span className="text-sm font-medium">{interaction.author}</span>
-                        <span className="text-xs text-muted-foreground ml-auto">
-                          {interaction.time}
-                        </span>
+                      key={interaction.id}
+                      className="flex items-start gap-3 p-3 rounded-lg bg-muted/50"
+                    >
+                      <div
+                        className={`w-2 h-2 rounded-full mt-2 ${
+                          interaction.sentiment === "positive"
+                            ? "bg-sentiment-positive"
+                            : interaction.sentiment === "negative"
+                            ? "bg-sentiment-negative"
+                            : "bg-sentiment-neutral"
+                        }`}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium">
+                            {interaction.author_name || "Unknown"}
+                          </span>
+                          <Badge variant="outline" className="text-xs capitalize">
+                            {interaction.platform}
+                          </Badge>
+                          {interaction.status === "pending" ? (
+                            <AlertCircle className="h-3 w-3 text-sentiment-neutral ml-auto" />
+                          ) : (
+                            <CheckCircle2 className="h-3 w-3 text-sentiment-positive ml-auto" />
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {interaction.content}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {interaction.content}
-                      </p>
                     </div>
-                    <Button variant="ghost" size="sm">
-                      Reply
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
           {/* Quick Actions */}
           <Card>
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+              <CardTitle className="text-lg">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                View Pending (12)
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Star className="h-4 w-4 mr-2" />
-                Request Reviews
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <TrendingUp className="h-4 w-4 mr-2" />
-                View Reports
-              </Button>
-              <Button variant="hero" className="w-full">
-                <Zap className="h-4 w-4 mr-2" />
-                Process All with AI
-              </Button>
+              <Link to="/dashboard/inbox">
+                <Button variant="outline" className="w-full justify-start">
+                  <MessageSquare className="h-4 w-4 mr-3" />
+                  Open Smart Inbox
+                  {pendingInteractions > 0 && (
+                    <Badge variant="destructive" className="ml-auto">
+                      {pendingInteractions}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
+              <Link to="/dashboard/reviews">
+                <Button variant="outline" className="w-full justify-start">
+                  <Star className="h-4 w-4 mr-3" />
+                  Manage Reviews
+                </Button>
+              </Link>
+              <Link to="/dashboard/leads">
+                <Button variant="outline" className="w-full justify-start">
+                  <Users className="h-4 w-4 mr-3" />
+                  View Leads
+                </Button>
+              </Link>
+              <Link to="/dashboard/analytics">
+                <Button variant="outline" className="w-full justify-start">
+                  <TrendingUp className="h-4 w-4 mr-3" />
+                  View Analytics
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>

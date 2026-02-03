@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,11 +26,12 @@ import {
   ThumbsDown,
   Minus,
   RefreshCw,
-  Plus,
+  Beaker,
 } from "lucide-react";
 import { useInteractions } from "@/hooks/useInteractions";
 import { useAIResponse } from "@/hooks/useAIResponse";
-import { useRealtime } from "@/hooks/useRealtime";
+import { useAuth } from "@/hooks/useAuth";
+import { seedSampleData } from "@/lib/sampleData";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
@@ -65,8 +65,9 @@ const statusIcons: Record<Status, typeof Clock> = {
 };
 
 export default function InboxPage() {
+  const { user } = useAuth();
   const { toast } = useToast();
-  const { interactions, loading, error, refetch, updateInteraction, createInteraction } = useInteractions();
+  const { interactions, loading, refetch, updateInteraction } = useInteractions();
   const { generateResponse, loading: aiLoading, error: aiError } = useAIResponse();
   
   const [selectedInteraction, setSelectedInteraction] = useState<Interaction | null>(null);
@@ -75,19 +76,7 @@ export default function InboxPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [response, setResponse] = useState("");
   const [suggestedResponse, setSuggestedResponse] = useState("");
-
-  // Real-time subscription for new interactions
-  useRealtime<Interaction>({
-    table: "interactions",
-    onInsert: (newInteraction) => {
-      toast({
-        title: "New interaction",
-        description: `New ${newInteraction.interaction_type} from ${newInteraction.author_name || "Unknown"}`,
-      });
-      refetch();
-    },
-    onUpdate: () => refetch(),
-  });
+  const [seeding, setSeeding] = useState(false);
 
   // Filter interactions
   const filteredInteractions = interactions.filter((interaction) => {
@@ -105,6 +94,31 @@ export default function InboxPage() {
     }
   }, [interactions, selectedInteraction]);
 
+  const handleLoadSampleData = async () => {
+    if (!user) return;
+    setSeeding(true);
+    try {
+      const result = await seedSampleData(user.id);
+      if (result.success) {
+        toast({
+          title: "Sample data loaded",
+          description: "Your inbox has been populated with sample interactions.",
+        });
+        refetch();
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to load sample data",
+        variant: "destructive",
+      });
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   const handleGenerateResponse = async () => {
     if (!selectedInteraction) return;
 
@@ -117,7 +131,6 @@ export default function InboxPage() {
 
     if (result) {
       setSuggestedResponse(result.response);
-      // Update sentiment in database if analyzed
       if (result.sentiment !== selectedInteraction.sentiment) {
         await updateInteraction(selectedInteraction.id, {
           sentiment: result.sentiment,
@@ -160,31 +173,6 @@ export default function InboxPage() {
     }
   };
 
-  const handleAddMockInteraction = async () => {
-    try {
-      await createInteraction({
-        platform: "instagram",
-        interaction_type: "comment",
-        content: "Just tried your product and it's amazing! The quality exceeded my expectations. Will definitely recommend to friends! 🔥",
-        author_name: "Happy Customer",
-        author_handle: "@happy_customer_2024",
-        status: "pending",
-        sentiment: "positive",
-        urgency_score: 3,
-      });
-      toast({
-        title: "Mock interaction added",
-        description: "A sample interaction has been added to your inbox.",
-      });
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to add interaction",
-        variant: "destructive",
-      });
-    }
-  };
-
   const getSentimentColor = (sentiment: Sentiment | null) => {
     switch (sentiment) {
       case "positive":
@@ -218,9 +206,9 @@ export default function InboxPage() {
     const days = Math.floor(diff / 86400000);
 
     if (minutes < 1) return "Just now";
-    if (minutes < 60) return `${minutes} minutes ago`;
-    if (hours < 24) return `${hours} hours ago`;
-    return `${days} days ago`;
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${days}d ago`;
   };
 
   if (loading) {
@@ -266,8 +254,14 @@ export default function InboxPage() {
               <Button variant="outline" size="icon" onClick={refetch} title="Refresh">
                 <RefreshCw className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon" onClick={handleAddMockInteraction} title="Add mock interaction">
-                <Plus className="h-4 w-4" />
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={handleLoadSampleData} 
+                disabled={seeding}
+                title="Load sample data"
+              >
+                <Beaker className={`h-4 w-4 ${seeding ? "animate-pulse" : ""}`} />
               </Button>
             </div>
             <div className="flex gap-2">
@@ -314,10 +308,11 @@ export default function InboxPage() {
             <TabsContent value="all" className="flex-1 overflow-auto p-2 m-0">
               {filteredInteractions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                  <Beaker className="h-10 w-10 mb-3 opacity-50" />
                   <p className="mb-4">No interactions yet</p>
-                  <Button variant="outline" onClick={handleAddMockInteraction}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add sample interaction
+                  <Button variant="outline" onClick={handleLoadSampleData} disabled={seeding}>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Load Sample Data
                   </Button>
                 </div>
               ) : (
@@ -529,7 +524,6 @@ export default function InboxPage() {
   );
 }
 
-// Extracted component for interaction cards
 function InteractionCard({
   interaction,
   isSelected,
