@@ -6,6 +6,46 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Input validation
+interface ValidationError {
+  field: string;
+  message: string;
+}
+
+function validateString(
+  value: unknown,
+  field: string,
+  options: { required?: boolean; maxLength?: number; enum?: string[]; pattern?: RegExp } = {}
+): ValidationError | null {
+  const { required = false, maxLength, enum: allowedValues, pattern } = options;
+
+  if (value === undefined || value === null || value === "") {
+    if (required) return { field, message: `${field} is required` };
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    return { field, message: `${field} must be a string` };
+  }
+
+  if (maxLength !== undefined && value.length > maxLength) {
+    return { field, message: `${field} must be at most ${maxLength} characters` };
+  }
+
+  if (allowedValues && !allowedValues.includes(value)) {
+    return { field, message: `${field} must be one of: ${allowedValues.join(", ")}` };
+  }
+
+  if (pattern && !pattern.test(value)) {
+    return { field, message: `${field} has invalid format` };
+  }
+
+  return null;
+}
+
+// Pattern for alphanumeric IDs (Facebook/Meta IDs)
+const META_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
 interface MetaRequestBody {
   action: "fetch_comments" | "fetch_dms" | "post_reply" | "verify_token";
   accessToken?: string;
@@ -44,7 +84,58 @@ serve(async (req) => {
       );
     }
 
-    const { action, accessToken, pageId, postId, message, commentId } = await req.json() as MetaRequestBody;
+    // Check request size
+    const contentLength = req.headers.get("content-length");
+    if (contentLength && parseInt(contentLength, 10) > 50 * 1024) {
+      return new Response(
+        JSON.stringify({ error: "Request body too large" }),
+        { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Parse JSON body
+    let body: MetaRequestBody;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON body" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { action, accessToken, pageId, postId, message, commentId } = body;
+
+    // Input validation
+    const validationErrors: ValidationError[] = [];
+
+    const actionErr = validateString(action, "action", { 
+      required: true, 
+      enum: ["fetch_comments", "fetch_dms", "post_reply", "verify_token"] 
+    });
+    if (actionErr) validationErrors.push(actionErr);
+
+    const accessTokenErr = validateString(accessToken, "accessToken", { maxLength: 500 });
+    if (accessTokenErr) validationErrors.push(accessTokenErr);
+
+    const pageIdErr = validateString(pageId, "pageId", { maxLength: 100, pattern: META_ID_PATTERN });
+    if (pageIdErr) validationErrors.push(pageIdErr);
+
+    const postIdErr = validateString(postId, "postId", { maxLength: 100, pattern: META_ID_PATTERN });
+    if (postIdErr) validationErrors.push(postIdErr);
+
+    const messageErr = validateString(message, "message", { maxLength: 8000 });
+    if (messageErr) validationErrors.push(messageErr);
+
+    const commentIdErr = validateString(commentId, "commentId", { maxLength: 100, pattern: META_ID_PATTERN });
+    if (commentIdErr) validationErrors.push(commentIdErr);
+
+    if (validationErrors.length > 0) {
+      return new Response(
+        JSON.stringify({ error: "Validation failed", details: validationErrors }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Get stored access token from connected_platforms if not provided
     let metaAccessToken = accessToken;
@@ -75,12 +166,12 @@ serve(async (req) => {
     switch (action) {
       case "verify_token": {
         // Verify the access token is valid
-        const response = await fetch(`${META_GRAPH_URL}/me?access_token=${metaAccessToken}`);
+        const response = await fetch(`${META_GRAPH_URL}/me?access_token=${encodeURIComponent(metaAccessToken)}`);
         const data = await response.json();
         
         if (data.error) {
           return new Response(
-            JSON.stringify({ error: data.error.message, valid: false }),
+            JSON.stringify({ error: "Token verification failed", valid: false }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
@@ -101,13 +192,13 @@ serve(async (req) => {
 
         // Fetch posts from page
         const postsResponse = await fetch(
-          `${META_GRAPH_URL}/${pageId}/posts?fields=id,message,created_time,comments{id,message,from,created_time}&access_token=${metaAccessToken}`
+          `${META_GRAPH_URL}/${encodeURIComponent(pageId)}/posts?fields=id,message,created_time,comments{id,message,from,created_time}&access_token=${encodeURIComponent(metaAccessToken)}`
         );
         const postsData = await postsResponse.json();
 
         if (postsData.error) {
           return new Response(
-            JSON.stringify({ error: postsData.error.message }),
+            JSON.stringify({ error: "Failed to fetch comments" }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
@@ -147,13 +238,13 @@ serve(async (req) => {
 
         // Fetch conversations (DMs)
         const conversationsResponse = await fetch(
-          `${META_GRAPH_URL}/${pageId}/conversations?fields=participants,messages{message,from,created_time}&access_token=${metaAccessToken}`
+          `${META_GRAPH_URL}/${encodeURIComponent(pageId)}/conversations?fields=participants,messages{message,from,created_time}&access_token=${encodeURIComponent(metaAccessToken)}`
         );
         const conversationsData = await conversationsResponse.json();
 
         if (conversationsData.error) {
           return new Response(
-            JSON.stringify({ error: conversationsData.error.message }),
+            JSON.stringify({ error: "Failed to fetch messages" }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
@@ -192,7 +283,7 @@ serve(async (req) => {
 
         // Post a reply to a comment
         const replyResponse = await fetch(
-          `${META_GRAPH_URL}/${commentId}/comments`,
+          `${META_GRAPH_URL}/${encodeURIComponent(commentId)}/comments`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -206,7 +297,7 @@ serve(async (req) => {
 
         if (replyData.error) {
           return new Response(
-            JSON.stringify({ error: replyData.error.message }),
+            JSON.stringify({ error: "Failed to post reply" }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
@@ -226,7 +317,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("meta-integration error:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ error: "An error occurred processing your request" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

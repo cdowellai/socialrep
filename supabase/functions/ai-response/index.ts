@@ -1,9 +1,72 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// Input validation
+interface ValidationError {
+  field: string;
+  message: string;
+}
+
+function validateString(
+  value: unknown,
+  field: string,
+  options: { required?: boolean; maxLength?: number; enum?: string[] } = {}
+): ValidationError | null {
+  const { required = false, maxLength, enum: allowedValues } = options;
+
+  if (value === undefined || value === null || value === "") {
+    if (required) return { field, message: `${field} is required` };
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    return { field, message: `${field} must be a string` };
+  }
+
+  if (maxLength !== undefined && value.length > maxLength) {
+    return { field, message: `${field} must be at most ${maxLength} characters` };
+  }
+
+  if (allowedValues && !allowedValues.includes(value)) {
+    return { field, message: `${field} must be one of: ${allowedValues.join(", ")}` };
+  }
+
+  return null;
+}
+
+function validateStringArray(
+  value: unknown,
+  field: string,
+  options: { maxItems?: number; maxItemLength?: number } = {}
+): ValidationError | null {
+  if (value === undefined || value === null) return null;
+
+  if (!Array.isArray(value)) {
+    return { field, message: `${field} must be an array` };
+  }
+
+  const { maxItems = 50, maxItemLength = 500 } = options;
+
+  if (value.length > maxItems) {
+    return { field, message: `${field} must have at most ${maxItems} items` };
+  }
+
+  for (let i = 0; i < value.length; i++) {
+    if (typeof value[i] !== "string") {
+      return { field, message: `${field}[${i}] must be a string` };
+    }
+    if (value[i].length > maxItemLength) {
+      return { field, message: `${field}[${i}] must be at most ${maxItemLength} characters` };
+    }
+  }
+
+  return null;
+}
 
 interface BrandVoiceContext {
   guidelines?: string;
@@ -28,6 +91,50 @@ serve(async (req) => {
   }
 
   try {
+    // Authentication check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Authorization required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Verify user from JWT
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check request size
+    const contentLength = req.headers.get("content-length");
+    if (contentLength && parseInt(contentLength, 10) > 100 * 1024) {
+      return new Response(
+        JSON.stringify({ error: "Request body too large" }),
+        { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Parse JSON body
+    let body: AIRequestBody;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: "Invalid JSON body" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { 
       content, 
       platform, 
@@ -36,11 +143,56 @@ serve(async (req) => {
       interactionType,
       brandVoiceContext,
       language 
-    } = await req.json() as AIRequestBody;
-    
-    if (!content) {
+    } = body;
+
+    // Input validation
+    const validationErrors: ValidationError[] = [];
+
+    const contentErr = validateString(content, "content", { required: true, maxLength: 10000 });
+    if (contentErr) validationErrors.push(contentErr);
+
+    const platformErr = validateString(platform, "platform", { required: true, maxLength: 50 });
+    if (platformErr) validationErrors.push(platformErr);
+
+    const sentimentErr = validateString(sentiment, "sentiment", { 
+      enum: ["positive", "neutral", "negative"] 
+    });
+    if (sentimentErr) validationErrors.push(sentimentErr);
+
+    const brandVoiceErr = validateString(brandVoice, "brandVoice", { maxLength: 200 });
+    if (brandVoiceErr) validationErrors.push(brandVoiceErr);
+
+    const interactionTypeErr = validateString(interactionType, "interactionType", { 
+      maxLength: 50,
+      enum: ["comment", "dm", "mention", "review", "post"]
+    });
+    if (interactionTypeErr) validationErrors.push(interactionTypeErr);
+
+    const languageErr = validateString(language, "language", { maxLength: 50 });
+    if (languageErr) validationErrors.push(languageErr);
+
+    // Validate brandVoiceContext if provided
+    if (brandVoiceContext !== undefined && brandVoiceContext !== null) {
+      if (typeof brandVoiceContext !== "object" || Array.isArray(brandVoiceContext)) {
+        validationErrors.push({ field: "brandVoiceContext", message: "brandVoiceContext must be an object" });
+      } else {
+        const guidelinesErr = validateString(brandVoiceContext.guidelines, "brandVoiceContext.guidelines", { maxLength: 2000 });
+        if (guidelinesErr) validationErrors.push(guidelinesErr);
+
+        const phrasesErr = validateStringArray(brandVoiceContext.phrases, "brandVoiceContext.phrases", { maxItems: 20, maxItemLength: 200 });
+        if (phrasesErr) validationErrors.push(phrasesErr);
+
+        const keywordsErr = validateStringArray(brandVoiceContext.keywords, "brandVoiceContext.keywords", { maxItems: 50, maxItemLength: 100 });
+        if (keywordsErr) validationErrors.push(keywordsErr);
+
+        const examplesErr = validateString(brandVoiceContext.responseExamples, "brandVoiceContext.responseExamples", { maxLength: 5000 });
+        if (examplesErr) validationErrors.push(examplesErr);
+      }
+    }
+
+    if (validationErrors.length > 0) {
       return new Response(
-        JSON.stringify({ error: "Content is required" }),
+        JSON.stringify({ error: "Validation failed", details: validationErrors }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -115,8 +267,7 @@ Guidelines:
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("AI gateway error:", response.status);
       throw new Error("Failed to generate AI response");
     }
 
@@ -201,7 +352,7 @@ ONLY respond with the JSON object, no other text.`
   } catch (error) {
     console.error("ai-response error:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ error: "An error occurred processing your request" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
