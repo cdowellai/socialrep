@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, Lock, User } from "lucide-react";
+import { Loader2, Mail, Lock, User, ArrowLeft } from "lucide-react";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -14,12 +14,12 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose, defaultTab = "login" }: AuthModalProps) {
-  const [tab, setTab] = useState<"login" | "signup">(defaultTab);
+  const [tab, setTab] = useState<"login" | "signup" | "forgot">(defaultTab);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,13 +32,21 @@ export function AuthModal({ isOpen, onClose, defaultTab = "login" }: AuthModalPr
         if (error) throw error;
         toast({ title: "Welcome back!", description: "Successfully signed in." });
         onClose();
-      } else {
+      } else if (tab === "signup") {
         const { error } = await signUp(email, password, fullName);
         if (error) throw error;
         toast({
           title: "Check your email",
           description: "We sent you a confirmation link to verify your account.",
         });
+      } else if (tab === "forgot") {
+        const { error } = await resetPassword(email);
+        if (error) throw error;
+        toast({
+          title: "Check your email",
+          description: "We sent you a password reset link.",
+        });
+        setTab("login");
       }
     } catch (error: any) {
       toast({
@@ -51,44 +59,67 @@ export function AuthModal({ isOpen, onClose, defaultTab = "login" }: AuthModalPr
     }
   };
 
+  const getTitle = () => {
+    if (tab === "forgot") return "Reset password";
+    return tab === "login" ? "Welcome back" : "Create account";
+  };
+
+  const getDescription = () => {
+    if (tab === "forgot") return "Enter your email and we'll send you a reset link";
+    return tab === "login"
+      ? "Sign in to access your dashboard"
+      : "Start managing your social presence";
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
-            {tab === "login" ? "Welcome back" : "Create account"}
+            {getTitle()}
           </DialogTitle>
           <DialogDescription className="text-center">
-            {tab === "login"
-              ? "Sign in to access your dashboard"
-              : "Start managing your social presence"}
+            {getDescription()}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex gap-2 p-1 bg-muted rounded-lg mb-4">
+        {tab !== "forgot" && (
+          <div className="flex gap-2 p-1 bg-muted rounded-lg mb-4">
+            <button
+              type="button"
+              onClick={() => setTab("login")}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                tab === "login"
+                  ? "bg-background shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("signup")}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                tab === "signup"
+                  ? "bg-background shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Sign Up
+            </button>
+          </div>
+        )}
+
+        {tab === "forgot" && (
           <button
             type="button"
             onClick={() => setTab("login")}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-              tab === "login"
-                ? "bg-background shadow-sm text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4"
           >
-            Sign In
+            <ArrowLeft className="h-4 w-4" />
+            Back to sign in
           </button>
-          <button
-            type="button"
-            onClick={() => setTab("signup")}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-              tab === "signup"
-                ? "bg-background shadow-sm text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Sign Up
-          </button>
-        </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {tab === "signup" && (
@@ -124,26 +155,38 @@ export function AuthModal({ isOpen, onClose, defaultTab = "login" }: AuthModalPr
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="pl-10"
-              />
+          {tab !== "forgot" && (
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="pl-10"
+                />
+              </div>
             </div>
-          </div>
+          )}
+
+          {tab === "login" && (
+            <button
+              type="button"
+              onClick={() => setTab("forgot")}
+              className="text-sm text-primary hover:underline"
+            >
+              Forgot password?
+            </button>
+          )}
 
           <Button type="submit" className="w-full" variant="hero" size="lg" disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {tab === "login" ? "Sign In" : "Create Account"}
+            {tab === "login" ? "Sign In" : tab === "signup" ? "Create Account" : "Send Reset Link"}
           </Button>
         </form>
 
