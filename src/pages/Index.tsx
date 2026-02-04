@@ -1,21 +1,25 @@
-import { Navbar } from "@/components/landing/Navbar";
-import { HeroSection } from "@/components/landing/HeroSection";
-import { FeaturesSection } from "@/components/landing/FeaturesSection";
-import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
+import { NewNavbar } from "@/components/landing/NewNavbar";
+import { NewHeroSection } from "@/components/landing/NewHeroSection";
+import { PainPointsSection } from "@/components/landing/PainPointsSection";
+import { SolutionSection } from "@/components/landing/SolutionSection";
+import { NewFeaturesSection } from "@/components/landing/NewFeaturesSection";
+import { IntegrationsSection } from "@/components/landing/IntegrationsSection";
 import { PricingSection } from "@/components/landing/PricingSection";
-import { CTASection } from "@/components/landing/CTASection";
-import { Footer } from "@/components/landing/Footer";
+import { FinalCTASection } from "@/components/landing/FinalCTASection";
+import { NewFooter } from "@/components/landing/NewFooter";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      <HeroSection />
-      <FeaturesSection />
-      <TestimonialsSection />
+      <NewNavbar />
+      <NewHeroSection />
+      <PainPointsSection />
+      <SolutionSection />
+      <NewFeaturesSection />
+      <IntegrationsSection />
       <PricingSection />
-      <CTASection />
-      <Footer />
+      <FinalCTASection />
+      <NewFooter />
     </div>
   );
 };

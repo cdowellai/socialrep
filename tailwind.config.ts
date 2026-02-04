@@ -81,8 +81,13 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Cal Sans", "Inter", "system-ui", "sans-serif"],
+        sans: ["Instrument Sans", "system-ui", "sans-serif"],
+        display: ["Instrument Sans", "system-ui", "sans-serif"],
+        mono: ["Space Mono", "monospace"],
+      },
+      backgroundImage: {
+        'gradient-accent': 'linear-gradient(135deg, hsl(166, 100%, 42%) 0%, hsl(200, 100%, 50%) 100%)',
+        'gradient-glow': 'radial-gradient(circle at center, hsla(166, 100%, 42%, 0.2) 0%, transparent 70%)',
       },
       keyframes: {
         "accordion-down": {
