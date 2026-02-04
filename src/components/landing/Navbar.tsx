@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
-import { Menu, X, Moon, Sun, Sparkles } from "lucide-react";
+import { Menu, X, Moon, Sun, MessageSquare } from "lucide-react";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,9 +17,18 @@ export function Navbar() {
 
   const navLinks = [
     { href: "#features", label: "Features" },
+    { href: "#integrations", label: "Integrations" },
     { href: "#pricing", label: "Pricing" },
-    { href: "#testimonials", label: "Testimonials" },
   ];
+
+  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    const element = document.querySelector(href);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+    setIsMenuOpen(false);
+  };
 
   return (
     <>
@@ -28,10 +37,10 @@ export function Navbar() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded-lg bg-gradient-primary flex items-center justify-center">
-                <Sparkles className="h-5 w-5 text-primary-foreground" />
+              <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
+                <MessageSquare className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-bold text-xl">SocialRep AI</span>
+              <span className="font-bold text-xl">SocialRep</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -40,6 +49,7 @@ export function Navbar() {
                 <a
                   key={link.href}
                   href={link.href}
+                  onClick={(e) => handleSmoothScroll(e, link.href)}
                   className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {link.label}
@@ -67,13 +77,13 @@ export function Navbar() {
                     variant="ghost"
                     onClick={() => setAuthModal({ isOpen: true, tab: "login" })}
                   >
-                    Sign In
+                    Log in
                   </Button>
                   <Button
                     variant="hero"
                     onClick={() => setAuthModal({ isOpen: true, tab: "signup" })}
                   >
-                    Get Started
+                    Start Free Trial
                   </Button>
                 </>
               )}
@@ -100,7 +110,7 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   className="block text-sm font-medium text-muted-foreground hover:text-foreground"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={(e) => handleSmoothScroll(e, link.href)}
                 >
                   {link.label}
                 </a>
@@ -125,7 +135,7 @@ export function Navbar() {
                         setIsMenuOpen(false);
                       }}
                     >
-                      Sign In
+                      Log in
                     </Button>
                     <Button
                       variant="hero"
@@ -135,7 +145,7 @@ export function Navbar() {
                         setIsMenuOpen(false);
                       }}
                     >
-                      Get Started
+                      Start Free Trial
                     </Button>
                   </>
                 )}
