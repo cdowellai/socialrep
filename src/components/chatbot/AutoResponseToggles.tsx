@@ -1,9 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { useAutoResponseSettings } from "@/hooks/useAutoResponseSettings";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bot, MessageSquare, MessageCircle, Star } from "lucide-react";
+import { Bot, MessageSquare, MessageCircle, Star, Clock } from "lucide-react";
 
 export function AutoResponseToggles() {
   const { settings, loading, saving, updateSetting } = useAutoResponseSettings();
@@ -16,7 +17,7 @@ export function AutoResponseToggles() {
           <Skeleton className="h-4 w-64" />
         </CardHeader>
         <CardContent className="space-y-4">
-          {[1, 2, 3, 4].map((i) => (
+          {[1, 2, 3, 4, 5].map((i) => (
             <Skeleton key={i} className="h-12 w-full" />
           ))}
         </CardContent>
@@ -51,6 +52,8 @@ export function AutoResponseToggles() {
     },
   ];
 
+  const delaySeconds = settings.auto_response_delay_ms / 1000;
+
   return (
     <Card>
       <CardHeader>
@@ -63,6 +66,40 @@ export function AutoResponseToggles() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Response Delay Setting */}
+        <div className="rounded-lg border p-4 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+              <Clock className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div className="flex-1 space-y-0.5">
+              <Label className="text-sm font-medium">Response Delay</Label>
+              <p className="text-xs text-muted-foreground">
+                Add a delay before auto-responses to feel more human
+              </p>
+            </div>
+            <span className="text-sm font-medium tabular-nums min-w-[4rem] text-right">
+              {delaySeconds === 0 ? "Instant" : `${delaySeconds}s`}
+            </span>
+          </div>
+          <div className="px-1">
+            <Slider
+              value={[settings.auto_response_delay_ms]}
+              onValueChange={([value]) => updateSetting("auto_response_delay_ms", value)}
+              min={0}
+              max={30000}
+              step={1000}
+              disabled={saving}
+              className="cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <span>Instant</span>
+              <span>30 seconds</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Toggle Items */}
         {toggleItems.map((item) => (
           <div
             key={item.key}

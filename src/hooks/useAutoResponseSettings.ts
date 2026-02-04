@@ -8,6 +8,7 @@ interface AutoResponseSettings {
   auto_respond_messages: boolean;
   auto_respond_reviews: boolean;
   auto_respond_chatbot: boolean;
+  auto_response_delay_ms: number;
 }
 
 export function useAutoResponseSettings() {
@@ -18,6 +19,7 @@ export function useAutoResponseSettings() {
     auto_respond_messages: false,
     auto_respond_reviews: false,
     auto_respond_chatbot: true,
+    auto_response_delay_ms: 2000,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -28,7 +30,7 @@ export function useAutoResponseSettings() {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("auto_respond_comments, auto_respond_messages, auto_respond_reviews, auto_respond_chatbot")
+        .select("auto_respond_comments, auto_respond_messages, auto_respond_reviews, auto_respond_chatbot, auto_response_delay_ms")
         .eq("user_id", user.id)
         .single();
 
@@ -40,6 +42,7 @@ export function useAutoResponseSettings() {
           auto_respond_messages: data.auto_respond_messages ?? false,
           auto_respond_reviews: data.auto_respond_reviews ?? false,
           auto_respond_chatbot: data.auto_respond_chatbot ?? true,
+          auto_response_delay_ms: data.auto_response_delay_ms ?? 2000,
         });
       }
     } catch (error) {
@@ -54,7 +57,7 @@ export function useAutoResponseSettings() {
   }, [fetchSettings]);
 
   const updateSetting = useCallback(
-    async (key: keyof AutoResponseSettings, value: boolean) => {
+    async (key: keyof AutoResponseSettings, value: boolean | number) => {
       if (!user?.id) return;
 
       setSaving(true);
@@ -71,9 +74,12 @@ export function useAutoResponseSettings() {
 
         if (error) throw error;
 
+        const isDelayUpdate = key === "auto_response_delay_ms";
         toast({
           title: "Setting updated",
-          description: `Auto-response ${value ? "enabled" : "disabled"}`,
+          description: isDelayUpdate 
+            ? `Response delay set to ${(value as number) / 1000} seconds`
+            : `Auto-response ${value ? "enabled" : "disabled"}`,
         });
       } catch (error) {
         console.error("Error updating auto-response setting:", error);
