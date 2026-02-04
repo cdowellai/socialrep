@@ -8,7 +8,7 @@ const plans = [
     name: "Free",
     price: "$0",
     period: "forever",
-    description: "Perfect for trying out SocialRep",
+    description: "Perfect for trying out SocialRep AI",
     features: [
       "100 interactions/month",
       "2 connected platforms",
@@ -76,15 +76,14 @@ export function PricingSection() {
 
   return (
     <>
-      <section id="pricing" className="py-24 bg-background">
+      <section id="pricing" className="py-24 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <span className="section-tag mb-4 inline-block">Pricing</span>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              Simple, transparent{" "}
-              <span className="text-gradient-accent">pricing</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Simple, Transparent{" "}
+              <span className="text-gradient">Pricing</span>
             </h2>
-            <p className="text-lg text-foreground-secondary">
+            <p className="text-lg text-muted-foreground">
               Start free and scale as you grow. No hidden fees, cancel anytime.
             </p>
           </div>
@@ -93,15 +92,14 @@ export function PricingSection() {
             {plans.map((plan, index) => (
               <div
                 key={index}
-                className={`relative p-6 rounded-xl bg-background-secondary border ${
+                className={`relative p-6 rounded-2xl bg-card border ${
                   plan.popular
-                    ? "border-accent shadow-glow"
+                    ? "border-primary shadow-glow"
                     : "border-border"
-                } flex flex-col animate-fade-in-up hover:border-accent/50 transition-colors`}
-                style={{ animationDelay: `${index * 100}ms` }}
+                } flex flex-col`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gradient-accent text-background text-xs font-semibold">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">
                     Most Popular
                   </div>
                 )}
@@ -109,10 +107,10 @@ export function PricingSection() {
                 <div className="mb-6">
                   <h3 className="font-semibold text-lg mb-2">{plan.name}</h3>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold font-mono">{plan.price}</span>
-                    <span className="text-foreground-muted">{plan.period}</span>
+                    <span className="text-4xl font-bold">{plan.price}</span>
+                    <span className="text-muted-foreground">{plan.period}</span>
                   </div>
-                  <p className="text-sm text-foreground-muted mt-2">
+                  <p className="text-sm text-muted-foreground mt-2">
                     {plan.description}
                   </p>
                 </div>
@@ -120,15 +118,15 @@ export function PricingSection() {
                 <ul className="space-y-3 mb-8 flex-1">
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
-                      <Check className="h-4 w-4 text-accent mt-0.5 shrink-0" />
-                      <span className="text-foreground-secondary">{feature}</span>
+                      <Check className="h-4 w-4 text-sentiment-positive mt-0.5 shrink-0" />
+                      <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
 
                 <Button
-                  className={plan.popular ? "btn-gradient w-full" : "w-full border-border hover:bg-background-tertiary"}
-                  variant={plan.popular ? "default" : "outline"}
+                  variant={plan.popular ? "hero" : "outline"}
+                  className="w-full"
                   onClick={() => setAuthModal(true)}
                 >
                   {plan.cta}
