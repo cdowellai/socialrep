@@ -245,7 +245,7 @@ serve(async (req) => {
                   const postId = String(value.post_id || "").slice(0, 200);
 
                   // Insert new interaction
-                  await supabase.from("interactions").insert({
+                  const { data: newInteraction } = await supabase.from("interactions").insert({
                     user_id: platform.user_id,
                     external_id: externalId,
                     platform: payload.object === "instagram" ? "instagram" : "facebook",
@@ -256,9 +256,41 @@ serve(async (req) => {
                     post_url: postId ? `https://facebook.com/${postId}` : null,
                     status: "pending",
                     sentiment: "neutral",
-                  });
+                  }).select("id").single();
 
                   console.log("New interaction created from webhook");
+
+                  // Auto-detect leads based on keywords
+                  if (newInteraction) {
+                    const { data: profile } = await supabase
+                      .from("profiles")
+                      .select("lead_keywords")
+                      .eq("user_id", platform.user_id)
+                      .single();
+
+                    const leadKeywords = profile?.lead_keywords || [
+                      "pricing", "price", "cost", "buy", "purchase", 
+                      "interested", "demo", "quote", "trial", "how much"
+                    ];
+
+                    const contentLower = content.toLowerCase();
+                    const isLead = leadKeywords.some((kw: string) => contentLower.includes(kw.toLowerCase()));
+
+                    if (isLead) {
+                      // Create lead from interaction
+                      await supabase.from("leads").insert({
+                        user_id: platform.user_id,
+                        source_interaction_id: newInteraction.id,
+                        source_platform: payload.object === "instagram" ? "instagram" : "facebook",
+                        contact_name: authorName || null,
+                        status: "new",
+                        score: 50,
+                        notes: `Auto-detected from ${payload.object} comment: "${content.slice(0, 200)}..."`,
+                      });
+
+                      console.log("Lead auto-created from interaction keywords");
+                    }
+                  }
                 }
               }
             }

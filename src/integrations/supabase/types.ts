@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_response_feedback: {
+        Row: {
+          created_at: string
+          edited_response: string | null
+          feedback_type: string
+          id: string
+          interaction_id: string | null
+          original_response: string
+          rating: number | null
+          rejection_reason: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          edited_response?: string | null
+          feedback_type: string
+          id?: string
+          interaction_id?: string | null
+          original_response: string
+          rating?: number | null
+          rejection_reason?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          edited_response?: string | null
+          feedback_type?: string
+          id?: string
+          interaction_id?: string | null
+          original_response?: string
+          rating?: number | null
+          rejection_reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_response_feedback_interaction_id_fkey"
+            columns: ["interaction_id"]
+            isOneToOne: false
+            referencedRelation: "interactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automation_rules: {
         Row: {
           action_config: Json
@@ -301,6 +345,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          lead_keywords: string[] | null
           monthly_interactions_limit: number | null
           monthly_interactions_used: number | null
           plan: string | null
@@ -316,6 +361,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id?: string
+          lead_keywords?: string[] | null
           monthly_interactions_limit?: number | null
           monthly_interactions_used?: number | null
           plan?: string | null
@@ -331,6 +377,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          lead_keywords?: string[] | null
           monthly_interactions_limit?: number | null
           monthly_interactions_used?: number | null
           plan?: string | null

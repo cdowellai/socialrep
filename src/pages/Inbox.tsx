@@ -39,6 +39,7 @@ import { seedSampleData } from "@/lib/sampleData";
 import { useToast } from "@/hooks/use-toast";
 import { AdvancedFilters } from "@/components/inbox/AdvancedFilters";
 import { BulkActions } from "@/components/inbox/BulkActions";
+import { AIResponseFeedback } from "@/components/inbox/AIResponseFeedback";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
 type Interaction = Tables<"interactions">;
@@ -702,15 +703,22 @@ export default function InboxPage() {
                       )}
                     </div>
                     <div className="p-4 rounded-lg border border-primary/20 bg-accent/50">
-                      <p className="text-sm">{suggestedResponse}</p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="mt-2"
-                        onClick={() => setResponse(suggestedResponse)}
-                      >
-                        Use this response
-                      </Button>
+                      <p className="text-sm mb-4">{suggestedResponse}</p>
+                      <AIResponseFeedback
+                        interactionId={selectedInteraction.id}
+                        aiResponse={suggestedResponse}
+                        onAccept={(finalResponse) => {
+                          setResponse(finalResponse);
+                          setSuggestedResponse("");
+                        }}
+                        onReject={() => {
+                          setSuggestedResponse("");
+                          toast({
+                            title: "Response rejected",
+                            description: "Try generating a new response or write your own.",
+                          });
+                        }}
+                      />
                     </div>
                   </div>
                 )}
