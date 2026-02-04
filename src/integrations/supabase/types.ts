@@ -460,6 +460,7 @@ export type Database = {
           auto_respond_comments: boolean
           auto_respond_messages: boolean
           auto_respond_reviews: boolean
+          auto_response_delay_ms: number
           avatar_url: string | null
           brand_voice: string | null
           company_name: string | null
@@ -480,6 +481,7 @@ export type Database = {
           auto_respond_comments?: boolean
           auto_respond_messages?: boolean
           auto_respond_reviews?: boolean
+          auto_response_delay_ms?: number
           avatar_url?: string | null
           brand_voice?: string | null
           company_name?: string | null
@@ -500,6 +502,7 @@ export type Database = {
           auto_respond_comments?: boolean
           auto_respond_messages?: boolean
           auto_respond_reviews?: boolean
+          auto_response_delay_ms?: number
           avatar_url?: string | null
           brand_voice?: string | null
           company_name?: string | null
