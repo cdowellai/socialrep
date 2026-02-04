@@ -18,6 +18,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { AutomationRulesManager } from "@/components/automation/AutomationRulesManager";
+import { AutoResponseToggles } from "@/components/chatbot/AutoResponseToggles";
 import { BrandVoiceTraining } from "@/components/brand/BrandVoiceTraining";
 import { TeamManagement } from "@/components/settings/TeamManagement";
 import { ReviewPlatformConnections } from "@/components/settings/ReviewPlatformConnections";
@@ -194,6 +195,7 @@ export default function SettingsPage() {
 
           {/* Automation Tab */}
           <TabsContent value="automation" className="space-y-6">
+            <AutoResponseToggles />
             <AutomationRulesManager />
 
             <Card>
