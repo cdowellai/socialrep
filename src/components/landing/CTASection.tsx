@@ -1,48 +1,40 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AuthModal } from "@/components/auth/AuthModal";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export function CTASection() {
   const [authModal, setAuthModal] = useState(false);
 
+  const scrollToPricing = () => {
+    const element = document.querySelector("#pricing");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <>
-      <section className="py-24 relative overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-primary opacity-95" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCA0LTRzNCAyIDQgNC0yIDQtNCA0LTQtMi00LTR6bTAtMzBjMC0yIDItNCA0LTRzNCAyIDQgNC0yIDQtNCA0LTQtMi00LTR6TTYgMzRjMC0yIDItNCA0LTRzNCAyIDQgNC0yIDQtNCA0LTQtMi00LTR6bTAtMzBjMC0yIDItNCA0LTRzNCAyIDQgNC0yIDQtNCA0LTQtMi00LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm mb-8">
-              <Sparkles className="h-4 w-4 text-white" />
-              <span className="text-sm font-medium text-white">
-                Start your free trial today
-              </span>
-            </div>
-
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-              Ready to Transform Your Social Presence?
+      <section className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="max-w-2xl mx-auto text-center">
+            <span className="inline-block text-sm font-medium text-primary mb-3 animate-fade-in">
+              Get Started
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+              Ready to take control of your engagement?
             </h2>
-
-            <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
-              Join 10,000+ businesses already using SocialRep AI to automate
-              their social media management and boost their online reputation.
+            <p className="text-lg text-muted-foreground mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+              Set up your account in minutes. No credit card required.
             </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button
-                size="xl"
-                className="bg-white text-primary hover:bg-white/90 shadow-xl"
-                onClick={() => setAuthModal(true)}
-              >
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
+              <Button size="lg" className="text-base px-8" onClick={() => setAuthModal(true)}>
                 Start Free Trial
-                <ArrowRight className="h-5 w-5 ml-2" />
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <p className="text-sm text-white/70">
-                No credit card required • 14-day free trial
-              </p>
+              <Button variant="outline" size="lg" className="text-base px-8" onClick={scrollToPricing}>
+                See Plans
+              </Button>
             </div>
           </div>
         </div>
