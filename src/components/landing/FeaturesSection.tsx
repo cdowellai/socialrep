@@ -1,80 +1,92 @@
-import { Target, Zap, BarChart3, Shield, Star, TrendingUp } from "lucide-react";
+import {
+  MessageSquare,
+  Brain,
+  Star,
+  TrendingUp,
+  Users,
+  BarChart3,
+  Zap,
+  Shield,
+} from "lucide-react";
 
 const features = [
   {
-    icon: Target,
-    emoji: "🎯",
-    title: "Brand Voice Training",
+    icon: MessageSquare,
+    title: "Unified Smart Inbox",
     description:
-      "Show the AI how you talk to customers, and it learns your style—friendly, professional, or however you communicate.",
+      "All your comments, DMs, mentions, and reviews from 150+ platforms in one dashboard with AI-powered prioritization.",
   },
   {
-    icon: Zap,
-    emoji: "⚡",
-    title: "One-Click Responses",
+    icon: Brain,
+    title: "AI Response Generation",
     description:
-      "Review what the AI drafts, then send with a single click. Or set rules to auto-reply to common questions.",
-  },
-  {
-    icon: BarChart3,
-    emoji: "📊",
-    title: "Sentiment Detection",
-    description:
-      "Instantly see which comments are positive, negative, or need urgent attention. Catch issues early.",
-  },
-  {
-    icon: Shield,
-    emoji: "🛡️",
-    title: "Auto-Moderation",
-    description:
-      "Automatically hide spam, bots, and inappropriate comments so your pages stay clean.",
+      "Context-aware replies in your brand voice. Sentiment analysis and automatic escalation for urgent issues.",
   },
   {
     icon: Star,
-    emoji: "⭐",
     title: "Review Management",
     description:
-      "Respond to reviews on Google, Facebook, Trustpilot, Yelp, and more—all from one place.",
+      "Aggregate reviews from Google, Yelp, and 150+ sites. Auto-send review requests and manage reputation scoring.",
   },
   {
     icon: TrendingUp,
-    emoji: "📈",
-    title: "Simple Analytics",
+    title: "Proactive Listening",
     description:
-      "Track your response times, see what's working, and understand how engagement is helping your business.",
+      "Monitor trends, track competitors, and get AI-suggested content based on industry conversations.",
+  },
+  {
+    icon: Users,
+    title: "Lead Generation",
+    description:
+      "Detect potential leads from social interactions and automatically sync to your CRM like HubSpot.",
+  },
+  {
+    icon: BarChart3,
+    title: "Advanced Analytics",
+    description:
+      "ROI dashboard, sentiment trends, performance predictions, and exportable reports.",
+  },
+  {
+    icon: Zap,
+    title: "Automation Rules",
+    description:
+      "Create custom workflows to auto-respond, escalate, or tag interactions based on keywords and sentiment.",
+  },
+  {
+    icon: Shield,
+    title: "Enterprise Security",
+    description:
+      "GDPR compliant with role-based access control, audit logs, and data encryption.",
   },
 ];
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-20 md:py-28 bg-muted/30">
+    <section id="features" className="py-24 bg-background">
       <div className="container mx-auto px-4">
-        {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            Features
-          </div>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Everything you need to stay on top of engagement
+            Everything You Need to{" "}
+            <span className="text-gradient">Dominate Social</span>
           </h2>
           <p className="text-lg text-muted-foreground">
-            Simple tools that save you hours every week.
+            Replace Hootsuite and enhance Birdeye with our all-in-one AI-powered
+            platform designed for modern businesses.
           </p>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, index) => (
             <div
               key={index}
-              className="group p-6 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-lg transition-all duration-300"
+              className="group p-6 rounded-2xl bg-card border border-border hover:border-primary/50 hover:shadow-lg transition-all duration-300"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <div className="h-12 w-12 rounded-xl bg-accent flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                 <feature.icon className="h-6 w-6" />
               </div>
               <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+              <p className="text-sm text-muted-foreground">{feature.description}</p>
             </div>
           ))}
         </div>
