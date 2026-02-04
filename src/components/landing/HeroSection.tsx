@@ -8,8 +8,8 @@ export function HeroSection() {
 
   const stats = [
     { value: "93%", label: "Response time reduction" },
-    { value: "40hrs", label: "Saved per month" },
-    { value: "100k+", label: "Responses automated" },
+    { value: "10hrs", label: "Saved per week" },
+    { value: "50k+", label: "Responses automated" },
   ];
 
   return (
@@ -34,13 +34,13 @@ export function HeroSection() {
 
             {/* Headline */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-              <span className="block">Stop drowning in comments.</span>
-              <span className="block text-gradient">Let AI respond.</span>
+              <span className="block">Every comment answered.</span>
+              <span className="block text-gradient">Every review handled.</span>
             </h1>
 
             {/* Subheadline */}
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-              One platform to manage and respond to every comment, message, and review across all
+              One platform to manage and respond to comments, messages, and reviews across all
               your channels—powered by AI that sounds like you.
             </p>
 

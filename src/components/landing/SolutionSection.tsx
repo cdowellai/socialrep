@@ -3,19 +3,19 @@ import { Check, Zap, AlertTriangle } from "lucide-react";
 const features = [
   {
     title: "Unified inbox",
-    description: "Comments, DMs, reviews from Meta, Google, TikTok, and more",
+    description: "Comments, DMs, and reviews from every platform in one place",
   },
   {
     title: "AI responses",
-    description: "Trained on your brand voice, approved in one click",
+    description: "Drafts that sound like you, ready to send in one click",
   },
   {
     title: "Smart prioritization",
-    description: "Surface complaints, buying signals, and VIPs first",
+    description: "See complaints, questions, and hot leads first",
   },
   {
     title: "Auto-moderation",
-    description: "Hide spam, filter toxicity, protect your brand",
+    description: "Hide spam and filter inappropriate comments automatically",
   },
 ];
 
@@ -35,9 +35,9 @@ export function SolutionSection() {
               <span className="text-gradient">AI that actually gets it.</span>
             </h2>
             <p className="text-lg text-muted-foreground mb-8">
-              SocialRep unifies your comments, messages, and reviews into a single dashboard—then
-              uses AI to draft responses that match your brand voice, flag priority items, and keep
-              your engagement running 24/7.
+              SocialRep brings your comments, messages, and reviews into a single dashboard—then
+              uses AI to draft responses that match your voice, flag what needs attention, and keep
+              your engagement running while you focus on your business.
             </p>
 
             {/* Feature Checklist */}
@@ -83,11 +83,11 @@ export function SolutionSection() {
                         Live
                       </span>
                     </div>
-                    <div className="text-2xl font-bold">847</div>
+                    <div className="text-2xl font-bold">24</div>
                   </div>
                   <div className="p-4 rounded-xl bg-muted/50 border border-border">
                     <div className="text-xs text-muted-foreground mb-2">Responded Today</div>
-                    <div className="text-2xl font-bold text-sentiment-positive">2,341</div>
+                    <div className="text-2xl font-bold text-sentiment-positive">89</div>
                   </div>
                 </div>
 
@@ -100,7 +100,7 @@ export function SolutionSection() {
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium">@sarah_designs</div>
                         <div className="text-sm text-muted-foreground mt-1">
-                          OMG how much is this?? I need it 😍
+                          Do you guys deliver to Miami?
                         </div>
                         <div className="mt-2 flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-primary/10 w-fit">
                           <Zap className="h-3 w-3 text-primary" />
@@ -119,7 +119,7 @@ export function SolutionSection() {
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium">@mike_thompson</div>
                         <div className="text-sm text-muted-foreground mt-1">
-                          Still waiting on my order from 2 weeks ago...
+                          Still waiting on my order from last week...
                         </div>
                         <div className="mt-2 flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-destructive/10 w-fit">
                           <AlertTriangle className="h-3 w-3 text-destructive" />

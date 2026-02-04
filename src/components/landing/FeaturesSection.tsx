@@ -6,42 +6,42 @@ const features = [
     emoji: "🎯",
     title: "Brand Voice Training",
     description:
-      "Upload past responses and our AI learns exactly how you communicate—casual, professional, or somewhere in between.",
+      "Show the AI how you talk to customers, and it learns your style—friendly, professional, or however you communicate.",
   },
   {
     icon: Zap,
     emoji: "⚡",
-    title: "One-Click Approve",
+    title: "One-Click Responses",
     description:
-      "Review AI-drafted responses and send with a single click. Or set rules to auto-respond and save even more time.",
+      "Review what the AI drafts, then send with a single click. Or set rules to auto-reply to common questions.",
   },
   {
     icon: BarChart3,
     emoji: "📊",
-    title: "Sentiment Analysis",
+    title: "Sentiment Detection",
     description:
-      "Instantly know if comments are positive, negative, or neutral. Spot trends and address issues before they escalate.",
+      "Instantly see which comments are positive, negative, or need urgent attention. Catch issues early.",
   },
   {
     icon: Shield,
     emoji: "🛡️",
     title: "Auto-Moderation",
     description:
-      "Automatically hide spam, filter profanity, and remove toxic comments before they damage your brand.",
+      "Automatically hide spam, bots, and inappropriate comments so your pages stay clean.",
   },
   {
     icon: Star,
     emoji: "⭐",
     title: "Review Management",
     description:
-      "Respond to Google, Yelp, and Facebook reviews from one place. Turn negative reviews into recovery opportunities.",
+      "Respond to reviews on Google, Facebook, Trustpilot, Yelp, and more—all from one place.",
   },
   {
     icon: TrendingUp,
     emoji: "📈",
-    title: "Performance Analytics",
+    title: "Simple Analytics",
     description:
-      "Track response times, sentiment trends, and team performance. Know exactly how engagement impacts your bottom line.",
+      "Track your response times, see what's working, and understand how engagement is helping your business.",
   },
 ];
 
@@ -55,10 +55,10 @@ export function FeaturesSection() {
             Features
           </div>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Built for teams drowning in engagement
+            Everything you need to stay on top of engagement
           </h2>
           <p className="text-lg text-muted-foreground">
-            Everything you need to turn comments into customers—at scale.
+            Simple tools that save you hours every week.
           </p>
         </div>
 

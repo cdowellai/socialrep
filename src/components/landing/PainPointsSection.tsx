@@ -4,20 +4,20 @@ const painPoints = [
   {
     icon: Smartphone,
     emoji: "📱",
-    title: "Thousands of comments, zero time",
-    body: "Your Meta ads are crushing it—but responding to thousands of comments manually? That's a full-time job you didn't sign up for.",
+    title: "Comments pile up fast",
+    body: "You're running ads, posting content, and getting traction—but who has time to respond to every comment and DM? They add up quick.",
   },
   {
     icon: Shuffle,
     emoji: "🔀",
-    title: "Tool sprawl is killing you",
-    body: "Hootsuite for comments. Birdeye for reviews. Another app for DMs. You're paying for 4 tools and none of them talk to each other.",
+    title: "Too many tools, too many tabs",
+    body: "One app for social, another for reviews, another for messages. You're juggling platforms instead of running your business.",
   },
   {
     icon: Clock,
     emoji: "⏰",
-    title: "Slow responses = lost revenue",
-    body: "Every unanswered comment is a missed conversion. Every ignored review is a reputation hit. Speed matters—and you can't keep up.",
+    title: "Slow replies cost you customers",
+    body: "When someone asks a question or leaves a review, they expect a fast response. Every hour you wait is a customer who moves on.",
   },
 ];
 
@@ -32,7 +32,7 @@ export function PainPointsSection() {
           </div>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Sound familiar?</h2>
           <p className="text-lg text-muted-foreground">
-            You're scaling your ads, but your engagement is buried in chaos.
+            You're growing your business, but customer engagement is slipping through the cracks.
           </p>
         </div>
 
