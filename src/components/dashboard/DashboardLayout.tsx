@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Sparkles,
   LayoutDashboard,
   MessageSquare,
   Star,
@@ -55,9 +54,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="h-16 flex items-center px-6 border-b border-sidebar-border">
           <Link to="/" className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
+              <MessageSquare className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-bold text-lg">SocialRep AI</span>
+            <span className="font-bold text-lg">SocialRep</span>
           </Link>
         </div>
 
@@ -117,7 +116,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             <div className="md:hidden">
               <Link to="/" className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
-                  <Sparkles className="h-4 w-4 text-primary-foreground" />
+                  <MessageSquare className="h-4 w-4 text-primary-foreground" />
                 </div>
               </Link>
             </div>
