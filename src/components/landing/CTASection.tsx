@@ -18,12 +18,12 @@ export function CTASection() {
 
             {/* Headline */}
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Ready to stop typing and start scaling?
+              Ready to take control of your engagement?
             </h2>
 
             {/* Subheadline */}
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join the beta and be the first to experience AI-powered engagement management.
+              Join the beta and see how much time you can save.
             </p>
 
             {/* CTA Button */}
