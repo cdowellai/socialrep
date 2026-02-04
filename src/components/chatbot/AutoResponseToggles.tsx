@@ -52,7 +52,12 @@ export function AutoResponseToggles() {
     },
   ];
 
-  const delaySeconds = settings.auto_response_delay_ms / 1000;
+  const delaySeconds = Math.round(settings.auto_response_delay_ms / 1000);
+  const delayMinutes = Math.floor(delaySeconds / 60);
+  const remainingSeconds = delaySeconds % 60;
+  const delayDisplay = delayMinutes > 0 
+    ? `${delayMinutes}m ${remainingSeconds}s` 
+    : `${delaySeconds}s`;
 
   return (
     <Card>
@@ -79,22 +84,22 @@ export function AutoResponseToggles() {
               </p>
             </div>
             <span className="text-sm font-medium tabular-nums min-w-[4rem] text-right">
-              {delaySeconds === 0 ? "Instant" : `${delaySeconds}s`}
+              {delayDisplay}
             </span>
           </div>
           <div className="px-1">
             <Slider
               value={[settings.auto_response_delay_ms]}
               onValueChange={([value]) => updateSetting("auto_response_delay_ms", value)}
-              min={0}
-              max={30000}
-              step={1000}
+              min={30000}
+              max={120000}
+              step={5000}
               disabled={saving}
               className="cursor-pointer"
             />
             <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>Instant</span>
               <span>30 seconds</span>
+              <span>2 minutes</span>
             </div>
           </div>
         </div>
