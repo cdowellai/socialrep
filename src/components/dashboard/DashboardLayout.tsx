@@ -26,12 +26,15 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { Bot } from "lucide-react";
+
 const sidebarLinks = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Overview" },
   { href: "/dashboard/inbox", icon: MessageSquare, label: "Smart Inbox" },
   { href: "/dashboard/reviews", icon: Star, label: "Reviews" },
   { href: "/dashboard/leads", icon: Users, label: "Leads" },
   { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics" },
+  { href: "/dashboard/chatbot", icon: Bot, label: "Chatbot" },
   { href: "/dashboard/settings", icon: Settings, label: "Settings" },
 ];
 

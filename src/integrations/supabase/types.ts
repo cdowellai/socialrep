@@ -145,6 +145,125 @@ export type Database = {
         }
         Relationships: []
       }
+      chatbot_conversations: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: string
+          metadata: Json | null
+          started_at: string
+          status: string
+          user_id: string
+          visitor_email: string | null
+          visitor_id: string
+          visitor_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          metadata?: Json | null
+          started_at?: string
+          status?: string
+          user_id: string
+          visitor_email?: string | null
+          visitor_id: string
+          visitor_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          metadata?: Json | null
+          started_at?: string
+          status?: string
+          user_id?: string
+          visitor_email?: string | null
+          visitor_id?: string
+          visitor_name?: string | null
+        }
+        Relationships: []
+      }
+      chatbot_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          sentiment: string | null
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          sentiment?: string | null
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          sentiment?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chatbot_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatbot_settings: {
+        Row: {
+          auto_reply_delay_ms: number
+          collect_email: boolean
+          collect_name: boolean
+          created_at: string
+          id: string
+          is_enabled: boolean
+          position: string
+          primary_color: string | null
+          updated_at: string
+          user_id: string
+          welcome_message: string
+          widget_title: string
+        }
+        Insert: {
+          auto_reply_delay_ms?: number
+          collect_email?: boolean
+          collect_name?: boolean
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          position?: string
+          primary_color?: string | null
+          updated_at?: string
+          user_id: string
+          welcome_message?: string
+          widget_title?: string
+        }
+        Update: {
+          auto_reply_delay_ms?: number
+          collect_email?: boolean
+          collect_name?: boolean
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          position?: string
+          primary_color?: string | null
+          updated_at?: string
+          user_id?: string
+          welcome_message?: string
+          widget_title?: string
+        }
+        Relationships: []
+      }
       connected_platforms: {
         Row: {
           access_token: string | null

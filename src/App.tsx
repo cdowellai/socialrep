@@ -10,6 +10,7 @@ import InboxPage from "./pages/Inbox";
 import ReviewsPage from "./pages/Reviews";
 import LeadsPage from "./pages/Leads";
 import AnalyticsPage from "./pages/Analytics";
+import ChatbotPage from "./pages/Chatbot";
 import SettingsPage from "./pages/Settings";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -76,6 +77,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <AnalyticsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/chatbot"
+        element={
+          <ProtectedRoute>
+            <ChatbotPage />
           </ProtectedRoute>
         }
       />
