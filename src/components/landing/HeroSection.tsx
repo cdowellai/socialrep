@@ -34,8 +34,8 @@ export function HeroSection() {
 
             {/* Headline */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-              <span className="block">Every comment answered.</span>
-              <span className="block text-gradient">Every review handled.</span>
+              <span className="block">Stop drowning in comments.</span>
+              <span className="block text-gradient">Let AI respond.</span>
             </h1>
 
             {/* Subheadline */}
