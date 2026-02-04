@@ -2,7 +2,7 @@ import { Check, Zap, AlertTriangle } from "lucide-react";
 
 const features = [
   "Unified inbox — Comments, DMs, and reviews from every platform in one place",
-  "AI responses — Drafts that sound like you, ready to send in one click",
+  "AI responses — Send with one click or fully automate based on your rules",
   "Smart prioritization — See complaints, questions, and hot leads first",
   "Auto-moderation — Hide spam and filter inappropriate comments automatically",
 ];
