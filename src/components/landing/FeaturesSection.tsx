@@ -8,8 +8,8 @@ const features = [
   },
   {
     icon: Zap,
-    title: "One-Click Responses",
-    description: "Review what the AI drafts, then send with a single click. Or set rules to auto-reply to common questions.",
+    title: "One-Click or Fully Automated",
+    description: "Review AI drafts and send with one click—or let SocialRep respond automatically based on your rules. You choose the level of control.",
   },
   {
     icon: BarChart3,
