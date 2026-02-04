@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { useAuth } from "@/hooks/useAuth";
-import { Menu, X, MessageCircle } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
+import { Menu, X, Moon, Sun, Sparkles } from "lucide-react";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,49 +13,45 @@ export function Navbar() {
     tab: "login",
   });
   const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const navLinks = [
     { href: "#features", label: "Features" },
-    { href: "#integrations", label: "Integrations" },
     { href: "#pricing", label: "Pricing" },
+    { href: "#testimonials", label: "Testimonials" },
   ];
-
-  const scrollToSection = (href: string) => {
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-    setIsMenuOpen(false);
-  };
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+      <nav className="fixed top-0 left-0 right-0 z-50 glass">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <MessageCircle className="h-4 w-4 text-primary-foreground" />
+              <div className="h-9 w-9 rounded-lg bg-gradient-primary flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="font-bold text-xl">SocialRep</span>
+              <span className="font-bold text-xl">SocialRep AI</span>
             </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
               {navLinks.map((link) => (
-                <button
+                <a
                   key={link.href}
-                  onClick={() => scrollToSection(link.href)}
+                  href={link.href}
                   className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {link.label}
-                </button>
+                </a>
               ))}
             </div>
 
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-3">
+              <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+              </Button>
               {user ? (
                 <>
                   <Button variant="ghost" asChild>
@@ -70,12 +67,13 @@ export function Navbar() {
                     variant="ghost"
                     onClick={() => setAuthModal({ isOpen: true, tab: "login" })}
                   >
-                    Log in
+                    Sign In
                   </Button>
                   <Button
+                    variant="hero"
                     onClick={() => setAuthModal({ isOpen: true, tab: "signup" })}
                   >
-                    Start Free Trial
+                    Get Started
                   </Button>
                 </>
               )}
@@ -83,6 +81,9 @@ export function Navbar() {
 
             {/* Mobile Menu Button */}
             <div className="flex md:hidden items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+              </Button>
               <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                 {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
@@ -95,13 +96,14 @@ export function Navbar() {
           <div className="md:hidden border-t border-border bg-background">
             <div className="container mx-auto px-4 py-4 space-y-4">
               {navLinks.map((link) => (
-                <button
+                <a
                   key={link.href}
-                  onClick={() => scrollToSection(link.href)}
-                  className="block w-full text-left text-sm font-medium text-muted-foreground hover:text-foreground"
+                  href={link.href}
+                  className="block text-sm font-medium text-muted-foreground hover:text-foreground"
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   {link.label}
-                </button>
+                </a>
               ))}
               <div className="pt-4 border-t border-border space-y-2">
                 {user ? (
@@ -123,16 +125,17 @@ export function Navbar() {
                         setIsMenuOpen(false);
                       }}
                     >
-                      Log in
+                      Sign In
                     </Button>
                     <Button
+                      variant="hero"
                       className="w-full"
                       onClick={() => {
                         setAuthModal({ isOpen: true, tab: "signup" });
                         setIsMenuOpen(false);
                       }}
                     >
-                      Start Free Trial
+                      Get Started
                     </Button>
                   </>
                 )}
