@@ -456,6 +456,10 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auto_respond_chatbot: boolean
+          auto_respond_comments: boolean
+          auto_respond_messages: boolean
+          auto_respond_reviews: boolean
           avatar_url: string | null
           brand_voice: string | null
           company_name: string | null
@@ -472,6 +476,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          auto_respond_chatbot?: boolean
+          auto_respond_comments?: boolean
+          auto_respond_messages?: boolean
+          auto_respond_reviews?: boolean
           avatar_url?: string | null
           brand_voice?: string | null
           company_name?: string | null
@@ -488,6 +496,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          auto_respond_chatbot?: boolean
+          auto_respond_comments?: boolean
+          auto_respond_messages?: boolean
+          auto_respond_reviews?: boolean
           avatar_url?: string | null
           brand_voice?: string | null
           company_name?: string | null

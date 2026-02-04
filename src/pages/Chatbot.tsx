@@ -10,8 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChatbotWidget } from "@/components/chatbot/ChatbotWidget";
 import { useChatbotSettings } from "@/hooks/useChatbotSettings";
+import { AutoResponseToggles } from "@/components/chatbot/AutoResponseToggles";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Copy, Code, MessageSquare, Settings, Eye } from "lucide-react";
+import { Copy, Code, MessageSquare, Settings, Eye, Bot } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -105,6 +106,10 @@ export default function ChatbotPage() {
             <TabsTrigger value="settings" className="gap-2">
               <Settings className="h-4 w-4" />
               Settings
+            </TabsTrigger>
+            <TabsTrigger value="auto-response" className="gap-2">
+              <Bot className="h-4 w-4" />
+              Auto-Response
             </TabsTrigger>
             <TabsTrigger value="preview" className="gap-2">
               <Eye className="h-4 w-4" />
@@ -232,6 +237,10 @@ export default function ChatbotPage() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="auto-response">
+            <AutoResponseToggles />
           </TabsContent>
 
           <TabsContent value="preview">
