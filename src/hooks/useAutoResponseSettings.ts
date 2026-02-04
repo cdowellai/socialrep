@@ -19,7 +19,7 @@ export function useAutoResponseSettings() {
     auto_respond_messages: false,
     auto_respond_reviews: false,
     auto_respond_chatbot: true,
-    auto_response_delay_ms: 2000,
+    auto_response_delay_ms: 30000,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -42,7 +42,7 @@ export function useAutoResponseSettings() {
           auto_respond_messages: data.auto_respond_messages ?? false,
           auto_respond_reviews: data.auto_respond_reviews ?? false,
           auto_respond_chatbot: data.auto_respond_chatbot ?? true,
-          auto_response_delay_ms: data.auto_response_delay_ms ?? 2000,
+          auto_response_delay_ms: data.auto_response_delay_ms ?? 30000,
         });
       }
     } catch (error) {
@@ -75,10 +75,17 @@ export function useAutoResponseSettings() {
         if (error) throw error;
 
         const isDelayUpdate = key === "auto_response_delay_ms";
+        const delayValue = value as number;
+        const delaySeconds = Math.round(delayValue / 1000);
+        const delayMinutes = Math.floor(delaySeconds / 60);
+        const remainingSeconds = delaySeconds % 60;
+        const delayDisplay = delayMinutes > 0 
+          ? `${delayMinutes}m ${remainingSeconds}s` 
+          : `${delaySeconds}s`;
         toast({
           title: "Setting updated",
           description: isDelayUpdate 
-            ? `Response delay set to ${(value as number) / 1000} seconds`
+            ? `Response delay set to ${delayDisplay}`
             : `Auto-response ${value ? "enabled" : "disabled"}`,
         });
       } catch (error) {
