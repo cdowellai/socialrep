@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StreamCard } from "./StreamCard";
+import { StreamNotificationSettings } from "./StreamNotificationSettings";
 import { useStreamInteractions } from "@/hooks/useStreamInteractions";
 import type { Stream } from "@/hooks/useStreams";
 import type { Tables } from "@/integrations/supabase/types";
@@ -31,6 +32,7 @@ type Interaction = Tables<"interactions">;
 
 interface StreamColumnProps {
   stream: Stream;
+  isSelected?: boolean;
   onEdit: (stream: Stream) => void;
   onDelete: (stream: Stream) => void;
   onToggleCollapse: (id: string) => void;
@@ -39,6 +41,7 @@ interface StreamColumnProps {
 
 export function StreamColumn({
   stream,
+  isSelected = false,
   onEdit,
   onDelete,
   onToggleCollapse,
@@ -71,9 +74,10 @@ export function StreamColumn({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex flex-col rounded-xl border bg-muted/30 transition-all",
-        stream.is_collapsed ? "w-12" : "w-80 min-w-80",
-        isDragging && "opacity-50 shadow-xl"
+        "flex flex-col rounded-xl border bg-muted/30 transition-all flex-shrink-0",
+        stream.is_collapsed ? "w-12" : "w-72 sm:w-80 min-w-72 sm:min-w-80",
+        isDragging && "opacity-50 shadow-xl",
+        isSelected && "ring-2 ring-primary ring-offset-2"
       )}
     >
       {/* Header */}
@@ -126,6 +130,12 @@ export function StreamColumn({
               {stream.show_ai_suggestions && (
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
               )}
+              <StreamNotificationSettings
+                stream={stream}
+                onUpdate={(updates) => {
+                  // Handle optimistic update if needed
+                }}
+              />
               <Button
                 variant="ghost"
                 size="icon"

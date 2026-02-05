@@ -618,6 +618,41 @@ export type Database = {
         }
         Relationships: []
       }
+      stream_read_state: {
+        Row: {
+          created_at: string
+          id: string
+          last_interaction_read_at: string | null
+          stream_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_interaction_read_at?: string | null
+          stream_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_interaction_read_at?: string | null
+          stream_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stream_read_state_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       streams: {
         Row: {
           auto_sort_by_urgency: boolean | null
@@ -628,11 +663,16 @@ export type Database = {
           id: string
           interaction_types: string[] | null
           is_collapsed: boolean | null
+          last_read_at: string | null
           name: string
+          notifications_enabled: boolean
+          notifications_muted: boolean
           platform: string | null
           position: number
           show_ai_suggestions: boolean | null
+          sidebar_position: number
           team_id: string | null
+          unread_count: number
           updated_at: string
           user_id: string
         }
@@ -645,11 +685,16 @@ export type Database = {
           id?: string
           interaction_types?: string[] | null
           is_collapsed?: boolean | null
+          last_read_at?: string | null
           name: string
+          notifications_enabled?: boolean
+          notifications_muted?: boolean
           platform?: string | null
           position?: number
           show_ai_suggestions?: boolean | null
+          sidebar_position?: number
           team_id?: string | null
+          unread_count?: number
           updated_at?: string
           user_id: string
         }
@@ -662,11 +707,16 @@ export type Database = {
           id?: string
           interaction_types?: string[] | null
           is_collapsed?: boolean | null
+          last_read_at?: string | null
           name?: string
+          notifications_enabled?: boolean
+          notifications_muted?: boolean
           platform?: string | null
           position?: number
           show_ai_suggestions?: boolean | null
+          sidebar_position?: number
           team_id?: string | null
+          unread_count?: number
           updated_at?: string
           user_id?: string
         }
