@@ -113,12 +113,12 @@ export function AggregatedStreamView({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full animate-in fade-in duration-200">
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 border-b bg-card">
         <div className="flex items-center gap-2">
-          <LayoutGrid className="h-5 w-5 text-muted-foreground hidden sm:block" />
-          <h2 className="font-semibold">All Streams</h2>
+          <LayoutGrid className="h-5 w-5 text-primary hidden sm:block" />
+          <h2 className="font-semibold text-lg">All Streams</h2>
           <span className="text-sm text-muted-foreground">
             ({streams.length} active)
           </span>
@@ -141,6 +141,12 @@ export function AggregatedStreamView({
             <Plus className="h-4 w-4" />
           </Button>
         </div>
+      </div>
+
+      {/* Info Banner */}
+      <div className="px-4 py-2 bg-muted/50 border-b text-sm text-muted-foreground flex items-center gap-2">
+        <span>💡</span>
+        <span>Click any stream to open its dedicated view. Drag columns to reorder.</span>
       </div>
 
       {/* Board */}
