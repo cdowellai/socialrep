@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,9 +21,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { StreamCard } from "./StreamCard";
 import { StreamFilterBar, type StreamFilters } from "./StreamFilterBar";
+import { StreamBreadcrumb } from "./StreamBreadcrumb";
 import { useStreamInteractions } from "@/hooks/useStreamInteractions";
 import { useStreams, type Stream } from "@/hooks/useStreams";
 import type { Tables } from "@/integrations/supabase/types";
@@ -43,6 +49,7 @@ export function SingleStreamView({
   onDelete,
   onInteractionClick,
 }: SingleStreamViewProps) {
+  const navigate = useNavigate();
   const { updateStream } = useStreams();
   const { interactions, loading, refetch } = useStreamInteractions({
     stream,
@@ -57,6 +64,20 @@ export function SingleStreamView({
     showAiDraftsOnly: false,
   });
   const [refreshing, setRefreshing] = useState(false);
+
+  // Keyboard navigation - Escape to go back
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInInput = target?.closest?.("input, textarea, [role='dialog']");
+      if (e.key === "Escape" && !isInInput) {
+        navigate("/dashboard/streams");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [navigate]);
 
   // Apply local filters to interactions
   const filteredInteractions = useMemo(() => {
@@ -128,89 +149,145 @@ export function SingleStreamView({
   }, [filteredInteractions, stream.auto_sort_by_urgency]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full animate-in slide-in-from-right-4 duration-200">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 border-b bg-card">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild className="h-8 w-8">
-            <Link to="/dashboard/streams">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div
-            className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: stream.color || "#6366f1" }}
-          />
-          <div>
-            <h2 className="font-semibold text-lg">{stream.name}</h2>
-            {stream.platform && (
-              <span className="text-xs text-muted-foreground capitalize">
-                {stream.platform}
-                {stream.interaction_types?.length
-                  ? ` · ${stream.interaction_types.join(", ")}`
-                  : ""}
-              </span>
-            )}
+      <div className="flex flex-col gap-3 p-4 border-b bg-card">
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" asChild className="h-8 w-8 flex-shrink-0">
+                  <Link to="/dashboard/streams">
+                    <ArrowLeft className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <div className="flex items-center gap-1.5">
+                  <span>Back to All Streams</span>
+                  <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs">Esc</kbd>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+            <StreamBreadcrumb stream={stream} />
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="hidden sm:flex"
+            >
+              {refreshing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              <span className="ml-2">Refresh</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="sm:hidden h-8 w-8"
+            >
+              {refreshing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="hidden sm:flex">
+                  <Settings className="h-4 w-4" />
+                  <span className="ml-2">Settings</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => onEdit(stream)}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Edit Stream
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleToggleMute}>
+                  {stream.notifications_muted ? (
+                    <>
+                      <Bell className="h-4 w-4 mr-2" />
+                      Enable Notifications
+                    </>
+                  ) : (
+                    <>
+                      <BellOff className="h-4 w-4 mr-2" />
+                      Mute Notifications
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onDelete(stream)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Stream
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="sm:hidden h-8 w-8">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => onEdit(stream)}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Edit Stream
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleToggleMute}>
+                  {stream.notifications_muted ? (
+                    <>
+                      <Bell className="h-4 w-4 mr-2" />
+                      Enable Notifications
+                    </>
+                  ) : (
+                    <>
+                      <BellOff className="h-4 w-4 mr-2" />
+                      Mute Notifications
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onDelete(stream)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Stream
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={refreshing}
-          >
-            {refreshing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            <span className="ml-2 hidden sm:inline">Refresh</span>
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4" />
-                <span className="ml-2 hidden sm:inline">Settings</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => onEdit(stream)}>
-                <Settings className="h-4 w-4 mr-2" />
-                Edit Stream
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleToggleMute}>
-                {stream.notifications_muted ? (
-                  <>
-                    <Bell className="h-4 w-4 mr-2" />
-                    Enable Notifications
-                  </>
-                ) : (
-                  <>
-                    <BellOff className="h-4 w-4 mr-2" />
-                    Mute Notifications
-                  </>
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => onDelete(stream)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Stream
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/dashboard/streams">
-              <LayoutGrid className="h-4 w-4" />
-              <span className="ml-2 hidden sm:inline">All Streams</span>
-            </Link>
-          </Button>
+        {/* Stream Info */}
+        <div className="flex items-center gap-2 pl-11">
+          {stream.platform && (
+            <Badge variant="outline" className="capitalize text-xs">
+              {stream.platform}
+            </Badge>
+          )}
+          {stream.interaction_types?.map((type) => (
+            <Badge key={type} variant="secondary" className="text-xs">
+              {type}
+            </Badge>
+          ))}
         </div>
       </div>
 
@@ -230,8 +307,8 @@ export function SingleStreamView({
       <ScrollArea className="flex-1">
         <div className="p-4">
           {loading ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              {Array.from({ length: 6 }).map((_, i) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="p-4 rounded-lg border bg-card space-y-3">
                   <div className="flex items-center gap-2">
                     <Skeleton className="h-10 w-10 rounded-full" />
@@ -275,7 +352,7 @@ export function SingleStreamView({
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
               {sortedInteractions.map((interaction) => (
                 <StreamCard
                   key={interaction.id}

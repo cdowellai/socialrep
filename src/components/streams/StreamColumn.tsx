@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import {
   ChevronRight,
   RefreshCw,
   Sparkles,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StreamCard } from "./StreamCard";
@@ -106,13 +108,19 @@ export function StreamColumn({
           </Button>
         ) : (
           <>
-            <div className="flex-1 min-w-0">
+            <Link
+              to={`/dashboard/streams?stream=${stream.id}`}
+              className="flex-1 min-w-0 group/link hover:opacity-80 transition-opacity"
+            >
               <div className="flex items-center gap-2">
                 <div
                   className="w-2 h-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: stream.color || "#6366f1" }}
                 />
-                <h3 className="font-semibold text-sm truncate">{stream.name}</h3>
+                <h3 className="font-semibold text-sm truncate group-hover/link:text-primary transition-colors">
+                  {stream.name}
+                </h3>
+                <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover/link:opacity-100 transition-opacity flex-shrink-0" />
               </div>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-xs text-muted-foreground">
@@ -124,7 +132,7 @@ export function StreamColumn({
                   </Badge>
                 )}
               </div>
-            </div>
+            </Link>
 
             <div className="flex items-center gap-1">
               {stream.show_ai_suggestions && (
@@ -151,6 +159,12 @@ export function StreamColumn({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to={`/dashboard/streams?stream=${stream.id}`}>
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open Stream
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => refetch()}>
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Refresh
