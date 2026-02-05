@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import InboxPage from "./pages/Inbox";
+import StreamsPage from "./pages/Streams";
 import ReviewsPage from "./pages/Reviews";
 import LeadsPage from "./pages/Leads";
 import AnalyticsPage from "./pages/Analytics";
@@ -53,6 +54,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <InboxPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/streams"
+        element={
+          <ProtectedRoute>
+            <StreamsPage />
           </ProtectedRoute>
         }
       />

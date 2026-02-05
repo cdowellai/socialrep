@@ -25,12 +25,14 @@ import {
   Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Columns3 } from "lucide-react";
 
 import { Bot } from "lucide-react";
 
 const sidebarLinks = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Overview" },
   { href: "/dashboard/inbox", icon: MessageSquare, label: "Smart Inbox" },
+  { href: "/dashboard/streams", icon: Columns3, label: "Streams" },
   { href: "/dashboard/reviews", icon: Star, label: "Reviews" },
   { href: "/dashboard/leads", icon: Users, label: "Leads" },
   { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics" },
