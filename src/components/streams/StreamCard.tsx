@@ -44,6 +44,8 @@ const platformColors: Record<Platform, string> = {
   twitter: "bg-sky-500",
   google: "bg-red-500",
   linkedin: "bg-blue-700",
+  tiktok: "bg-black",
+  youtube: "bg-red-600",
   yelp: "bg-red-600",
   tripadvisor: "bg-green-600",
   trustpilot: "bg-emerald-500",

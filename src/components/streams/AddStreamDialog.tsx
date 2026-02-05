@@ -33,6 +33,8 @@ const platforms = [
   { value: "all", label: "All Platforms" },
   { value: "facebook", label: "Facebook" },
   { value: "instagram", label: "Instagram" },
+  { value: "tiktok", label: "TikTok" },
+  { value: "youtube", label: "YouTube" },
   { value: "twitter", label: "Twitter/X" },
   { value: "linkedin", label: "LinkedIn" },
   { value: "google", label: "Google" },

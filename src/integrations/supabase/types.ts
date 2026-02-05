@@ -884,6 +884,8 @@ export type Database = {
         | "amazon"
         | "appstore"
         | "playstore"
+        | "tiktok"
+        | "youtube"
       interaction_status: "pending" | "responded" | "escalated" | "archived"
       interaction_type: "comment" | "dm" | "mention" | "review" | "post"
       lead_status: "new" | "contacted" | "qualified" | "converted" | "lost"
@@ -1033,6 +1035,8 @@ export const Constants = {
         "amazon",
         "appstore",
         "playstore",
+        "tiktok",
+        "youtube",
       ],
       interaction_status: ["pending", "responded", "escalated", "archived"],
       interaction_type: ["comment", "dm", "mention", "review", "post"],
