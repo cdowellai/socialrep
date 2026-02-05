@@ -23,16 +23,15 @@ import {
   LogOut,
   ChevronRight,
   Bell,
+  Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Columns3 } from "lucide-react";
-
-import { Bot } from "lucide-react";
+import { StreamsSidebarMenu } from "@/components/sidebar/StreamsSidebarMenu";
 
 const sidebarLinks = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Overview" },
   { href: "/dashboard/inbox", icon: MessageSquare, label: "Smart Inbox" },
-  { href: "/dashboard/streams", icon: Columns3, label: "Streams" },
+  // Streams is handled separately with StreamsSidebarMenu
   { href: "/dashboard/reviews", icon: Star, label: "Reviews" },
   { href: "/dashboard/leads", icon: Users, label: "Leads" },
   { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics" },
@@ -68,7 +67,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Navigation */}
         <nav className="flex-1 py-6 px-4">
           <ul className="space-y-1">
-            {sidebarLinks.map((link) => {
+            {sidebarLinks.slice(0, 2).map((link) => {
               const isActive = location.pathname === link.href;
               return (
                 <li key={link.href}>
@@ -88,6 +87,31 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                         12
                       </span>
                     )}
+                  </Link>
+                </li>
+              );
+            })}
+            
+            {/* Expandable Streams Menu */}
+            <li>
+              <StreamsSidebarMenu />
+            </li>
+            
+            {sidebarLinks.slice(2).map((link) => {
+              const isActive = location.pathname === link.href;
+              return (
+                <li key={link.href}>
+                  <Link
+                    to={link.href}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                    )}
+                  >
+                    <link.icon className="h-5 w-5" />
+                    {link.label}
                   </Link>
                 </li>
               );

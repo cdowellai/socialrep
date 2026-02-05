@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   DndContext,
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -14,19 +16,19 @@ import {
 } from "@dnd-kit/sortable";
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Plus,
-  Search,
   LayoutGrid,
   RefreshCw,
-  SlidersHorizontal,
   Loader2,
+  Menu,
 } from "lucide-react";
 import { StreamColumn } from "./StreamColumn";
 import { AddStreamDialog } from "./AddStreamDialog";
+import { GlobalStreamSearch } from "./GlobalStreamSearch";
 import { useStreams, type Stream } from "@/hooks/useStreams";
+import { useStreamUnreadCounts } from "@/hooks/useStreamUnreadCounts";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Interaction = Tables<"interactions">;
@@ -36,6 +38,7 @@ interface StreamBoardProps {
 }
 
 export function StreamBoard({ onInteractionClick }: StreamBoardProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     streams,
     loading,
@@ -47,15 +50,46 @@ export function StreamBoard({ onInteractionClick }: StreamBoardProps) {
     refetch,
   } = useStreams();
 
+  const { markStreamAsRead } = useStreamUnreadCounts(streams);
+  
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingStream, setEditingStream] = useState<Stream | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+
+  // Check URL params for stream selection and edit mode
+  const selectedStreamId = searchParams.get("stream");
+  const shouldEdit = searchParams.get("edit") === "true";
+
+  useEffect(() => {
+    if (shouldEdit && selectedStreamId) {
+      const stream = streams.find(s => s.id === selectedStreamId);
+      if (stream) {
+        setEditingStream(stream);
+        setShowAddDialog(true);
+        // Clear edit param
+        searchParams.delete("edit");
+        setSearchParams(searchParams);
+      }
+    }
+  }, [shouldEdit, selectedStreamId, streams]);
+
+  // Mark stream as read when selected
+  useEffect(() => {
+    if (selectedStreamId) {
+      markStreamAsRead(selectedStreamId);
+    }
+  }, [selectedStreamId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 8,
       },
     }),
     useSensor(KeyboardSensor)
@@ -114,25 +148,17 @@ export function StreamBoard({ onInteractionClick }: StreamBoardProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
-      <div className="flex items-center justify-between gap-4 p-4 border-b bg-card">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 border-b bg-card">
         <div className="flex items-center gap-2">
-          <LayoutGrid className="h-5 w-5 text-muted-foreground" />
+          <LayoutGrid className="h-5 w-5 text-muted-foreground hidden sm:block" />
           <h2 className="font-semibold">Streams</h2>
           <span className="text-sm text-muted-foreground">
             ({streams.length} active)
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search all streams..."
-              className="w-64 pl-9"
-            />
-          </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <GlobalStreamSearch onSelectInteraction={onInteractionClick} />
           <Button variant="outline" size="icon" onClick={handleRefresh} disabled={refreshing}>
             {refreshing ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -140,15 +166,18 @@ export function StreamBoard({ onInteractionClick }: StreamBoardProps) {
               <RefreshCw className="h-4 w-4" />
             )}
           </Button>
-          <Button onClick={() => setShowAddDialog(true)}>
+          <Button onClick={() => setShowAddDialog(true)} className="hidden sm:flex">
             <Plus className="h-4 w-4 mr-2" />
             Add Stream
+          </Button>
+          <Button onClick={() => setShowAddDialog(true)} size="icon" className="sm:hidden">
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* Board */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden">
+      <div className="flex-1 overflow-x-auto overflow-y-hidden touch-pan-x">
         {streams.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full p-8 text-center">
             <LayoutGrid className="h-12 w-12 text-muted-foreground/50 mb-4" />
@@ -173,11 +202,12 @@ export function StreamBoard({ onInteractionClick }: StreamBoardProps) {
               items={streams.map((s) => s.id)}
               strategy={horizontalListSortingStrategy}
             >
-              <div className="flex gap-4 p-4 h-full items-start">
+              <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 h-full items-start min-w-max">
                 {streams.map((stream) => (
                   <StreamColumn
                     key={stream.id}
                     stream={stream}
+                    isSelected={selectedStreamId === stream.id}
                     onEdit={(s) => {
                       setEditingStream(s);
                       setShowAddDialog(true);
@@ -191,7 +221,7 @@ export function StreamBoard({ onInteractionClick }: StreamBoardProps) {
                 {/* Add Stream Button */}
                 <button
                   onClick={() => setShowAddDialog(true)}
-                  className="flex flex-col items-center justify-center w-80 min-w-80 h-40 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50 transition-colors"
+                  className="flex flex-col items-center justify-center w-72 sm:w-80 min-w-72 sm:min-w-80 h-40 rounded-xl border-2 border-dashed border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50 transition-colors flex-shrink-0"
                 >
                   <Plus className="h-8 w-8 text-muted-foreground/50 mb-2" />
                   <span className="text-sm text-muted-foreground">
