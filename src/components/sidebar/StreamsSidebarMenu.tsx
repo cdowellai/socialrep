@@ -39,6 +39,7 @@ import {
   MoreHorizontal,
   Plus,
   Settings,
+  LayoutGrid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStreams, type Stream } from "@/hooks/useStreams";
@@ -282,6 +283,20 @@ export function StreamsSidebarMenu({ collapsed = false }: StreamsSidebarMenuProp
       </CollapsibleTrigger>
 
       <CollapsibleContent className="mt-1">
+        {/* All Streams Link */}
+        <Link
+          to="/dashboard/streams"
+          className={cn(
+            "flex items-center gap-2 pl-6 pr-3 py-1.5 rounded-md text-sm transition-colors",
+            !activeStreamId && isStreamsActive
+              ? "bg-sidebar-accent/70 text-sidebar-accent-foreground font-medium"
+              : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50"
+          )}
+        >
+          <LayoutGrid className="h-4 w-4" />
+          <span>All Streams</span>
+        </Link>
+
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -292,7 +307,7 @@ export function StreamsSidebarMenu({ collapsed = false }: StreamsSidebarMenuProp
             items={sortedStreams.map((s) => s.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="space-y-0.5">
+            <div className="space-y-0.5 mt-1">
               {sortedStreams.map((stream) => (
                 <SortableStreamItem
                   key={stream.id}
@@ -314,7 +329,7 @@ export function StreamsSidebarMenu({ collapsed = false }: StreamsSidebarMenuProp
 
         <Link
           to="/dashboard/streams"
-          className="flex items-center gap-2 pl-8 pr-3 py-1.5 mt-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50 transition-colors"
+          className="flex items-center gap-2 pl-6 pr-3 py-1.5 mt-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50 transition-colors"
         >
           <Plus className="h-3 w-3" />
           Add Stream
