@@ -306,6 +306,60 @@ export type Database = {
         }
         Relationships: []
       }
+      interaction_replies: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          interaction_id: string
+          platform_error: string | null
+          platform_reply_id: string | null
+          platform_status: string | null
+          team_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          interaction_id: string
+          platform_error?: string | null
+          platform_reply_id?: string | null
+          platform_status?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          interaction_id?: string
+          platform_error?: string | null
+          platform_reply_id?: string | null
+          platform_status?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interaction_replies_interaction_id_fkey"
+            columns: ["interaction_id"]
+            isOneToOne: false
+            referencedRelation: "interactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interaction_replies_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       interactions: {
         Row: {
           assigned_to: string | null
@@ -321,6 +375,10 @@ export type Database = {
           parent_interaction_id: string | null
           platform: Database["public"]["Enums"]["interaction_platform"]
           post_url: string | null
+          reply_count: number | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
           responded_at: string | null
           response: string | null
           sentiment: Database["public"]["Enums"]["sentiment_type"] | null
@@ -344,6 +402,10 @@ export type Database = {
           parent_interaction_id?: string | null
           platform: Database["public"]["Enums"]["interaction_platform"]
           post_url?: string | null
+          reply_count?: number | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           responded_at?: string | null
           response?: string | null
           sentiment?: Database["public"]["Enums"]["sentiment_type"] | null
@@ -367,6 +429,10 @@ export type Database = {
           parent_interaction_id?: string | null
           platform?: Database["public"]["Enums"]["interaction_platform"]
           post_url?: string | null
+          reply_count?: number | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           responded_at?: string | null
           response?: string | null
           sentiment?: Database["public"]["Enums"]["sentiment_type"] | null

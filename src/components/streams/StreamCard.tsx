@@ -1,13 +1,12 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   ThumbsUp,
   ThumbsDown,
@@ -16,13 +15,18 @@ import {
   Archive,
   CheckCircle2,
   AlertTriangle,
-  MoreHorizontal,
-  Send,
   Sparkles,
   ExternalLink,
   Clock,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { InteractionActionBar } from "./InteractionActionBar";
+import { InteractionReplyInput } from "./InteractionReplyInput";
+import { InteractionThread } from "./InteractionThread";
+import { InteractionResolutionBadge } from "./InteractionResolutionBadge";
+import { useInteractionReplies } from "@/hooks/useInteractionReplies";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
 type Interaction = Tables<"interactions">;
@@ -36,6 +40,7 @@ interface StreamCardProps {
   onReply?: (interaction: Interaction) => void;
   onArchive?: (interaction: Interaction) => void;
   onMarkResponded?: (interaction: Interaction) => void;
+  isPlatformConnected?: boolean;
 }
 
 const platformColors: Record<Platform, string> = {
@@ -92,17 +97,52 @@ export function StreamCard({
   onReply,
   onArchive,
   onMarkResponded,
+  isPlatformConnected = false,
 }: StreamCardProps) {
+  const [isThreadOpen, setIsThreadOpen] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+
+  const {
+    replies,
+    loading: repliesLoading,
+    sending,
+    sendReply,
+    resolveInteraction,
+    unresolveInteraction,
+  } = useInteractionReplies({
+    interactionId: interaction.id,
+    enabled: isThreadOpen,
+  });
+
   const sentiment = interaction.sentiment || "neutral";
   const status = interaction.status || "pending";
   const SentimentIcon = sentimentConfig[sentiment].icon;
   const StatusIcon = statusConfig[status].icon;
   const isUrgent = (interaction.urgency_score || 0) >= 7;
+  const replyCount = (interaction as any).reply_count || replies.length || 0;
+  const isResolved = (interaction as any).resolved || false;
+  const resolvedBy = (interaction as any).resolved_by || null;
+  const resolvedAt = (interaction as any).resolved_at || null;
+
+  const handleSendReply = useCallback(
+    async (content: string) => {
+      await sendReply(content, interaction.platform);
+    },
+    [sendReply, interaction.platform]
+  );
+
+  const handleToggleResolution = useCallback(async () => {
+    if (isResolved) {
+      await unresolveInteraction(interaction.id);
+    } else {
+      await resolveInteraction(interaction.id);
+    }
+  }, [isResolved, interaction.id, resolveInteraction, unresolveInteraction]);
 
   return (
     <div
       className={cn(
-        "group p-3 rounded-lg border bg-card hover:shadow-md transition-all cursor-pointer",
+        "group p-3 rounded-lg border bg-card hover:shadow-md transition-all",
         isUrgent && "border-sentiment-negative/50 bg-sentiment-negative/5"
       )}
     >
@@ -129,41 +169,30 @@ export function StreamCard({
           </div>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onReply?.(interaction)}>
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Reply
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onMarkResponded?.(interaction)}>
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Mark Responded
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onArchive?.(interaction)}>
-              <Archive className="h-4 w-4 mr-2" />
-              Archive
-            </DropdownMenuItem>
-            {interaction.post_url && (
-              <DropdownMenuItem onClick={() => window.open(interaction.post_url!, "_blank")}>
-                <ExternalLink className="h-4 w-4 mr-2" />
-                View Original
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Resolution Badge */}
+        <InteractionResolutionBadge
+          resolved={isResolved}
+          resolvedBy={resolvedBy}
+          resolvedAt={resolvedAt}
+          onToggle={handleToggleResolution}
+        />
       </div>
 
       {/* Content */}
-      <p className="text-sm text-foreground line-clamp-3 mb-2">{interaction.content}</p>
+      <p className="text-sm text-foreground mb-2">{interaction.content}</p>
+
+      {/* View Full Post Link */}
+      {interaction.post_url && (
+        <a
+          href={interaction.post_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs text-primary hover:underline mb-2"
+        >
+          <ExternalLink className="h-3 w-3" />
+          View full post
+        </a>
+      )}
 
       {/* Tags */}
       <div className="flex flex-wrap items-center gap-1.5 mb-2">
@@ -185,15 +214,69 @@ export function StreamCard({
 
       {/* AI Suggestion */}
       {showAiSuggestions && status === "pending" && (
-        <div className="flex items-center gap-2 p-2 rounded-md bg-primary/5 border border-primary/20">
+        <div className="flex items-center gap-2 p-2 rounded-md bg-primary/5 border border-primary/20 mb-2">
           <Sparkles className="h-3.5 w-3.5 text-primary flex-shrink-0" />
           <span className="text-xs text-primary flex-1">AI draft ready</span>
           <Button size="sm" variant="ghost" className="h-6 text-xs px-2">
-            <Send className="h-3 w-3 mr-1" />
-            Send
+            <MessageSquare className="h-3 w-3 mr-1" />
+            Use Draft
           </Button>
         </div>
       )}
+
+      {/* Action Bar */}
+      <InteractionActionBar
+        replyCount={replyCount}
+        isLiked={isLiked}
+        postUrl={interaction.post_url}
+        onToggleLike={() => setIsLiked(!isLiked)}
+        onToggleThread={() => setIsThreadOpen(!isThreadOpen)}
+        onArchive={() => onArchive?.(interaction)}
+        onMarkResponded={() => onMarkResponded?.(interaction)}
+      />
+
+      {/* Thread/Replies Section */}
+      <Collapsible open={isThreadOpen} onOpenChange={setIsThreadOpen}>
+        <CollapsibleTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full h-7 mt-2 text-xs text-muted-foreground hover:text-foreground"
+          >
+            {isThreadOpen ? (
+              <>
+                <ChevronUp className="h-3 w-3 mr-1" />
+                Hide comments
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-3 w-3 mr-1" />
+                {replyCount > 0
+                  ? `View ${replyCount} ${replyCount === 1 ? "comment" : "comments"}`
+                  : "Add a comment"}
+              </>
+            )}
+          </Button>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent className="mt-2 space-y-2">
+          {/* Thread of replies */}
+          {replyCount > 0 && (
+            <InteractionThread
+              replies={replies}
+              loading={repliesLoading}
+            />
+          )}
+
+          {/* Reply Input */}
+          <InteractionReplyInput
+            platform={interaction.platform}
+            isConnected={isPlatformConnected}
+            sending={sending}
+            onSubmit={handleSendReply}
+          />
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }
