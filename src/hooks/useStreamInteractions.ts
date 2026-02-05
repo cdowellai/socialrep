@@ -28,8 +28,8 @@ export function useStreamInteractions({ stream, limit = 50 }: UseStreamInteracti
         .eq("user_id", user.id)
         .limit(limit + 1);
 
-      // Apply platform filter
-      if (stream.platform) {
+      // Apply platform filter - only when platform is explicitly set
+      if (stream.platform && stream.platform !== "all") {
         query = query.eq("platform", stream.platform as Enums<"interaction_platform">);
       }
 
@@ -148,8 +148,8 @@ export function useStreamInteractions({ stream, limit = 50 }: UseStreamInteracti
 }
 
 function matchesStreamFilters(interaction: Interaction, stream: Stream): boolean {
-  // Platform filter
-  if (stream.platform && interaction.platform !== stream.platform) {
+  // Platform filter - only filter if platform is set and not "all"
+  if (stream.platform && stream.platform !== "all" && interaction.platform !== stream.platform) {
     return false;
   }
 
