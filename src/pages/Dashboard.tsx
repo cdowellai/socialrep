@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { DashboardTrendChart } from "@/components/dashboard/DashboardTrendChart";
+import { PlatformBreakdownChart } from "@/components/dashboard/PlatformBreakdownChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,12 +23,14 @@ import {
   CheckCircle2,
   RefreshCw,
   Beaker,
+  AlertTriangle,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { interactions, loading: interactionsLoading, refetch: refetchInteractions } = useInteractions();
   const { reviews, loading: reviewsLoading, refetch: refetchReviews } = useReviews();
   const { leads, loading: leadsLoading, refetch: refetchLeads } = useLeads();
@@ -37,6 +41,7 @@ export default function Dashboard() {
   // Calculate stats
   const pendingInteractions = interactions.filter(i => i.status === "pending").length;
   const respondedInteractions = interactions.filter(i => i.status === "responded").length;
+  const urgentInteractions = interactions.filter(i => (i.urgency_score || 0) >= 7).length;
   const avgRating = reviews.length > 0 
     ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
     : "0.0";
@@ -67,6 +72,10 @@ export default function Dashboard() {
     setSeeding(false);
   };
 
+  const handleStatClick = (href: string, filterParam?: string) => {
+    navigate(filterParam ? `${href}?${filterParam}` : href);
+  };
+
   const stats = [
     {
       title: "Pending Messages",
@@ -75,6 +84,16 @@ export default function Dashboard() {
       color: "text-primary",
       bgColor: "bg-primary/10",
       href: "/dashboard/inbox",
+      filterParam: "status=pending",
+    },
+    {
+      title: "Urgent Items",
+      value: urgentInteractions,
+      icon: AlertTriangle,
+      color: "text-sentiment-negative",
+      bgColor: "bg-sentiment-negative/10",
+      href: "/dashboard/inbox",
+      filterParam: "urgent=true",
     },
     {
       title: "Avg. Review Rating",
@@ -83,14 +102,6 @@ export default function Dashboard() {
       color: "text-sentiment-positive",
       bgColor: "bg-sentiment-positive/10",
       href: "/dashboard/reviews",
-    },
-    {
-      title: "Qualified Leads",
-      value: qualifiedLeads,
-      icon: Users,
-      color: "text-blue-500",
-      bgColor: "bg-blue-500/10",
-      href: "/dashboard/leads",
     },
     {
       title: "Response Rate",
@@ -164,8 +175,12 @@ export default function Dashboard() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat) => (
-            <Link key={stat.title} to={stat.href}>
-              <Card className="hover:border-primary/30 transition-colors cursor-pointer">
+            <button
+              key={stat.title}
+              onClick={() => handleStatClick(stat.href, stat.filterParam)}
+              className="text-left w-full"
+            >
+              <Card className="hover:border-primary/30 transition-colors cursor-pointer h-full">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className={`h-10 w-10 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
@@ -177,8 +192,14 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground">{stat.title}</p>
                 </CardContent>
               </Card>
-            </Link>
+            </button>
           ))}
+        </div>
+
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <DashboardTrendChart interactions={interactions} loading={loading} />
+          <PlatformBreakdownChart interactions={interactions} loading={loading} />
         </div>
 
         {/* Content Grid */}
