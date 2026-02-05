@@ -618,6 +618,75 @@ export type Database = {
         }
         Relationships: []
       }
+      streams: {
+        Row: {
+          auto_sort_by_urgency: boolean | null
+          color: string | null
+          connected_platform_id: string | null
+          created_at: string
+          filters: Json | null
+          id: string
+          interaction_types: string[] | null
+          is_collapsed: boolean | null
+          name: string
+          platform: string | null
+          position: number
+          show_ai_suggestions: boolean | null
+          team_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_sort_by_urgency?: boolean | null
+          color?: string | null
+          connected_platform_id?: string | null
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          interaction_types?: string[] | null
+          is_collapsed?: boolean | null
+          name: string
+          platform?: string | null
+          position?: number
+          show_ai_suggestions?: boolean | null
+          team_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_sort_by_urgency?: boolean | null
+          color?: string | null
+          connected_platform_id?: string | null
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          interaction_types?: string[] | null
+          is_collapsed?: boolean | null
+          name?: string
+          platform?: string | null
+          position?: number
+          show_ai_suggestions?: boolean | null
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streams_connected_platform_id_fkey"
+            columns: ["connected_platform_id"]
+            isOneToOne: false
+            referencedRelation: "connected_platforms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "streams_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_invitations: {
         Row: {
           created_at: string
