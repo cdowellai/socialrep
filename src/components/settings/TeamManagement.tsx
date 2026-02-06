@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTeam, type TeamRole, type TeamMember, type TeamInvitation } from "@/hooks/useTeam";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -27,6 +29,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Users,
   Crown,
   Shield,
@@ -41,6 +50,9 @@ import {
   Edit2,
   Check,
   X,
+  MoreHorizontal,
+  UserMinus,
+  UserCog,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -65,6 +77,11 @@ const roleColors: Record<TeamRole, string> = {
   viewer: "bg-gray-500/10 text-gray-600 border-gray-500/20",
 };
 
+interface PlanLimits {
+  maxSeats: number;
+  planName: string;
+}
+
 export function TeamManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -88,6 +105,32 @@ export function TeamManagement() {
   const [inviting, setInviting] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [teamNameInput, setTeamNameInput] = useState("");
+  const [planLimits, setPlanLimits] = useState<PlanLimits>({ maxSeats: 1, planName: "Free" });
+
+  useEffect(() => {
+    if (user) {
+      fetchPlanLimits();
+    }
+  }, [user]);
+
+  const fetchPlanLimits = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("profiles")
+      .select("plan")
+      .eq("user_id", user.id)
+      .single();
+
+    const planSeats: Record<string, { maxSeats: number; planName: string }> = {
+      free: { maxSeats: 1, planName: "Free" },
+      starter: { maxSeats: 2, planName: "Starter" },
+      professional: { maxSeats: 5, planName: "Professional" },
+      agency: { maxSeats: 15, planName: "Agency" },
+    };
+
+    const plan = data?.plan || "free";
+    setPlanLimits(planSeats[plan] || planSeats.free);
+  };
 
   const handleInvite = async () => {
     if (!inviteEmail) return;
@@ -254,6 +297,20 @@ export function TeamManagement() {
             )}
           </div>
         </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <div className="flex items-center justify-between text-sm mb-1">
+                <span className="text-muted-foreground">Seats used</span>
+                <span className="font-medium">{members.length} of {planLimits.maxSeats}</span>
+              </div>
+              <Progress value={(members.length / planLimits.maxSeats) * 100} className="h-2" />
+            </div>
+            <Badge variant="outline" className="text-xs">
+              {planLimits.planName} Plan
+            </Badge>
+          </div>
+        </CardContent>
       </Card>
 
       {/* Invite Member Card - Admin Only */}
@@ -371,17 +428,23 @@ interface MemberRowProps {
 }
 
 function MemberRow({ member, currentUserId, isAdmin, isOwner, onUpdateRole, onRemove }: MemberRowProps) {
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const RoleIcon = roleIcons[member.role];
   const isCurrentUser = member.user_id === currentUserId;
   const canModify = isAdmin && !isCurrentUser && member.role !== "owner";
   const canChangeRole = isOwner && member.role !== "owner";
 
+  // Calculate last active (using accepted_at as proxy for now)
+  const lastActive = member.accepted_at
+    ? new Date(member.accepted_at).toLocaleDateString()
+    : "Never";
+
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg border bg-card">
+    <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10">
           <AvatarImage src={member.avatar_url || undefined} />
-          <AvatarFallback>
+          <AvatarFallback className="bg-primary/10 text-primary">
             {(member.full_name || member.email || "?").charAt(0).toUpperCase()}
           </AvatarFallback>
         </Avatar>
@@ -393,59 +456,84 @@ function MemberRow({ member, currentUserId, isAdmin, isOwner, onUpdateRole, onRe
             {isCurrentUser && (
               <Badge variant="outline" className="text-xs">You</Badge>
             )}
+            <Badge className="bg-sentiment-positive/10 text-sentiment-positive text-xs">
+              Active
+            </Badge>
           </div>
-          <span className="text-sm text-muted-foreground">{member.email}</span>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>{member.email}</span>
+            <span>•</span>
+            <span>Last active: {lastActive}</span>
+          </div>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        {canChangeRole ? (
-          <Select
-            value={member.role}
-            onValueChange={(v) => onUpdateRole(member.id, v as TeamRole)}
-          >
-            <SelectTrigger className="w-28">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="member">Member</SelectItem>
-              <SelectItem value="viewer">Viewer</SelectItem>
-            </SelectContent>
-          </Select>
-        ) : (
-          <Badge className={roleColors[member.role]}>
-            <RoleIcon className="h-3 w-3 mr-1" />
-            {roleLabels[member.role]}
-          </Badge>
-        )}
+        <Badge className={roleColors[member.role]}>
+          <RoleIcon className="h-3 w-3 mr-1" />
+          {roleLabels[member.role]}
+        </Badge>
 
         {canModify && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Remove team member?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to remove {member.full_name || member.email} from the team?
-                  They will lose access to all team resources.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={() => onRemove(member.id, member.full_name || member.email || "Unknown")}
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {canChangeRole && (
+                  <>
+                    <DropdownMenuItem onClick={() => onUpdateRole(member.id, "admin")}>
+                      <Shield className="h-4 w-4 mr-2" />
+                      Make Admin
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onUpdateRole(member.id, "member")}>
+                      <User className="h-4 w-4 mr-2" />
+                      Make Member
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onUpdateRole(member.id, "viewer")}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      Make Viewer
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => setShowRemoveDialog(true)}
                 >
-                  Remove
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  <UserMinus className="h-4 w-4 mr-2" />
+                  Remove from team
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remove team member?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to remove {member.full_name || member.email} from the team?
+                    They will lose access to all team resources.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => {
+                      onRemove(member.id, member.full_name || member.email || "Unknown");
+                      setShowRemoveDialog(false);
+                    }}
+                  >
+                    Remove
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
         )}
       </div>
     </div>
