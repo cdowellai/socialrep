@@ -147,6 +147,39 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     fetchSubscriptionData();
   }, [fetchSubscriptionData]);
 
+  // Check for pending checkout after login (from pricing page signup flow)
+  useEffect(() => {
+    const handlePendingCheckout = async () => {
+      if (!user || loading) return;
+
+      const pendingPlanId = localStorage.getItem("pending_checkout_plan");
+      const pendingPeriod = localStorage.getItem("pending_checkout_period") as "monthly" | "annual" | null;
+
+      if (pendingPlanId && pendingPeriod) {
+        // Clear localStorage immediately to prevent duplicate attempts
+        localStorage.removeItem("pending_checkout_plan");
+        localStorage.removeItem("pending_checkout_period");
+
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) return;
+
+          const response = await supabase.functions.invoke("create-checkout-session", {
+            body: { plan_id: pendingPlanId, billing_period: pendingPeriod },
+          });
+
+          if (response.data?.url) {
+            window.location.href = response.data.url;
+          }
+        } catch (error) {
+          console.error("Error processing pending checkout:", error);
+        }
+      }
+    };
+
+    handlePendingCheckout();
+  }, [user, loading]);
+
   const hasFeature = useCallback((feature: keyof PlanFeatures): boolean => {
     if (!plan) return false;
     return plan.features[feature] === true;

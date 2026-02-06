@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Switch } from "@/components/ui/switch";
@@ -49,25 +49,17 @@ export function PricingSection() {
   const { plans, createCheckoutSession, loading: subLoading } = useSubscription();
   const navigate = useNavigate();
   const [authModal, setAuthModal] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<{ id: string; period: "monthly" | "annual" } | null>(null);
   const [isAnnual, setIsAnnual] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
-
-  // After auth completes, trigger checkout if a plan was selected
-  useEffect(() => {
-    if (user && selectedPlan && !subLoading) {
-      handleCheckout(selectedPlan.id, selectedPlan.period);
-      setSelectedPlan(null);
-    }
-  }, [user, selectedPlan, subLoading]);
 
   const handlePlanSelect = async (planName: string) => {
     const plan = plans.find(p => p.name === planName);
     if (!plan) return;
 
     if (!user) {
-      // Store selected plan and show auth modal
-      setSelectedPlan({ id: plan.id, period: isAnnual ? "annual" : "monthly" });
+      // Store selected plan in localStorage for post-auth checkout
+      localStorage.setItem("pending_checkout_plan", plan.id);
+      localStorage.setItem("pending_checkout_period", isAnnual ? "annual" : "monthly");
       setAuthModal(true);
       return;
     }
@@ -226,7 +218,9 @@ export function PricingSection() {
         isOpen={authModal} 
         onClose={() => {
           setAuthModal(false);
-          setSelectedPlan(null);
+          // Clear pending checkout if user cancels auth
+          localStorage.removeItem("pending_checkout_plan");
+          localStorage.removeItem("pending_checkout_period");
         }} 
         defaultTab="signup" 
       />
