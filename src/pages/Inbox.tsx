@@ -51,6 +51,7 @@ import { CannedResponsesDropdown } from "@/components/inbox/CannedResponsesDropd
 import { FloatingBulkActions } from "@/components/inbox/FloatingBulkActions";
 import { CustomerHistory } from "@/components/inbox/CustomerHistory";
 import { ResponseTimeIndicator } from "@/components/inbox/ResponseTimeIndicator";
+import { ConvertToLeadButton } from "@/components/leads";
 import { cn } from "@/lib/utils";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
@@ -732,6 +733,7 @@ export default function InboxPage() {
                       open={showAssignDropdown}
                       onOpenChange={setShowAssignDropdown}
                     />
+                    <ConvertToLeadButton interaction={selectedInteraction} />
                     <Button variant="ghost" size="icon">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>

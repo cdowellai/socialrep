@@ -455,6 +455,86 @@ export type Database = {
           },
         ]
       }
+      lead_activities: {
+        Row: {
+          activity_type: string
+          content: string | null
+          created_at: string
+          id: string
+          lead_id: string
+          metadata: Json | null
+          new_status: string | null
+          old_status: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          lead_id: string
+          metadata?: Json | null
+          new_status?: string | null
+          old_status?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string
+          metadata?: Json | null
+          new_status?: string | null
+          old_status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_interactions: {
+        Row: {
+          created_at: string
+          id: string
+          interaction_id: string
+          lead_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interaction_id: string
+          lead_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interaction_id?: string
+          lead_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_interactions_interaction_id_fkey"
+            columns: ["interaction_id"]
+            isOneToOne: false
+            referencedRelation: "interactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_interactions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           company: string | null
@@ -466,6 +546,10 @@ export type Database = {
           id: string
           notes: string | null
           score: number | null
+          score_engagement: number | null
+          score_profile: number | null
+          score_recency: number | null
+          score_sentiment: number | null
           source_interaction_id: string | null
           source_platform:
             | Database["public"]["Enums"]["interaction_platform"]
@@ -485,6 +569,10 @@ export type Database = {
           id?: string
           notes?: string | null
           score?: number | null
+          score_engagement?: number | null
+          score_profile?: number | null
+          score_recency?: number | null
+          score_sentiment?: number | null
           source_interaction_id?: string | null
           source_platform?:
             | Database["public"]["Enums"]["interaction_platform"]
@@ -504,6 +592,10 @@ export type Database = {
           id?: string
           notes?: string | null
           score?: number | null
+          score_engagement?: number | null
+          score_profile?: number | null
+          score_recency?: number | null
+          score_sentiment?: number | null
           source_interaction_id?: string | null
           source_platform?:
             | Database["public"]["Enums"]["interaction_platform"]
