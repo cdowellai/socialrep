@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, RefreshCw, FileText } from "lucide-react";
 import { useAnalytics, type Granularity, type DateRange } from "@/hooks/useAnalytics";
+import { useSubscription } from "@/hooks/useSubscription";
+import { AnalyticsPaywall } from "@/components/subscription";
 import { useToast } from "@/hooks/use-toast";
 import { subDays } from "date-fns";
 import {
@@ -19,6 +21,7 @@ import {
 
 export default function AnalyticsPage() {
   const { data, loading, error, fetchAnalytics } = useAnalytics();
+  const { plan, loading: subLoading } = useSubscription();
   const { toast } = useToast();
   const reportRef = useRef<HTMLDivElement>(null);
   const [exporting, setExporting] = useState(false);
@@ -28,6 +31,13 @@ export default function AnalyticsPage() {
     endDate: new Date(),
   });
   const [granularity, setGranularity] = useState<Granularity>("daily");
+
+  // Check if user has full analytics
+  const hasFullAnalytics = plan?.features && (plan.features as any).analytics_level === "full";
+
+  useEffect(() => {
+    fetchAnalytics(dateRange, granularity);
+  }, [dateRange, granularity, fetchAnalytics]);
 
   useEffect(() => {
     fetchAnalytics(dateRange, granularity);
@@ -128,23 +138,25 @@ export default function AnalyticsPage() {
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
-            <Button
-              variant="outline"
-              onClick={handleExportPDF}
-              disabled={exporting || !data}
-            >
-              {exporting ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Exporting...
-                </>
-              ) : (
-                <>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export PDF
-                </>
-              )}
-            </Button>
+            {hasFullAnalytics && (
+              <Button
+                variant="outline"
+                onClick={handleExportPDF}
+                disabled={exporting || !data}
+              >
+                {exporting ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export PDF
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -158,62 +170,84 @@ export default function AnalyticsPage() {
             </p>
           </div>
 
-          {/* Section 1: Key Metrics */}
+          {/* Section 1: Key Metrics - Always visible */}
           <section>
             <AnalyticsKPICards summary={data?.summary || null} loading={loading} />
           </section>
 
-          {/* Section 2: Interaction Volume */}
-          <section>
-            <InteractionVolumeChart
-              platformTrends={data?.platformTrends || null}
-              loading={loading}
-              granularity={granularity}
-              onGranularityChange={setGranularity}
-            />
-          </section>
+          {/* Paywall for non-full analytics users */}
+          {!hasFullAnalytics ? (
+            <div className="relative min-h-[600px]">
+              {/* Blurred preview of charts */}
+              <div className="space-y-6 blur-sm opacity-50 pointer-events-none">
+                <InteractionVolumeChart
+                  platformTrends={data?.platformTrends || null}
+                  loading={loading}
+                  granularity={granularity}
+                  onGranularityChange={setGranularity}
+                />
+                <ResponsePerformanceChart
+                  platformBreakdown={data?.platformBreakdown || null}
+                  loading={loading}
+                />
+              </div>
+              <AnalyticsPaywall />
+            </div>
+          ) : (
+            <>
+              {/* Section 2: Interaction Volume */}
+              <section>
+                <InteractionVolumeChart
+                  platformTrends={data?.platformTrends || null}
+                  loading={loading}
+                  granularity={granularity}
+                  onGranularityChange={setGranularity}
+                />
+              </section>
 
-          {/* Section 3: Response Performance */}
-          <section>
-            <ResponsePerformanceChart
-              platformBreakdown={data?.platformBreakdown || null}
-              loading={loading}
-            />
-          </section>
+              {/* Section 3: Response Performance */}
+              <section>
+                <ResponsePerformanceChart
+                  platformBreakdown={data?.platformBreakdown || null}
+                  loading={loading}
+                />
+              </section>
 
-          {/* Section 4: Sentiment Analysis */}
-          <section>
-            <SentimentAnalysisChart
-              sentiment={data?.sentiment || null}
-              sentimentTrend={data?.sentimentTrend || null}
-              granularity={granularity}
-              loading={loading}
-            />
-          </section>
+              {/* Section 4: Sentiment Analysis */}
+              <section>
+                <SentimentAnalysisChart
+                  sentiment={data?.sentiment || null}
+                  sentimentTrend={data?.sentimentTrend || null}
+                  granularity={granularity}
+                  loading={loading}
+                />
+              </section>
 
-          {/* Section 5: Team Performance */}
-          <section>
-            <TeamPerformanceTable
-              teamPerformance={data?.teamPerformance || null}
-              loading={loading}
-            />
-          </section>
+              {/* Section 5: Team Performance */}
+              <section>
+                <TeamPerformanceTable
+                  teamPerformance={data?.teamPerformance || null}
+                  loading={loading}
+                />
+              </section>
 
-          {/* Section 6: Platform Breakdown */}
-          <section>
-            <PlatformBreakdownChart
-              platformBreakdown={data?.platformBreakdown || null}
-              loading={loading}
-            />
-          </section>
+              {/* Section 6: Platform Breakdown */}
+              <section>
+                <PlatformBreakdownChart
+                  platformBreakdown={data?.platformBreakdown || null}
+                  loading={loading}
+                />
+              </section>
 
-          {/* Section 7: Top Interactions */}
-          <section>
-            <TopInteractionsList
-              interactions={data?.topInteractions || null}
-              loading={loading}
-            />
-          </section>
+              {/* Section 7: Top Interactions */}
+              <section>
+                <TopInteractionsList
+                  interactions={data?.topInteractions || null}
+                  loading={loading}
+                />
+              </section>
+            </>
+          )}
         </div>
 
         {/* No Data State */}

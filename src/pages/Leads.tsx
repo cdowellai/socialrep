@@ -29,6 +29,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { useLeads } from "@/hooks/useLeads";
+import { useSubscription } from "@/hooks/useSubscription";
+import { FeaturePaywall } from "@/components/subscription";
 import {
   LeadDetailPanel,
   LeadScoreTooltip,
@@ -51,11 +53,15 @@ const statusConfig: Record<LeadStatus, { label: string; className: string }> = {
 
 export default function LeadsPage() {
   const { leads, loading, stats, updateLead } = useLeads();
+  const { hasFeature, loading: subLoading } = useSubscription();
   const [viewMode, setViewMode] = useState<LeadViewMode>("table");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  // Check if user has leads feature
+  const hasLeadsFeature = hasFeature("leads");
 
   // Filter leads
   const filteredLeads = leads.filter((lead) => {
@@ -107,7 +113,7 @@ export default function LeadsPage() {
     { label: "Avg Score", value: stats.avgScore, change: "Lead quality" },
   ];
 
-  if (loading) {
+  if (loading || subLoading) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
@@ -121,6 +127,27 @@ export default function LeadsPage() {
             ))}
           </div>
           <Skeleton className="h-96" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show paywall if user doesn't have leads feature
+  if (!hasLeadsFeature) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold">Lead Management</h2>
+            <p className="text-muted-foreground">
+              Track and manage leads detected from social interactions
+            </p>
+          </div>
+          <FeaturePaywall
+            feature="Lead Generation"
+            description="Automatically capture leads from social interactions and track them through your sales pipeline."
+            requiredPlan="Professional"
+          />
         </div>
       </DashboardLayout>
     );
