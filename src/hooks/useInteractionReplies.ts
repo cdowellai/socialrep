@@ -9,6 +9,7 @@ export interface InteractionReply {
   user_id: string;
   team_id: string | null;
   content: string;
+  is_internal: boolean;
   platform_reply_id: string | null;
   platform_status: "pending" | "sent" | "failed" | "not_connected";
   platform_error: string | null;
@@ -72,7 +73,7 @@ export function useInteractionReplies({ interactionId, enabled = true }: UseInte
 
   // Send a reply
   const sendReply = useCallback(
-    async (content: string, platform: string) => {
+    async (content: string, platform: string, isInternal: boolean = false) => {
       if (!user || !interactionId) return null;
 
       setSending(true);
@@ -92,12 +93,23 @@ export function useInteractionReplies({ interactionId, enabled = true }: UseInte
             user_id: user.id,
             team_id: profile?.current_team_id || null,
             content,
-            platform_status: "pending",
+            is_internal: isInternal,
+            platform_status: isInternal ? "not_connected" : "pending",
           })
           .select()
           .single();
 
         if (insertError) throw insertError;
+
+        // Skip platform API call for internal notes
+        if (isInternal) {
+          toast({
+            title: "Internal note saved",
+            description: "Your note has been saved and is visible to your team.",
+          });
+          await fetchReplies();
+          return reply;
+        }
 
         // Call edge function to send to platform
         const { data: platformResult, error: platformError } = await supabase.functions.invoke(

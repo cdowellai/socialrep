@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle2, AlertCircle, Clock, Wifi } from "lucide-react";
+import { CheckCircle2, AlertCircle, Clock, Wifi, StickyNote } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { InteractionReply } from "@/hooks/useInteractionReplies";
 
@@ -71,9 +71,16 @@ export function InteractionThread({
       {replies.map((reply) => {
         const status = statusConfig[reply.platform_status];
         const StatusIcon = status.icon;
+        const isInternal = reply.is_internal;
 
         return (
-          <div key={reply.id} className="flex items-start gap-2">
+          <div
+            key={reply.id}
+            className={cn(
+              "flex items-start gap-2 p-2 rounded-md -mx-2",
+              isInternal && "bg-accent/50 border border-accent"
+            )}
+          >
             <Avatar className="h-6 w-6 flex-shrink-0">
               <AvatarImage src="" />
               <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
@@ -88,16 +95,24 @@ export function InteractionThread({
                 <span className="text-xs font-medium truncate">
                   {reply.user_name || reply.user_email || "Team Member"}
                 </span>
+                {isInternal && (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 gap-0.5">
+                    <StickyNote className="h-2.5 w-2.5" />
+                    Internal
+                  </Badge>
+                )}
                 <span className="text-[10px] text-muted-foreground">
                   {formatTime(reply.created_at)}
                 </span>
-                <Badge
-                  variant="outline"
-                  className={cn("text-[10px] px-1 py-0 h-4", status.color)}
-                >
-                  <StatusIcon className="h-2.5 w-2.5 mr-0.5" />
-                  {status.label}
-                </Badge>
+                {!isInternal && (
+                  <Badge
+                    variant="outline"
+                    className={cn("text-[10px] px-1 py-0 h-4", status.color)}
+                  >
+                    <StatusIcon className="h-2.5 w-2.5 mr-0.5" />
+                    {status.label}
+                  </Badge>
+                )}
               </div>
 
               <p className="text-sm text-foreground mt-0.5">{reply.content}</p>

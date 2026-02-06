@@ -312,6 +312,7 @@ export type Database = {
           created_at: string
           id: string
           interaction_id: string
+          is_internal: boolean
           platform_error: string | null
           platform_reply_id: string | null
           platform_status: string | null
@@ -324,6 +325,7 @@ export type Database = {
           created_at?: string
           id?: string
           interaction_id: string
+          is_internal?: boolean
           platform_error?: string | null
           platform_reply_id?: string | null
           platform_status?: string | null
@@ -336,6 +338,7 @@ export type Database = {
           created_at?: string
           id?: string
           interaction_id?: string
+          is_internal?: boolean
           platform_error?: string | null
           platform_reply_id?: string | null
           platform_status?: string | null
