@@ -26,6 +26,7 @@ import { InteractionActionBar } from "./InteractionActionBar";
 import { InteractionReplyInput } from "./InteractionReplyInput";
 import { InteractionThread } from "./InteractionThread";
 import { InteractionResolutionBadge } from "./InteractionResolutionBadge";
+import { StreamCardAssignDropdown } from "./StreamCardAssignDropdown";
 import { useInteractionReplies } from "@/hooks/useInteractionReplies";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
@@ -194,22 +195,30 @@ export function StreamCard({
         </a>
       )}
 
-      {/* Tags */}
-      <div className="flex flex-wrap items-center gap-1.5 mb-2">
-        <Badge variant="outline" className={cn("text-[10px] px-1.5", sentimentConfig[sentiment].bg, sentimentConfig[sentiment].color)}>
-          <SentimentIcon className="h-2.5 w-2.5 mr-1" />
-          {sentiment}
-        </Badge>
-        <Badge variant="outline" className={cn("text-[10px] px-1.5", statusConfig[status].color)}>
-          <StatusIcon className="h-2.5 w-2.5 mr-1" />
-          {status}
-        </Badge>
-        {isUrgent && (
-          <Badge variant="destructive" className="text-[10px] px-1.5">
-            <AlertTriangle className="h-2.5 w-2.5 mr-1" />
-            Urgent
+      {/* Tags and Assignment */}
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge variant="outline" className={cn("text-[10px] px-1.5", sentimentConfig[sentiment].bg, sentimentConfig[sentiment].color)}>
+            <SentimentIcon className="h-2.5 w-2.5 mr-1" />
+            {sentiment}
           </Badge>
-        )}
+          <Badge variant="outline" className={cn("text-[10px] px-1.5", statusConfig[status].color)}>
+            <StatusIcon className="h-2.5 w-2.5 mr-1" />
+            {status}
+          </Badge>
+          {isUrgent && (
+            <Badge variant="destructive" className="text-[10px] px-1.5">
+              <AlertTriangle className="h-2.5 w-2.5 mr-1" />
+              Urgent
+            </Badge>
+          )}
+        </div>
+        
+        {/* Team Assignment */}
+        <StreamCardAssignDropdown
+          interactionId={interaction.id}
+          assignedTo={(interaction as any).assigned_to}
+        />
       </div>
 
       {/* AI Suggestion */}
@@ -273,6 +282,7 @@ export function StreamCard({
             platform={interaction.platform}
             isConnected={isPlatformConnected}
             sending={sending}
+            autoFocus={isThreadOpen}
             onSubmit={handleSendReply}
           />
         </CollapsibleContent>

@@ -26,7 +26,12 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { StreamTypeFilterTabs } from "./StreamTypeFilterTabs";
+import { StreamViewToggle, type StreamViewMode } from "./StreamViewToggle";
 import type { Stream } from "@/hooks/useStreams";
+import type { Tables } from "@/integrations/supabase/types";
+
+type Interaction = Tables<"interactions">;
 
 export interface StreamFilters {
   search: string;
@@ -34,24 +39,31 @@ export interface StreamFilters {
   status: string;
   minUrgency: number;
   showAiDraftsOnly: boolean;
+  interactionType: string | null;
 }
 
 interface StreamFilterBarProps {
   stream: Stream;
   filters: StreamFilters;
   onFiltersChange: (filters: StreamFilters) => void;
+  interactions: Interaction[];
   interactionCount: number;
   urgentCount: number;
   onToggleAiPrioritization: (enabled: boolean) => void;
+  viewMode: StreamViewMode;
+  onViewModeChange: (mode: StreamViewMode) => void;
 }
 
 export function StreamFilterBar({
   stream,
   filters,
   onFiltersChange,
+  interactions,
   interactionCount,
   urgentCount,
   onToggleAiPrioritization,
+  viewMode,
+  onViewModeChange,
 }: StreamFilterBarProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -69,6 +81,7 @@ export function StreamFilterBar({
       status: "all",
       minUrgency: 0,
       showAiDraftsOnly: false,
+      interactionType: null,
     });
   };
 
@@ -77,10 +90,24 @@ export function StreamFilterBar({
     filters.sentiment !== "all" ||
     filters.status !== "all" ||
     filters.minUrgency > 0 ||
-    filters.showAiDraftsOnly;
+    filters.showAiDraftsOnly ||
+    filters.interactionType !== null;
 
   return (
     <div className="space-y-3">
+      {/* Type Filter Tabs */}
+      <div className="flex items-center justify-between gap-3">
+        <StreamTypeFilterTabs
+          interactions={interactions}
+          selectedType={filters.interactionType}
+          onSelectType={(type) => updateFilter("interactionType", type)}
+        />
+        <StreamViewToggle
+          viewMode={viewMode}
+          onViewModeChange={onViewModeChange}
+        />
+      </div>
+
       {/* Primary Filter Row */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         {/* Search */}
