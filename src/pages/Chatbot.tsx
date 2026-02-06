@@ -8,6 +8,8 @@ import { KnowledgeBaseTab } from "@/components/chatbot/KnowledgeBaseTab";
 import { ConversationsTab } from "@/components/chatbot/ConversationsTab";
 import { ChatbotSettingsCard } from "@/components/chatbot/ChatbotSettingsCard";
 import { useChatbotSettings } from "@/hooks/useChatbotSettings";
+import { useSubscription } from "@/hooks/useSubscription";
+import { FeaturePaywall } from "@/components/subscription";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Copy, Code, Settings, Eye, BookOpen, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +19,7 @@ export default function ChatbotPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { settings, loading, saving, updateSettings } = useChatbotSettings();
+  const { hasFeature, loading: subLoading } = useSubscription();
   const [localSettings, setLocalSettings] = useState({
     widget_title: "",
     welcome_message: "",
@@ -27,6 +30,9 @@ export default function ChatbotPage() {
     collect_name: false,
     human_handoff_enabled: false,
   });
+
+  // Check if user has chatbot feature
+  const hasChatbotFeature = hasFeature("chatbot");
 
   // Sync local state with fetched settings
   useEffect(() => {
@@ -71,7 +77,7 @@ export default function ChatbotPage() {
     });
   };
 
-  if (loading) {
+  if (loading || subLoading) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
@@ -80,6 +86,27 @@ export default function ChatbotPage() {
             <Skeleton className="h-[500px]" />
             <Skeleton className="h-[500px]" />
           </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Show paywall if user doesn't have chatbot feature
+  if (!hasChatbotFeature) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Website Chatbot</h1>
+            <p className="text-muted-foreground">
+              Add an AI-powered chatbot to your website using your brand voice
+            </p>
+          </div>
+          <FeaturePaywall
+            feature="Website Chatbot"
+            description="Add an AI-powered chatbot to your website that uses your brand voice to engage visitors 24/7."
+            requiredPlan="Professional"
+          />
         </div>
       </DashboardLayout>
     );

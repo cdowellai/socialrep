@@ -11,3 +11,12 @@ verify_jwt = false
 
 [functions.analytics]
 verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.create-checkout-session]
+verify_jwt = false
+
+[functions.create-portal-session]
+verify_jwt = false

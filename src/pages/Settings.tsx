@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -16,6 +17,7 @@ import {
   NotificationsSettings,
   BillingSettings,
 } from "@/components/settings";
+import { FeaturePaywall } from "@/components/subscription";
 import {
   User,
   CreditCard,
@@ -26,16 +28,20 @@ import {
   Users,
   Save,
 } from "lucide-react";
-import { useEffect } from "react";
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { hasFeature } = useSubscription();
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState({
     full_name: "",
     company_name: "",
   });
+
+  // Check features
+  const hasBrandAI = hasFeature("brand_ai");
+  const hasAutomations = hasFeature("automations");
 
   useEffect(() => {
     if (user) {
@@ -172,12 +178,28 @@ export default function SettingsPage() {
 
           {/* Brand AI Tab */}
           <TabsContent value="brand" className="space-y-6">
-            <BrandAISettings />
+            {hasBrandAI ? (
+              <BrandAISettings />
+            ) : (
+              <FeaturePaywall
+                feature="Brand AI Training"
+                description="Train AI to match your brand's unique voice and tone across all responses."
+                requiredPlan="Professional"
+              />
+            )}
           </TabsContent>
 
           {/* Automation Tab */}
           <TabsContent value="automation" className="space-y-6">
-            <AutomationSettings />
+            {hasAutomations ? (
+              <AutomationSettings />
+            ) : (
+              <FeaturePaywall
+                feature="Automation Rules"
+                description="Set up automated responses, escalations, and workflows to save time."
+                requiredPlan="Professional"
+              />
+            )}
           </TabsContent>
 
           {/* Platforms Tab */}

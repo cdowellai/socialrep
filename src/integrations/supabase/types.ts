@@ -680,6 +680,57 @@ export type Database = {
           },
         ]
       }
+      plans: {
+        Row: {
+          annual_price: number
+          created_at: string
+          display_name: string
+          features: Json
+          id: string
+          max_ai_responses: number
+          max_interactions: number
+          max_platforms: number
+          max_team_seats: number
+          monthly_price: number
+          name: string
+          stripe_annual_price_id: string | null
+          stripe_monthly_price_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          annual_price?: number
+          created_at?: string
+          display_name: string
+          features?: Json
+          id?: string
+          max_ai_responses?: number
+          max_interactions?: number
+          max_platforms?: number
+          max_team_seats?: number
+          monthly_price?: number
+          name: string
+          stripe_annual_price_id?: string | null
+          stripe_monthly_price_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          annual_price?: number
+          created_at?: string
+          display_name?: string
+          features?: Json
+          id?: string
+          max_ai_responses?: number
+          max_interactions?: number
+          max_platforms?: number
+          max_team_seats?: number
+          monthly_price?: number
+          name?: string
+          stripe_annual_price_id?: string | null
+          stripe_monthly_price_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           auto_respond_chatbot: boolean
@@ -1089,6 +1140,62 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          billing_period: string
+          cancel_at_period_end: boolean | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          trial_end: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          billing_period?: string
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          billing_period?: string
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_invitations: {
         Row: {
           created_at: string
@@ -1195,12 +1302,51 @@ export type Database = {
         }
         Relationships: []
       }
+      usage: {
+        Row: {
+          ai_responses_used: number
+          id: string
+          interactions_used: number
+          period_end: string
+          period_start: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_responses_used?: number
+          id?: string
+          interactions_used?: number
+          period_end?: string
+          period_start?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_responses_used?: number
+          id?: string
+          interactions_used?: number
+          period_end?: string
+          period_start?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       get_user_team_id: { Args: { _user_id: string }; Returns: string }
+      get_user_usage: {
+        Args: { p_user_id: string }
+        Returns: {
+          ai_responses_used: number
+          interactions_used: number
+          period_end: string
+          period_start: string
+        }[]
+      }
       has_team_role: {
         Args: {
           _role: Database["public"]["Enums"]["team_role"]
@@ -1209,6 +1355,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_ai_usage: { Args: { p_user_id: string }; Returns: undefined }
       is_team_admin: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
