@@ -11,6 +11,7 @@ interface ChatMessage {
 
 interface UseChatbotOptions {
   onError?: (error: string) => void;
+  onHandoff?: () => void;
 }
 
 export function useChatbot(options: UseChatbotOptions = {}) {
@@ -18,7 +19,13 @@ export function useChatbot(options: UseChatbotOptions = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [handedOff, setHandedOff] = useState(false);
   const visitorIdRef = useRef<string>(generateVisitorId());
+  const visitorDataRef = useRef<{ name?: string; email?: string }>({});
+
+  const setVisitorData = useCallback((data: { name?: string; email?: string }) => {
+    visitorDataRef.current = data;
+  }, []);
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -63,6 +70,8 @@ export function useChatbot(options: UseChatbotOptions = {}) {
               userId: user.id,
               conversationId,
               visitorId: visitorIdRef.current,
+              visitorName: visitorDataRef.current.name,
+              visitorEmail: visitorDataRef.current.email,
             }),
           }
         );
@@ -76,6 +85,13 @@ export function useChatbot(options: UseChatbotOptions = {}) {
         const newConversationId = response.headers.get("X-Conversation-Id");
         if (newConversationId && !conversationId) {
           setConversationId(newConversationId);
+        }
+
+        // Check if handoff occurred
+        const handoffHeader = response.headers.get("X-Human-Handoff");
+        if (handoffHeader === "true") {
+          setHandedOff(true);
+          options.onHandoff?.();
         }
 
         // Stream the response
@@ -163,7 +179,9 @@ export function useChatbot(options: UseChatbotOptions = {}) {
   const clearChat = useCallback(() => {
     setMessages([]);
     setConversationId(null);
+    setHandedOff(false);
     visitorIdRef.current = generateVisitorId();
+    visitorDataRef.current = {};
   }, []);
 
   return {
@@ -172,6 +190,8 @@ export function useChatbot(options: UseChatbotOptions = {}) {
     sendMessage,
     clearChat,
     conversationId,
+    handedOff,
+    setVisitorData,
   };
 }
 

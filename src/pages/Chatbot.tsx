@@ -1,17 +1,15 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChatbotWidget } from "@/components/chatbot/ChatbotWidget";
+import { KnowledgeBaseTab } from "@/components/chatbot/KnowledgeBaseTab";
+import { ConversationsTab } from "@/components/chatbot/ConversationsTab";
+import { ChatbotSettingsCard } from "@/components/chatbot/ChatbotSettingsCard";
 import { useChatbotSettings } from "@/hooks/useChatbotSettings";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Copy, Code, MessageSquare, Settings, Eye } from "lucide-react";
+import { Copy, Code, Settings, Eye, BookOpen, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -27,6 +25,7 @@ export default function ChatbotPage() {
     is_enabled: true,
     collect_email: false,
     collect_name: false,
+    human_handoff_enabled: false,
   });
 
   // Sync local state with fetched settings
@@ -40,12 +39,17 @@ export default function ChatbotPage() {
         is_enabled: settings.is_enabled,
         collect_email: settings.collect_email,
         collect_name: settings.collect_name,
+        human_handoff_enabled: settings.human_handoff_enabled,
       });
     }
   }, [settings]);
 
   const handleSave = () => {
     updateSettings(localSettings);
+  };
+
+  const handleSettingsChange = (updates: Partial<typeof localSettings>) => {
+    setLocalSettings((s) => ({ ...s, ...updates }));
   };
 
   const embedCode = `<!-- SocialRep AI Chatbot Widget -->
@@ -106,6 +110,14 @@ export default function ChatbotPage() {
               <Settings className="h-4 w-4" />
               Settings
             </TabsTrigger>
+            <TabsTrigger value="knowledge" className="gap-2">
+              <BookOpen className="h-4 w-4" />
+              Knowledge Base
+            </TabsTrigger>
+            <TabsTrigger value="conversations" className="gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Conversations
+            </TabsTrigger>
             <TabsTrigger value="preview" className="gap-2">
               <Eye className="h-4 w-4" />
               Preview
@@ -118,99 +130,13 @@ export default function ChatbotPage() {
 
           <TabsContent value="settings" className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5" />
-                    Widget Configuration
-                  </CardTitle>
-                  <CardDescription>
-                    Customize how your chatbot appears on your website
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="enabled">Enable Chatbot</Label>
-                    <Switch
-                      id="enabled"
-                      checked={localSettings.is_enabled}
-                      onCheckedChange={(checked) =>
-                        setLocalSettings((s) => ({ ...s, is_enabled: checked }))
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Widget Title</Label>
-                    <Input
-                      id="title"
-                      value={localSettings.widget_title || settings?.widget_title || ""}
-                      onChange={(e) =>
-                        setLocalSettings((s) => ({ ...s, widget_title: e.target.value }))
-                      }
-                      placeholder="Chat with us"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="welcome">Welcome Message</Label>
-                    <Textarea
-                      id="welcome"
-                      value={localSettings.welcome_message || settings?.welcome_message || ""}
-                      onChange={(e) =>
-                        setLocalSettings((s) => ({ ...s, welcome_message: e.target.value }))
-                      }
-                      placeholder="Hi! How can I help you today?"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="color">Primary Color</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="color"
-                        type="color"
-                        value={localSettings.primary_color || settings?.primary_color || "#3b82f6"}
-                        onChange={(e) =>
-                          setLocalSettings((s) => ({ ...s, primary_color: e.target.value }))
-                        }
-                        className="w-16 h-10 p-1 cursor-pointer"
-                      />
-                      <Input
-                        value={localSettings.primary_color || settings?.primary_color || "#3b82f6"}
-                        onChange={(e) =>
-                          setLocalSettings((s) => ({ ...s, primary_color: e.target.value }))
-                        }
-                        placeholder="#3b82f6"
-                        className="flex-1"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="position">Widget Position</Label>
-                    <Select
-                      value={localSettings.position || settings?.position || "bottom-right"}
-                      onValueChange={(value: "bottom-right" | "bottom-left") =>
-                        setLocalSettings((s) => ({ ...s, position: value }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="bottom-right">Bottom Right</SelectItem>
-                        <SelectItem value="bottom-left">Bottom Left</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Button onClick={handleSave} disabled={saving} className="w-full">
-                    {saving ? "Saving..." : "Save Settings"}
-                  </Button>
-                </CardContent>
-              </Card>
+              <ChatbotSettingsCard
+                localSettings={localSettings}
+                settings={settings}
+                onSettingsChange={handleSettingsChange}
+                onSave={handleSave}
+                saving={saving}
+              />
 
               <Card>
                 <CardHeader>
@@ -226,12 +152,22 @@ export default function ChatbotPage() {
                       welcomeMessage={displaySettings.welcome_message}
                       primaryColor={displaySettings.primary_color}
                       position={displaySettings.position}
+                      collectName={localSettings.collect_name}
+                      collectEmail={localSettings.collect_email}
                       isPreview
                     />
                   </div>
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="knowledge">
+            <KnowledgeBaseTab />
+          </TabsContent>
+
+          <TabsContent value="conversations">
+            <ConversationsTab />
           </TabsContent>
 
           <TabsContent value="preview">
@@ -249,6 +185,8 @@ export default function ChatbotPage() {
                     welcomeMessage={displaySettings.welcome_message}
                     primaryColor={displaySettings.primary_color}
                     position={displaySettings.position}
+                    collectName={localSettings.collect_name}
+                    collectEmail={localSettings.collect_email}
                     isPreview
                   />
                 </div>
@@ -291,7 +229,7 @@ export default function ChatbotPage() {
                     <li>Copy the embed code above</li>
                     <li>Paste it into your website's HTML, before the closing &lt;/body&gt; tag</li>
                     <li>The chatbot widget will automatically appear on your website</li>
-                    <li>Messages will use your configured brand voice and settings</li>
+                    <li>Messages will use your configured brand voice and knowledge base</li>
                   </ol>
                 </div>
               </CardContent>
