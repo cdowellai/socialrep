@@ -148,8 +148,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [fetchSubscriptionData]);
 
   // Check for pending checkout after login (from pricing page signup flow)
+  // Wait until loading is complete to ensure auth session is fully established
   useEffect(() => {
     const handlePendingCheckout = async () => {
+      // Wait until user is authenticated AND initial data fetch is complete
       if (!user || loading) return;
 
       const pendingPlanId = localStorage.getItem("pending_checkout_plan");
@@ -161,12 +163,23 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem("pending_checkout_period");
 
         try {
+          // Small delay to ensure session is fully propagated
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
           const { data: { session } } = await supabase.auth.getSession();
-          if (!session) return;
+          if (!session?.access_token) {
+            console.error("No valid session for checkout");
+            return;
+          }
 
           const response = await supabase.functions.invoke("create-checkout-session", {
             body: { plan_id: pendingPlanId, billing_period: pendingPeriod },
           });
+
+          if (response.error) {
+            console.error("Checkout session error:", response.error);
+            return;
+          }
 
           if (response.data?.url) {
             window.location.href = response.data.url;
