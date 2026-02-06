@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, Mail } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useNavigate } from "react-router-dom";
@@ -159,7 +159,7 @@ export function PricingSection() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {displayPlans.map((plan, index) => (
               <div
                 key={index}
@@ -218,55 +218,6 @@ export function PricingSection() {
                 </Button>
               </div>
             ))}
-
-            {/* Enterprise Card */}
-            <div className="relative p-6 rounded-2xl bg-card border border-border flex flex-col">
-              <div className="mb-6">
-                <h3 className="font-semibold text-lg mb-2">Enterprise</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold">Custom</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  For large organizations
-                </p>
-              </div>
-
-              <ul className="space-y-3 mb-8 flex-1">
-                <li className="flex items-start gap-2 text-sm">
-                  <Check className="h-4 w-4 text-sentiment-positive mt-0.5 shrink-0" />
-                  <span>Everything in Agency</span>
-                </li>
-                <li className="flex items-start gap-2 text-sm">
-                  <Check className="h-4 w-4 text-sentiment-positive mt-0.5 shrink-0" />
-                  <span>Unlimited team seats</span>
-                </li>
-                <li className="flex items-start gap-2 text-sm">
-                  <Check className="h-4 w-4 text-sentiment-positive mt-0.5 shrink-0" />
-                  <span>Custom AI models</span>
-                </li>
-                <li className="flex items-start gap-2 text-sm">
-                  <Check className="h-4 w-4 text-sentiment-positive mt-0.5 shrink-0" />
-                  <span>Dedicated account manager</span>
-                </li>
-                <li className="flex items-start gap-2 text-sm">
-                  <Check className="h-4 w-4 text-sentiment-positive mt-0.5 shrink-0" />
-                  <span>SLA guarantee</span>
-                </li>
-                <li className="flex items-start gap-2 text-sm">
-                  <Check className="h-4 w-4 text-sentiment-positive mt-0.5 shrink-0" />
-                  <span>On-premise deployment</span>
-                </li>
-              </ul>
-
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => window.location.href = "mailto:sales@socialrep.ai"}
-              >
-                <Mail className="h-4 w-4 mr-2" />
-                Contact Sales
-              </Button>
-            </div>
           </div>
         </div>
       </section>
