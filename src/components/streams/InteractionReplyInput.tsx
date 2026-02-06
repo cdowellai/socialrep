@@ -15,6 +15,7 @@ interface InteractionReplyInputProps {
   platform: string;
   isConnected?: boolean;
   sending?: boolean;
+  autoFocus?: boolean;
   onSubmit: (content: string) => void;
   className?: string;
 }
@@ -23,6 +24,7 @@ export function InteractionReplyInput({
   platform,
   isConnected = false,
   sending = false,
+  autoFocus = false,
   onSubmit,
   className,
 }: InteractionReplyInputProps) {
@@ -31,6 +33,9 @@ export function InteractionReplyInput({
   const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const platformDisplayName = platform.charAt(0).toUpperCase() + platform.slice(1);
+  const isDisabled = !isConnected;
+
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
@@ -38,6 +43,17 @@ export function InteractionReplyInput({
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
     }
   }, [content]);
+
+  // Auto-focus when requested
+  useEffect(() => {
+    if (autoFocus && textareaRef.current && !isDisabled) {
+      // Small delay to ensure the collapsible has finished animating
+      const timer = setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [autoFocus, isDisabled]);
 
   const handleSubmit = () => {
     if (content.trim() && !sending) {
@@ -52,9 +68,6 @@ export function InteractionReplyInput({
       handleSubmit();
     }
   };
-
-  const platformDisplayName = platform.charAt(0).toUpperCase() + platform.slice(1);
-  const isDisabled = !isConnected;
 
   return (
     <div

@@ -30,6 +30,8 @@ import { cn } from "@/lib/utils";
 import { StreamCard } from "./StreamCard";
 import { StreamFilterBar, type StreamFilters } from "./StreamFilterBar";
 import { StreamBreadcrumb } from "./StreamBreadcrumb";
+import { StreamListView } from "./StreamListView";
+import { type StreamViewMode } from "./StreamViewToggle";
 import { useStreamInteractions } from "@/hooks/useStreamInteractions";
 import { useStreams, type Stream } from "@/hooks/useStreams";
 import type { Tables } from "@/integrations/supabase/types";
@@ -62,7 +64,9 @@ export function SingleStreamView({
     status: "all",
     minUrgency: 0,
     showAiDraftsOnly: false,
+    interactionType: null,
   });
+  const [viewMode, setViewMode] = useState<StreamViewMode>("grid");
   const [refreshing, setRefreshing] = useState(false);
 
   // Keyboard navigation - Escape to go back
@@ -109,6 +113,11 @@ export function SingleStreamView({
 
       // AI drafts filter
       if (filters.showAiDraftsOnly && interaction.status !== "pending") {
+        return false;
+      }
+
+      // Interaction type filter
+      if (filters.interactionType && interaction.interaction_type !== filters.interactionType) {
         return false;
       }
 
@@ -297,9 +306,12 @@ export function SingleStreamView({
           stream={stream}
           filters={filters}
           onFiltersChange={setFilters}
+          interactions={interactions}
           interactionCount={filteredInteractions.length}
           urgentCount={urgentCount}
           onToggleAiPrioritization={handleToggleAiPrioritization}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
       </div>
 
@@ -330,11 +342,11 @@ export function SingleStreamView({
               <LayoutGrid className="h-12 w-12 text-muted-foreground/50 mb-4" />
               <h3 className="text-lg font-semibold mb-2">No interactions found</h3>
               <p className="text-muted-foreground mb-4 max-w-md">
-                {filters.search || filters.sentiment !== "all" || filters.status !== "all"
+                {filters.search || filters.sentiment !== "all" || filters.status !== "all" || filters.interactionType
                   ? "Try adjusting your filters to see more results."
                   : "New activity matching this stream's filters will appear here."}
               </p>
-              {(filters.search || filters.sentiment !== "all" || filters.status !== "all") && (
+              {(filters.search || filters.sentiment !== "all" || filters.status !== "all" || filters.interactionType) && (
                 <Button
                   variant="outline"
                   onClick={() =>
@@ -344,6 +356,7 @@ export function SingleStreamView({
                       status: "all",
                       minUrgency: 0,
                       showAiDraftsOnly: false,
+                      interactionType: null,
                     })
                   }
                 >
@@ -351,6 +364,11 @@ export function SingleStreamView({
                 </Button>
               )}
             </div>
+          ) : viewMode === "list" ? (
+            <StreamListView
+              interactions={sortedInteractions}
+              onInteractionClick={onInteractionClick}
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
               {sortedInteractions.map((interaction) => (
