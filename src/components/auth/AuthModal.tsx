@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,7 @@ export function AuthModal({ isOpen, onClose, defaultTab = "login" }: AuthModalPr
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, resetPassword } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +34,7 @@ export function AuthModal({ isOpen, onClose, defaultTab = "login" }: AuthModalPr
         if (error) throw error;
         toast({ title: "Welcome back!", description: "Successfully signed in." });
         onClose();
+        navigate("/dashboard");
       } else if (tab === "signup") {
         const { error } = await signUp(email, password, fullName);
         if (error) throw error;
