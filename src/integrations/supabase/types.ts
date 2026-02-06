@@ -636,6 +636,84 @@ export type Database = {
         }
         Relationships: []
       }
+      review_links: {
+        Row: {
+          click_count: number
+          created_at: string
+          id: string
+          platform: string
+          review_url: string
+          short_code: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          click_count?: number
+          created_at?: string
+          id?: string
+          platform: string
+          review_url: string
+          short_code: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          click_count?: number
+          created_at?: string
+          id?: string
+          platform?: string
+          review_url?: string
+          short_code?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      review_requests: {
+        Row: {
+          clicked_at: string | null
+          created_at: string
+          id: string
+          message_template: string
+          opened_at: string | null
+          platform: string
+          recipient_email: string | null
+          recipient_phone: string | null
+          sent_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clicked_at?: string | null
+          created_at?: string
+          id?: string
+          message_template: string
+          opened_at?: string | null
+          platform?: string
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clicked_at?: string | null
+          created_at?: string
+          id?: string
+          message_template?: string
+          opened_at?: string | null
+          platform?: string
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           content: string | null
@@ -647,6 +725,8 @@ export type Database = {
           rating: number | null
           responded_at: string | null
           response: string | null
+          response_by: string | null
+          response_type: string | null
           review_url: string | null
           reviewer_avatar: string | null
           reviewer_name: string | null
@@ -663,6 +743,8 @@ export type Database = {
           rating?: number | null
           responded_at?: string | null
           response?: string | null
+          response_by?: string | null
+          response_type?: string | null
           review_url?: string | null
           reviewer_avatar?: string | null
           reviewer_name?: string | null
@@ -679,6 +761,8 @@ export type Database = {
           rating?: number | null
           responded_at?: string | null
           response?: string | null
+          response_by?: string | null
+          response_type?: string | null
           review_url?: string | null
           reviewer_avatar?: string | null
           reviewer_name?: string | null
