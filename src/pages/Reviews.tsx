@@ -1,75 +1,35 @@
+import { useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Star, TrendingUp, TrendingDown, ArrowUpRight, ExternalLink, Sparkles } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Star,
+  TrendingUp,
+  TrendingDown,
+  ArrowUpRight,
+  ExternalLink,
+  Sparkles,
+  Link2,
+  Mail,
+} from "lucide-react";
+import { ReviewFilters } from "@/components/reviews/ReviewFilters";
+import { AIRespondAllModal } from "@/components/reviews/AIRespondAllModal";
+import { ReviewRequestModal } from "@/components/reviews/ReviewRequestModal";
+import { ReviewLinkGenerator } from "@/components/reviews/ReviewLinkGenerator";
+import { ReviewResponseThread } from "@/components/reviews/ReviewResponseThread";
+import { useReviews, type ReviewFilters as Filters } from "@/hooks/useReviews";
 
-const reviewStats = {
-  averageRating: 4.7,
-  totalReviews: 1284,
-  ratingDistribution: [
-    { stars: 5, count: 856, percentage: 67 },
-    { stars: 4, count: 257, percentage: 20 },
-    { stars: 3, count: 95, percentage: 7 },
-    { stars: 2, count: 51, percentage: 4 },
-    { stars: 1, count: 25, percentage: 2 },
-  ],
-  platforms: [
-    { name: "Google", rating: 4.8, count: 543, trend: "up" },
-    { name: "Yelp", rating: 4.5, count: 312, trend: "up" },
-    { name: "Facebook", rating: 4.7, count: 245, trend: "down" },
-    { name: "TripAdvisor", rating: 4.6, count: 184, trend: "up" },
-  ],
-};
-
-const recentReviews = [
-  {
-    id: 1,
-    platform: "google",
-    author: "Alex Thompson",
-    rating: 5,
-    content: "Absolutely fantastic service! The team went above and beyond to help me. Highly recommend to anyone looking for quality and professionalism.",
-    date: "2 hours ago",
-    responded: true,
-  },
-  {
-    id: 2,
-    platform: "yelp",
-    author: "Maria Garcia",
-    rating: 4,
-    content: "Good experience overall. The product quality is great, but shipping took a bit longer than expected. Will definitely order again though!",
-    date: "1 day ago",
-    responded: false,
-  },
-  {
-    id: 3,
-    platform: "facebook",
-    author: "David Kim",
-    rating: 3,
-    content: "Service was okay. Had some communication issues but they resolved it eventually. Room for improvement in customer support response times.",
-    date: "2 days ago",
-    responded: true,
-  },
-  {
-    id: 4,
-    platform: "google",
-    author: "Jennifer Lee",
-    rating: 5,
-    content: "Best purchase I've made! The quality exceeded my expectations and the customer service team was incredibly helpful and responsive.",
-    date: "3 days ago",
-    responded: false,
-  },
-];
-
-const renderStars = (rating: number) => {
+const renderStars = (rating: number | null) => {
   return (
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
           key={star}
           className={`h-4 w-4 ${
-            star <= rating
+            star <= (rating || 0)
               ? "fill-sentiment-neutral text-sentiment-neutral"
               : "text-muted-foreground"
           }`}
@@ -80,20 +40,146 @@ const renderStars = (rating: number) => {
 };
 
 export default function ReviewsPage() {
+  const [filters, setFilters] = useState<Filters>({
+    platform: "all",
+    rating: "all",
+    status: "all",
+  });
+
+  const { reviews, stats, loading, getPendingReviews, respondToReviews } = useReviews(filters);
+
+  const [showAIRespondModal, setShowAIRespondModal] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showLinkGenerator, setShowLinkGenerator] = useState(false);
+
+  const handleSendApprovedResponses = async (
+    responses: { reviewId: string; response: string }[]
+  ) => {
+    await respondToReviews(responses);
+  };
+
+  // Use database data or fallback to mock for demo
+  const displayStats = stats.totalReviews > 0 ? stats : {
+    averageRating: 4.7,
+    totalReviews: 1284,
+    responseRate: 94,
+    pendingCount: 12,
+    ratingDistribution: [
+      { stars: 5, count: 856, percentage: 67 },
+      { stars: 4, count: 257, percentage: 20 },
+      { stars: 3, count: 95, percentage: 7 },
+      { stars: 2, count: 51, percentage: 4 },
+      { stars: 1, count: 25, percentage: 2 },
+    ],
+    platforms: [
+      { name: "Google", rating: 4.8, count: 543, trend: "up" },
+      { name: "Yelp", rating: 4.5, count: 312, trend: "up" },
+      { name: "Facebook", rating: 4.7, count: 245, trend: "down" },
+      { name: "TripAdvisor", rating: 4.6, count: 184, trend: "up" },
+    ],
+  };
+
+  // Use database reviews or mock for demo
+  const displayReviews = reviews.length > 0 ? reviews : [
+    {
+      id: "1",
+      user_id: "",
+      platform: "google" as const,
+      reviewer_name: "Alex Thompson",
+      reviewer_avatar: null,
+      rating: 5,
+      content: "Absolutely fantastic service! The team went above and beyond to help me. Highly recommend to anyone looking for quality and professionalism.",
+      response: null,
+      responded_at: null,
+      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date().toISOString(),
+      external_id: null,
+      review_url: null,
+      is_featured: false,
+    },
+    {
+      id: "2",
+      user_id: "",
+      platform: "yelp" as const,
+      reviewer_name: "Maria Garcia",
+      reviewer_avatar: null,
+      rating: 4,
+      content: "Good experience overall. The product quality is great, but shipping took a bit longer than expected. Will definitely order again though!",
+      response: "Thank you so much for your kind words, Maria! We're thrilled you enjoyed our product quality. We're working on improving our shipping times and appreciate your patience. Looking forward to serving you again!",
+      responded_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+      created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date().toISOString(),
+      external_id: null,
+      review_url: null,
+      is_featured: false,
+    },
+    {
+      id: "3",
+      user_id: "",
+      platform: "facebook" as const,
+      reviewer_name: "David Kim",
+      reviewer_avatar: null,
+      rating: 3,
+      content: "Service was okay. Had some communication issues but they resolved it eventually. Room for improvement in customer support response times.",
+      response: "We sincerely apologize for the communication issues you experienced, David. Your feedback is invaluable, and we're actively working to improve our response times. Please reach out directly if there's anything more we can do.",
+      responded_at: new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString(),
+      created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date().toISOString(),
+      external_id: null,
+      review_url: null,
+      is_featured: false,
+    },
+    {
+      id: "4",
+      user_id: "",
+      platform: "google" as const,
+      reviewer_name: "Jennifer Lee",
+      reviewer_avatar: null,
+      rating: 5,
+      content: "Best purchase I've made! The quality exceeded my expectations and the customer service team was incredibly helpful and responsive.",
+      response: null,
+      responded_at: null,
+      created_at: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date().toISOString(),
+      external_id: null,
+      review_url: null,
+      is_featured: false,
+    },
+  ];
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(hours / 24);
+
+    if (hours < 1) return "Just now";
+    if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+    return `${days} day${days > 1 ? "s" : ""} ago`;
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold">Review Management</h2>
             <p className="text-muted-foreground">
               Monitor and respond to reviews across all platforms
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline">Request Reviews</Button>
-            <Button variant="hero">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setShowLinkGenerator(true)}>
+              <Link2 className="h-4 w-4 mr-2" />
+              Get Review Link
+            </Button>
+            <Button variant="outline" onClick={() => setShowRequestModal(true)}>
+              <Mail className="h-4 w-4 mr-2" />
+              Request Reviews
+            </Button>
+            <Button variant="hero" onClick={() => setShowAIRespondModal(true)}>
               <Sparkles className="h-4 w-4 mr-2" />
               AI Respond All
             </Button>
@@ -115,9 +201,9 @@ export default function ReviewsPage() {
                   <ArrowUpRight className="h-4 w-4" />
                 </div>
               </div>
-              <div className="text-4xl font-bold">{reviewStats.averageRating}</div>
+              <div className="text-4xl font-bold">{displayStats.averageRating}</div>
               <div className="flex gap-0.5 mt-2">
-                {renderStars(Math.round(reviewStats.averageRating))}
+                {renderStars(Math.round(displayStats.averageRating))}
               </div>
             </CardContent>
           </Card>
@@ -131,7 +217,7 @@ export default function ReviewsPage() {
                   +48 this month
                 </div>
               </div>
-              <div className="text-4xl font-bold">{reviewStats.totalReviews.toLocaleString()}</div>
+              <div className="text-4xl font-bold">{displayStats.totalReviews.toLocaleString()}</div>
             </CardContent>
           </Card>
 
@@ -145,8 +231,8 @@ export default function ReviewsPage() {
                   <ArrowUpRight className="h-4 w-4" />
                 </div>
               </div>
-              <div className="text-4xl font-bold">94%</div>
-              <Progress value={94} className="mt-2" />
+              <div className="text-4xl font-bold">{displayStats.responseRate}%</div>
+              <Progress value={displayStats.responseRate} className="mt-2" />
             </CardContent>
           </Card>
 
@@ -156,8 +242,13 @@ export default function ReviewsPage() {
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm text-muted-foreground">Pending Responses</span>
               </div>
-              <div className="text-4xl font-bold text-sentiment-neutral">12</div>
-              <Button variant="outline" size="sm" className="mt-2">
+              <div className="text-4xl font-bold text-sentiment-neutral">{displayStats.pendingCount}</div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => setFilters({ ...filters, status: "pending" })}
+              >
                 View All
               </Button>
             </CardContent>
@@ -173,8 +264,12 @@ export default function ReviewsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {reviewStats.ratingDistribution.map((item) => (
-                  <div key={item.stars} className="flex items-center gap-4">
+                {displayStats.ratingDistribution.map((item) => (
+                  <button
+                    key={item.stars}
+                    className="w-full flex items-center gap-4 hover:bg-muted/50 rounded-lg p-1 transition-colors"
+                    onClick={() => setFilters({ ...filters, rating: item.stars.toString() })}
+                  >
                     <div className="flex items-center gap-1 w-16">
                       <span className="text-sm font-medium">{item.stars}</span>
                       <Star className="h-4 w-4 fill-sentiment-neutral text-sentiment-neutral" />
@@ -185,7 +280,7 @@ export default function ReviewsPage() {
                     <span className="text-sm text-muted-foreground w-12 text-right">
                       {item.count}
                     </span>
-                  </div>
+                  </button>
                 ))}
               </div>
             </CardContent>
@@ -198,16 +293,17 @@ export default function ReviewsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {reviewStats.platforms.map((platform) => (
-                  <div
+                {displayStats.platforms.map((platform) => (
+                  <button
                     key={platform.name}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                    className="w-full flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                    onClick={() => setFilters({ ...filters, platform: platform.name.toLowerCase() })}
                   >
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-lg bg-background flex items-center justify-center border">
                         <span className="text-sm font-bold">{platform.name[0]}</span>
                       </div>
-                      <div>
+                      <div className="text-left">
                         <p className="font-medium">{platform.name}</p>
                         <p className="text-sm text-muted-foreground">
                           {platform.count} reviews
@@ -227,79 +323,146 @@ export default function ReviewsPage() {
                         <TrendingDown className="h-4 w-4 text-sentiment-negative" />
                       )}
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* Filter Bar */}
+        <ReviewFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+          pendingCount={displayStats.pendingCount}
+        />
+
         {/* Recent Reviews */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Recent Reviews</CardTitle>
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFilters({ platform: "all", rating: "all", status: "all" })}
+            >
               View All Reviews
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentReviews.map((review) => (
-                <div
-                  key={review.id}
-                  className="p-4 rounded-lg border border-border hover:border-primary/20 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-3">
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-4 rounded-lg border space-y-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-semibold">
-                        {review.author[0]}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{review.author}</p>
-                          <Badge variant="secondary" className="text-xs capitalize">
-                            {review.platform}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          {renderStars(review.rating)}
-                          <span className="text-xs text-muted-foreground">{review.date}</span>
-                        </div>
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24" />
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {review.responded ? (
-                        <Badge className="bg-sentiment-positive/10 text-sentiment-positive">
-                          Responded
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-sentiment-neutral/10 text-sentiment-neutral">
-                          Pending
-                        </Badge>
-                      )}
-                      <Button variant="ghost" size="icon">
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Skeleton className="h-16 w-full" />
                   </div>
-                  <p className="text-sm text-muted-foreground">{review.content}</p>
-                  {!review.responded && (
-                    <div className="mt-3 flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Generate Response
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        View Full Review
-                      </Button>
+                ))}
+              </div>
+            ) : displayReviews.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                No reviews found matching your filters.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {displayReviews.map((review) => (
+                  <div
+                    key={review.id}
+                    className="p-4 rounded-lg border border-border hover:border-primary/20 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-semibold">
+                          {review.reviewer_name?.[0] || "?"}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{review.reviewer_name || "Anonymous"}</p>
+                            <Badge variant="secondary" className="text-xs capitalize">
+                              {review.platform}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            {renderStars(review.rating)}
+                            <span className="text-xs text-muted-foreground">
+                              {formatDate(review.created_at)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {review.response ? (
+                          <Badge className="bg-sentiment-positive/10 text-sentiment-positive">
+                            Responded
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-sentiment-neutral/10 text-sentiment-neutral">
+                            Pending
+                          </Badge>
+                        )}
+                        {review.review_url && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => window.open(review.review_url!, "_blank")}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                    <p className="text-sm text-muted-foreground">{review.content}</p>
+
+                    {/* Response Thread */}
+                    <ReviewResponseThread
+                      response={review.response}
+                      respondedAt={review.responded_at}
+                      responseType={(review as any).response_type}
+                    />
+
+                    {!review.response && (
+                      <div className="mt-3 flex gap-2">
+                        <Button variant="outline" size="sm">
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generate Response
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          View Full Review
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Modals */}
+      <AIRespondAllModal
+        isOpen={showAIRespondModal}
+        onClose={() => setShowAIRespondModal(false)}
+        pendingReviews={getPendingReviews()}
+        onSendApproved={handleSendApprovedResponses}
+      />
+
+      <ReviewRequestModal
+        isOpen={showRequestModal}
+        onClose={() => setShowRequestModal(false)}
+        businessName="Your Business"
+      />
+
+      <ReviewLinkGenerator
+        isOpen={showLinkGenerator}
+        onClose={() => setShowLinkGenerator(false)}
+      />
     </DashboardLayout>
   );
 }
