@@ -149,8 +149,11 @@ export type Database = {
         Row: {
           created_at: string
           ended_at: string | null
+          handed_off_at: string | null
           id: string
+          interaction_id: string | null
           metadata: Json | null
+          resolution_type: string | null
           started_at: string
           status: string
           user_id: string
@@ -161,8 +164,11 @@ export type Database = {
         Insert: {
           created_at?: string
           ended_at?: string | null
+          handed_off_at?: string | null
           id?: string
+          interaction_id?: string | null
           metadata?: Json | null
+          resolution_type?: string | null
           started_at?: string
           status?: string
           user_id: string
@@ -173,14 +179,67 @@ export type Database = {
         Update: {
           created_at?: string
           ended_at?: string | null
+          handed_off_at?: string | null
           id?: string
+          interaction_id?: string | null
           metadata?: Json | null
+          resolution_type?: string | null
           started_at?: string
           status?: string
           user_id?: string
           visitor_email?: string | null
           visitor_id?: string
           visitor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_conversations_interaction_id_fkey"
+            columns: ["interaction_id"]
+            isOneToOne: false
+            referencedRelation: "interactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatbot_knowledge_base: {
+        Row: {
+          answer: string | null
+          content: string | null
+          created_at: string
+          entry_type: string
+          id: string
+          is_active: boolean
+          question: string | null
+          source_filename: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answer?: string | null
+          content?: string | null
+          created_at?: string
+          entry_type: string
+          id?: string
+          is_active?: boolean
+          question?: string | null
+          source_filename?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answer?: string | null
+          content?: string | null
+          created_at?: string
+          entry_type?: string
+          id?: string
+          is_active?: boolean
+          question?: string | null
+          source_filename?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -225,6 +284,8 @@ export type Database = {
           collect_email: boolean
           collect_name: boolean
           created_at: string
+          handoff_keywords: string[] | null
+          human_handoff_enabled: boolean
           id: string
           is_enabled: boolean
           position: string
@@ -239,6 +300,8 @@ export type Database = {
           collect_email?: boolean
           collect_name?: boolean
           created_at?: string
+          handoff_keywords?: string[] | null
+          human_handoff_enabled?: boolean
           id?: string
           is_enabled?: boolean
           position?: string
@@ -253,6 +316,8 @@ export type Database = {
           collect_email?: boolean
           collect_name?: boolean
           created_at?: string
+          handoff_keywords?: string[] | null
+          human_handoff_enabled?: boolean
           id?: string
           is_enabled?: boolean
           position?: string

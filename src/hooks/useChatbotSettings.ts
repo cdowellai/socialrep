@@ -14,6 +14,8 @@ interface ChatbotSettings {
   collect_email: boolean;
   collect_name: boolean;
   auto_reply_delay_ms: number;
+  human_handoff_enabled: boolean;
+  handoff_keywords: string[] | null;
 }
 
 const defaultSettings: Omit<ChatbotSettings, "id" | "user_id"> = {
@@ -25,6 +27,8 @@ const defaultSettings: Omit<ChatbotSettings, "id" | "user_id"> = {
   collect_email: false,
   collect_name: false,
   auto_reply_delay_ms: 1000,
+  human_handoff_enabled: false,
+  handoff_keywords: ["speak to human", "talk to agent", "real person", "customer service", "speak to someone"],
 };
 
 export function useChatbotSettings() {

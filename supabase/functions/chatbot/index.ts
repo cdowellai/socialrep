@@ -20,6 +20,18 @@ interface ChatRequest {
   visitorEmail?: string;
 }
 
+const DEFAULT_HANDOFF_KEYWORDS = [
+  "speak to human",
+  "talk to agent",
+  "real person",
+  "customer service",
+  "speak to someone",
+  "talk to a human",
+  "human agent",
+  "live agent",
+  "representative",
+];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -64,6 +76,15 @@ serve(async (req) => {
         throw new Error("Failed to create conversation");
       }
       activeConversationId = newConv.id;
+    } else if (visitorName || visitorEmail) {
+      // Update existing conversation with visitor info
+      await supabase
+        .from("chatbot_conversations")
+        .update({
+          visitor_name: visitorName,
+          visitor_email: visitorEmail,
+        })
+        .eq("id", activeConversationId);
     }
 
     // Get chatbot settings for this user
@@ -83,8 +104,50 @@ serve(async (req) => {
     const brandVoice = profile?.brand_voice || "professional and friendly";
     const companyName = profile?.company_name || "our company";
 
-    // Store the latest user message
+    // Get knowledge base content
+    const { data: knowledgeBase } = await supabase
+      .from("chatbot_knowledge_base")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("is_active", true);
+
+    // Build knowledge base context
+    let knowledgeContext = "";
+    if (knowledgeBase && knowledgeBase.length > 0) {
+      const faqContent = knowledgeBase
+        .filter((k) => k.entry_type === "faq")
+        .map((k) => `${k.title}: ${k.content}`)
+        .join("\n\n");
+
+      const qaContent = knowledgeBase
+        .filter((k) => k.entry_type === "qa_pair")
+        .map((k) => `Q: ${k.question}\nA: ${k.answer}`)
+        .join("\n\n");
+
+      const docContent = knowledgeBase
+        .filter((k) => k.entry_type === "document")
+        .map((k) => k.content)
+        .join("\n\n");
+
+      if (faqContent) knowledgeContext += `\n\n## FAQ Information:\n${faqContent}`;
+      if (qaContent) knowledgeContext += `\n\n## Questions & Answers:\n${qaContent}`;
+      if (docContent) knowledgeContext += `\n\n## Additional Information:\n${docContent}`;
+    }
+
+    // Check for human handoff triggers
     const lastUserMessage = messages[messages.length - 1];
+    const handoffEnabled = settings?.human_handoff_enabled ?? false;
+    const handoffKeywords = settings?.handoff_keywords || DEFAULT_HANDOFF_KEYWORDS;
+    
+    let shouldHandoff = false;
+    if (handoffEnabled && lastUserMessage?.role === "user") {
+      const lowerContent = lastUserMessage.content.toLowerCase();
+      shouldHandoff = handoffKeywords.some((keyword: string) => 
+        lowerContent.includes(keyword.toLowerCase())
+      );
+    }
+
+    // Store the latest user message
     if (lastUserMessage?.role === "user") {
       await supabase.from("chatbot_messages").insert({
         conversation_id: activeConversationId,
@@ -93,19 +156,97 @@ serve(async (req) => {
       });
     }
 
-    // Build system prompt
+    // Handle human handoff
+    if (shouldHandoff) {
+      // Get all conversation messages for the transcript
+      const { data: allMessages } = await supabase
+        .from("chatbot_messages")
+        .select("role, content, created_at")
+        .eq("conversation_id", activeConversationId)
+        .order("created_at", { ascending: true });
+
+      // Build transcript
+      const transcript = allMessages
+        ?.map((m) => `[${m.role.toUpperCase()}]: ${m.content}`)
+        .join("\n") || lastUserMessage.content;
+
+      // Create interaction in inbox
+      const { data: interaction, error: interactionError } = await supabase
+        .from("interactions")
+        .insert({
+          user_id: userId,
+          platform: "chatbot",
+          interaction_type: "message",
+          author_name: visitorName || "Website Visitor",
+          author_handle: visitorEmail || visitorId,
+          content: `Chatbot handoff requested.\n\nVisitor: ${visitorName || "Anonymous"}\nEmail: ${visitorEmail || "Not provided"}\n\n--- Chat Transcript ---\n${transcript}`,
+          sentiment: "neutral",
+          urgency_score: 8,
+          status: "pending",
+        })
+        .select("id")
+        .single();
+
+      if (interactionError) {
+        console.error("Error creating interaction for handoff:", interactionError);
+      }
+
+      // Update conversation with handoff info
+      await supabase
+        .from("chatbot_conversations")
+        .update({
+          resolution_type: "human",
+          handed_off_at: new Date().toISOString(),
+          interaction_id: interaction?.id,
+          status: "handed_off",
+        })
+        .eq("id", activeConversationId);
+
+      // Store handoff message
+      const handoffMessage = "I've connected you with our team — they'll respond shortly. A team member will reach out to you via your provided contact information or you can check back here.";
+      
+      await supabase.from("chatbot_messages").insert({
+        conversation_id: activeConversationId,
+        role: "assistant",
+        content: handoffMessage,
+      });
+
+      // Return non-streaming response for handoff
+      const handoffResponse = {
+        choices: [{
+          delta: { content: handoffMessage },
+          finish_reason: "stop"
+        }]
+      };
+
+      return new Response(
+        `data: ${JSON.stringify(handoffResponse)}\n\ndata: [DONE]\n\n`,
+        {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "text/event-stream",
+            "X-Conversation-Id": activeConversationId || "",
+            "X-Human-Handoff": "true",
+          },
+        }
+      );
+    }
+
+    // Build system prompt with knowledge base
     const systemPrompt = `You are a helpful AI customer support assistant for ${companyName}. 
 Your communication style is: ${brandVoice}
 
 Guidelines:
 - Be helpful, concise, and friendly
 - Answer questions about products, services, and general inquiries
-- If you don't know something, say so and offer to connect them with a human
+- If you don't know something specific, offer to connect them with a human by saying "Would you like me to connect you with our team?"
 - Keep responses brief (2-4 sentences) unless more detail is needed
 - Be conversational and personable
 - If they ask about pricing or want to make a purchase, encourage them to get in touch with the team
+- Use the knowledge base information below to provide accurate answers
 
-Welcome message: ${settings?.welcome_message || "Hi! How can I help you today?"}`;
+Welcome message: ${settings?.welcome_message || "Hi! How can I help you today?"}
+${knowledgeContext}`;
 
     const aiMessages: ChatMessage[] = [
       { role: "system", content: systemPrompt },
@@ -174,6 +315,13 @@ Welcome message: ${settings?.welcome_message || "Hi! How can I help you today?"}
             role: "assistant",
             content: fullResponse,
           });
+
+          // Update conversation resolution type to bot if still pending
+          await supabase
+            .from("chatbot_conversations")
+            .update({ resolution_type: "bot" })
+            .eq("id", activeConversationId)
+            .eq("resolution_type", "pending");
         }
       },
     });
@@ -185,6 +333,7 @@ Welcome message: ${settings?.welcome_message || "Hi! How can I help you today?"}
         ...corsHeaders,
         "Content-Type": "text/event-stream",
         "X-Conversation-Id": activeConversationId || "",
+        "X-Human-Handoff": "false",
       },
     });
   } catch (error) {

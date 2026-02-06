@@ -7,6 +7,7 @@ import { MessageSquare, X, Send, Loader2, Bot, User } from "lucide-react";
 import { useChatbot } from "@/hooks/useChatbot";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { PreChatForm } from "./PreChatForm";
 
 interface ChatbotWidgetProps {
   title?: string;
@@ -14,6 +15,8 @@ interface ChatbotWidgetProps {
   position?: "bottom-right" | "bottom-left";
   primaryColor?: string;
   isPreview?: boolean;
+  collectName?: boolean;
+  collectEmail?: boolean;
 }
 
 export function ChatbotWidget({
@@ -22,14 +25,24 @@ export function ChatbotWidget({
   position = "bottom-right",
   primaryColor,
   isPreview = false,
+  collectName = false,
+  collectEmail = false,
 }: ChatbotWidgetProps) {
   const [isOpen, setIsOpen] = useState(isPreview);
   const [inputValue, setInputValue] = useState("");
-  const { messages, isLoading, sendMessage, clearChat } = useChatbot({
+  const [visitorInfo, setVisitorInfo] = useState<{ name?: string; email?: string } | null>(null);
+  const [showPreChatForm, setShowPreChatForm] = useState(collectName || collectEmail);
+  
+  const { messages, isLoading, sendMessage, clearChat, setVisitorData } = useChatbot({
     onError: (error) => console.error("Chat error:", error),
   });
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Reset pre-chat form when settings change
+  useEffect(() => {
+    setShowPreChatForm(collectName || collectEmail);
+  }, [collectName, collectEmail]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -40,10 +53,10 @@ export function ChatbotWidget({
 
   // Focus input when chat opens
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (isOpen && inputRef.current && !showPreChatForm) {
       inputRef.current.focus();
     }
-  }, [isOpen]);
+  }, [isOpen, showPreChatForm]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,11 +66,18 @@ export function ChatbotWidget({
     }
   };
 
+  const handlePreChatSubmit = (data: { name?: string; email?: string }) => {
+    setVisitorInfo(data);
+    setShowPreChatForm(false);
+    setVisitorData(data);
+  };
+
   const displayMessages = messages.length === 0
     ? [{ id: "welcome", role: "assistant" as const, content: welcomeMessage, timestamp: new Date() }]
     : messages;
 
   const positionClasses = position === "bottom-right" ? "right-4" : "left-4";
+  const needsPreChatForm = showPreChatForm && !visitorInfo && (collectName || collectEmail);
 
   return (
     <div className={cn("fixed bottom-4 z-50", positionClasses, isPreview && "relative bottom-0 right-0 left-0")}>
@@ -92,80 +112,93 @@ export function ChatbotWidget({
             )}
           </CardHeader>
 
-          <CardContent className="p-0">
-            <ScrollArea className="h-[350px] p-4" ref={scrollRef}>
-              <div className="space-y-4">
-                {displayMessages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={cn(
-                      "flex gap-2",
-                      message.role === "user" ? "justify-end" : "justify-start"
-                    )}
-                  >
-                    {message.role === "assistant" && (
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                        <Bot className="h-4 w-4 text-primary" />
-                      </div>
-                    )}
-                    <div
-                      className={cn(
-                        "max-w-[75%] rounded-lg px-3 py-2 text-sm",
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      )}
-                      style={message.role === "user" && primaryColor ? { backgroundColor: primaryColor } : undefined}
-                    >
-                      {message.role === "assistant" ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <ReactMarkdown>{message.content || "..."}</ReactMarkdown>
-                        </div>
-                      ) : (
-                        message.content
-                      )}
-                    </div>
-                    {message.role === "user" && (
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
-                        <User className="h-4 w-4 text-primary-foreground" />
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {isLoading && messages[messages.length - 1]?.role === "user" && (
-                  <div className="flex gap-2 justify-start">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                      <Bot className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="bg-muted rounded-lg px-3 py-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-          </CardContent>
-
-          <CardFooter className="p-3 border-t">
-            <form onSubmit={handleSubmit} className="flex w-full gap-2">
-              <Input
-                ref={inputRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Type a message..."
-                disabled={isLoading}
-                className="flex-1"
+          {needsPreChatForm ? (
+            <CardContent className="p-0">
+              <PreChatForm
+                collectName={collectName}
+                collectEmail={collectEmail}
+                onSubmit={handlePreChatSubmit}
+                primaryColor={primaryColor}
               />
-              <Button
-                type="submit"
-                size="icon"
-                disabled={!inputValue.trim() || isLoading}
-                style={primaryColor ? { backgroundColor: primaryColor } : undefined}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </form>
-          </CardFooter>
+            </CardContent>
+          ) : (
+            <>
+              <CardContent className="p-0">
+                <ScrollArea className="h-[350px] p-4" ref={scrollRef}>
+                  <div className="space-y-4">
+                    {displayMessages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={cn(
+                          "flex gap-2",
+                          message.role === "user" ? "justify-end" : "justify-start"
+                        )}
+                      >
+                        {message.role === "assistant" && (
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                            <Bot className="h-4 w-4 text-primary" />
+                          </div>
+                        )}
+                        <div
+                          className={cn(
+                            "max-w-[75%] rounded-lg px-3 py-2 text-sm",
+                            message.role === "user"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted"
+                          )}
+                          style={message.role === "user" && primaryColor ? { backgroundColor: primaryColor } : undefined}
+                        >
+                          {message.role === "assistant" ? (
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                              <ReactMarkdown>{message.content || "..."}</ReactMarkdown>
+                            </div>
+                          ) : (
+                            message.content
+                          )}
+                        </div>
+                        {message.role === "user" && (
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
+                            <User className="h-4 w-4 text-primary-foreground" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {isLoading && messages[messages.length - 1]?.role === "user" && (
+                      <div className="flex gap-2 justify-start">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                          <Bot className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="bg-muted rounded-lg px-3 py-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+
+              <CardFooter className="p-3 border-t">
+                <form onSubmit={handleSubmit} className="flex w-full gap-2">
+                  <Input
+                    ref={inputRef}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="Type a message..."
+                    disabled={isLoading}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="submit"
+                    size="icon"
+                    disabled={!inputValue.trim() || isLoading}
+                    style={primaryColor ? { backgroundColor: primaryColor } : undefined}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </form>
+              </CardFooter>
+            </>
+          )}
         </Card>
       )}
     </div>
