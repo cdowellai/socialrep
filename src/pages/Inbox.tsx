@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Tooltip,
   TooltipContent,
@@ -29,17 +30,28 @@ import {
   Beaker,
   Loader2,
   Zap,
+  StickyNote,
 } from "lucide-react";
 import { useInfiniteInteractions, InteractionFilters } from "@/hooks/useInfiniteInteractions";
 import { useAIResponse } from "@/hooks/useAIResponse";
 import { useAutomationRules } from "@/hooks/useAutomationRules";
 import { useBrandVoice } from "@/hooks/useBrandVoice";
 import { useAuth } from "@/hooks/useAuth";
+import { useTeam } from "@/hooks/useTeam";
+import { useInboxKeyboardShortcuts } from "@/hooks/useInboxKeyboardShortcuts";
 import { seedSampleData } from "@/lib/sampleData";
 import { useToast } from "@/hooks/use-toast";
 import { AdvancedFilters } from "@/components/inbox/AdvancedFilters";
 import { BulkActions } from "@/components/inbox/BulkActions";
 import { AIResponseFeedback } from "@/components/inbox/AIResponseFeedback";
+import { KeyboardShortcutsHelper } from "@/components/inbox/KeyboardShortcutsHelper";
+import { AssignToDropdown } from "@/components/inbox/AssignToDropdown";
+import { InternalNoteToggle } from "@/components/inbox/InternalNoteToggle";
+import { CannedResponsesDropdown } from "@/components/inbox/CannedResponsesDropdown";
+import { FloatingBulkActions } from "@/components/inbox/FloatingBulkActions";
+import { CustomerHistory } from "@/components/inbox/CustomerHistory";
+import { ResponseTimeIndicator } from "@/components/inbox/ResponseTimeIndicator";
+import { cn } from "@/lib/utils";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
 type Interaction = Tables<"interactions">;
@@ -84,6 +96,7 @@ const statusIcons: Record<Status, typeof Clock> = {
 export default function InboxPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { members } = useTeam();
   const {
     interactions,
     loading,
@@ -113,8 +126,11 @@ export default function InboxPage() {
   const [seeding, setSeeding] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [matchedRules, setMatchedRules] = useState<string[]>([]);
+  const [isInternalNote, setIsInternalNote] = useState(false);
+  const [showAssignDropdown, setShowAssignDropdown] = useState(false);
 
   const listRef = useRef<HTMLDivElement>(null);
+  const replyInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Quick search filter (local) - uses useMemo for large datasets
   const displayedInteractions = useMemo(() => {
@@ -125,6 +141,51 @@ export default function InboxPage() {
       i.author_name?.toLowerCase().includes(query)
     );
   }, [interactions, searchQuery]);
+
+  // Keyboard shortcuts
+  const handleSelectInteraction = useCallback((id: string) => {
+    const interaction = interactions.find((i) => i.id === id);
+    if (interaction) {
+      setSelectedInteraction(interaction);
+      setResponse("");
+      setSuggestedResponse("");
+      setResponseConfidence(null);
+      setMatchedRules([]);
+    }
+  }, [interactions]);
+
+  const handleResolve = useCallback(async () => {
+    if (!selectedInteraction) return;
+    try {
+      await updateInteraction(selectedInteraction.id, {
+        resolved: true,
+        status: "responded",
+        responded_at: new Date().toISOString(),
+      });
+      toast({ title: "Marked as resolved" });
+      setSelectedInteraction({ ...selectedInteraction, resolved: true, status: "responded" });
+    } catch {
+      toast({ title: "Error", description: "Failed to resolve", variant: "destructive" });
+    }
+  }, [selectedInteraction, updateInteraction, toast]);
+
+  const handleFocusReply = useCallback(() => {
+    replyInputRef.current?.focus();
+  }, []);
+
+  const handleOpenAssign = useCallback(() => {
+    setShowAssignDropdown(true);
+  }, []);
+
+  const { showHelp, setShowHelp } = useInboxKeyboardShortcuts({
+    interactions: displayedInteractions,
+    selectedId: selectedInteraction?.id || null,
+    onSelect: handleSelectInteraction,
+    onResolve: handleResolve,
+    onFocusReply: handleFocusReply,
+    onOpenAssign: handleOpenAssign,
+    enabled: !loading,
+  });
 
   // Infinite scroll handler
   const handleScroll = useCallback(() => {
@@ -230,14 +291,17 @@ export default function InboxPage() {
       });
 
       toast({
-        title: "Response saved",
-        description: "Your response has been saved successfully.",
+        title: isInternalNote ? "Internal note saved" : "Response saved",
+        description: isInternalNote 
+          ? "Your internal note has been saved." 
+          : "Your response has been saved successfully.",
       });
 
       setResponse("");
       setSuggestedResponse("");
       setResponseConfidence(null);
       setMatchedRules([]);
+      setIsInternalNote(false);
       setSelectedInteraction({ ...selectedInteraction, status: "responded", response });
     } catch (err) {
       toast({
@@ -246,6 +310,17 @@ export default function InboxPage() {
         variant: "destructive",
       });
     }
+  };
+
+  // Assign interaction
+  const handleAssign = async (userId: string | null) => {
+    if (!selectedInteraction) return;
+    await updateInteraction(selectedInteraction.id, { assigned_to: userId });
+    setSelectedInteraction({ ...selectedInteraction, assigned_to: userId });
+    toast({ 
+      title: userId ? "Assigned" : "Unassigned",
+      description: userId ? "Interaction assigned to team member" : "Interaction unassigned",
+    });
   };
 
   // Bulk actions
@@ -287,6 +362,30 @@ export default function InboxPage() {
       setSelectedIds(new Set());
     } catch {
       toast({ title: "Error", description: "Failed to update", variant: "destructive" });
+    }
+  };
+
+  const handleBulkMarkResolved = async () => {
+    try {
+      await bulkUpdateInteractions(Array.from(selectedIds), { 
+        resolved: true,
+        status: "responded",
+        responded_at: new Date().toISOString(),
+      });
+      toast({ title: "Resolved", description: `${selectedIds.size} interactions marked as resolved` });
+      setSelectedIds(new Set());
+    } catch {
+      toast({ title: "Error", description: "Failed to resolve", variant: "destructive" });
+    }
+  };
+
+  const handleBulkAssign = async (userId: string | null) => {
+    try {
+      await bulkUpdateInteractions(Array.from(selectedIds), { assigned_to: userId });
+      toast({ title: "Assigned", description: `${selectedIds.size} interactions assigned` });
+      setSelectedIds(new Set());
+    } catch {
+      toast({ title: "Error", description: "Failed to assign", variant: "destructive" });
     }
   };
 
@@ -349,6 +448,12 @@ export default function InboxPage() {
     return `${days}d ago`;
   };
 
+  // Get assigned member info
+  const getAssignedMember = (assignedTo: string | null) => {
+    if (!assignedTo) return null;
+    return members.find((m) => m.user_id === assignedTo);
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -406,9 +511,13 @@ export default function InboxPage() {
               >
                 <Beaker className={`h-4 w-4 ${seeding ? "animate-pulse" : ""}`} />
               </Button>
+              <KeyboardShortcutsHelper
+                showDialog={showHelp}
+                onDialogChange={setShowHelp}
+              />
             </div>
 
-            {/* Bulk Actions */}
+            {/* Bulk Actions (in header) */}
             <BulkActions
               selectedCount={selectedIds.size}
               onSelectAll={handleSelectAll}
@@ -497,6 +606,7 @@ export default function InboxPage() {
                         setMatchedRules([]);
                       }}
                       formatTime={formatTime}
+                      assignedMember={getAssignedMember(interaction.assigned_to)}
                     />
                   ))}
                   {loadingMore && (
@@ -516,8 +626,6 @@ export default function InboxPage() {
             <TabsContent
               value="pending"
               className="flex-1 overflow-auto p-2 m-0"
-              ref={listRef}
-              onScroll={handleScroll}
             >
               <div className="space-y-2">
                 {displayedInteractions
@@ -537,6 +645,7 @@ export default function InboxPage() {
                         setMatchedRules([]);
                       }}
                       formatTime={formatTime}
+                      assignedMember={getAssignedMember(interaction.assigned_to)}
                     />
                   ))}
               </div>
@@ -545,8 +654,6 @@ export default function InboxPage() {
             <TabsContent
               value="urgent"
               className="flex-1 overflow-auto p-2 m-0"
-              ref={listRef}
-              onScroll={handleScroll}
             >
               <div className="space-y-2">
                 {displayedInteractions
@@ -566,6 +673,7 @@ export default function InboxPage() {
                         setMatchedRules([]);
                       }}
                       formatTime={formatTime}
+                      assignedMember={getAssignedMember(interaction.assigned_to)}
                     />
                   ))}
               </div>
@@ -618,6 +726,12 @@ export default function InboxPage() {
                         })()}
                       {selectedInteraction.status || "pending"}
                     </Badge>
+                    <AssignToDropdown
+                      assignedTo={selectedInteraction.assigned_to}
+                      onAssign={handleAssign}
+                      open={showAssignDropdown}
+                      onOpenChange={setShowAssignDropdown}
+                    />
                     <Button variant="ghost" size="icon">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
@@ -644,6 +758,13 @@ export default function InboxPage() {
                   <div className="p-4 rounded-lg bg-muted/50">
                     <p className="text-base">{selectedInteraction.content}</p>
                   </div>
+                  {/* Response Time Indicator */}
+                  <ResponseTimeIndicator
+                    createdAt={selectedInteraction.created_at}
+                    respondedAt={selectedInteraction.responded_at}
+                    status={selectedInteraction.status}
+                    className="mt-2"
+                  />
                 </div>
 
                 {/* Matched Rules */}
@@ -724,6 +845,20 @@ export default function InboxPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Customer History */}
+                <CustomerHistory
+                  currentInteractionId={selectedInteraction.id}
+                  authorHandle={selectedInteraction.author_handle}
+                  authorName={selectedInteraction.author_name}
+                  onSelectInteraction={(interaction) => {
+                    setSelectedInteraction(interaction);
+                    setResponse("");
+                    setSuggestedResponse("");
+                    setResponseConfidence(null);
+                    setMatchedRules([]);
+                  }}
+                />
               </div>
 
               {/* Response Area */}
@@ -731,23 +866,42 @@ export default function InboxPage() {
                 <div className="p-6 border-t">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Your Response</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleGenerateResponse}
-                        disabled={aiLoading}
-                      >
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        {aiLoading ? "Generating..." : "Generate with AI"}
-                      </Button>
+                      <InternalNoteToggle
+                        isInternal={isInternalNote}
+                        onToggle={setIsInternalNote}
+                      />
+                      <div className="flex items-center gap-2">
+                        <CannedResponsesDropdown
+                          onSelect={(template) => setResponse(template)}
+                          disabled={aiLoading}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleGenerateResponse}
+                          disabled={aiLoading}
+                        >
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          {aiLoading ? "Generating..." : "Generate with AI"}
+                        </Button>
+                      </div>
                     </div>
                     <Textarea
-                      placeholder="Type your response..."
+                      ref={replyInputRef}
+                      placeholder={isInternalNote ? "Write an internal note..." : "Type your response..."}
                       value={response}
                       onChange={(e) => setResponse(e.target.value)}
                       rows={4}
+                      className={cn(
+                        isInternalNote && "border-accent bg-accent/30"
+                      )}
                     />
+                    {isInternalNote && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <StickyNote className="h-3.5 w-3.5" />
+                        Internal notes are only visible to your team
+                      </div>
+                    )}
                     <div className="flex justify-end gap-2">
                       <Button variant="outline">Save Draft</Button>
                       <Button
@@ -756,7 +910,7 @@ export default function InboxPage() {
                         onClick={handleSendResponse}
                       >
                         <Send className="h-4 w-4 mr-2" />
-                        Send Response
+                        {isInternalNote ? "Save Note" : "Send Response"}
                       </Button>
                     </div>
                   </div>
@@ -770,8 +924,27 @@ export default function InboxPage() {
           )}
         </div>
       </div>
+
+      {/* Floating Bulk Actions */}
+      <FloatingBulkActions
+        selectedCount={selectedIds.size}
+        onMarkResolved={handleBulkMarkResolved}
+        onArchive={handleBulkArchive}
+        onAssign={handleBulkAssign}
+        onClear={handleDeselectAll}
+      />
     </DashboardLayout>
   );
+}
+
+interface InteractionCardProps {
+  interaction: Interaction;
+  isSelected: boolean;
+  isChecked: boolean;
+  onCheck: () => void;
+  onClick: () => void;
+  formatTime: (date: string) => string;
+  assignedMember?: { user_id: string; full_name?: string; email?: string; avatar_url?: string } | null;
 }
 
 function InteractionCard({
@@ -781,14 +954,8 @@ function InteractionCard({
   onCheck,
   onClick,
   formatTime,
-}: {
-  interaction: Interaction;
-  isSelected: boolean;
-  isChecked: boolean;
-  onCheck: () => void;
-  onClick: () => void;
-  formatTime: (date: string) => string;
-}) {
+  assignedMember,
+}: InteractionCardProps) {
   return (
     <div
       className={`p-4 rounded-lg cursor-pointer transition-all ${
@@ -809,6 +976,7 @@ function InteractionCard({
           className="flex-1 min-w-0"
         >
           <div className="flex items-center gap-2 mb-1">
+            {/* Sentiment dot */}
             <span
               className={`w-2 h-2 rounded-full ${
                 interaction.sentiment === "positive"
@@ -818,6 +986,7 @@ function InteractionCard({
                   : "bg-sentiment-neutral"
               }`}
             />
+            {/* Platform dot */}
             <span
               className={`w-2 h-2 rounded-full ${platformColors[interaction.platform]}`}
             />
@@ -834,9 +1003,27 @@ function InteractionCard({
               </Badge>
             )}
           </div>
-          <p className="font-medium text-sm mb-1">
-            {interaction.author_name || "Unknown"}
-          </p>
+          <div className="flex items-center gap-2 mb-1">
+            <p className="font-medium text-sm">
+              {interaction.author_name || "Unknown"}
+            </p>
+            {/* Assigned member avatar */}
+            {assignedMember && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Avatar className="h-5 w-5">
+                    <AvatarImage src={assignedMember.avatar_url || ""} />
+                    <AvatarFallback className="text-[8px]">
+                      {(assignedMember.full_name || assignedMember.email || "U")[0].toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Assigned to {assignedMember.full_name || assignedMember.email}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground line-clamp-2">
             {interaction.content}
           </p>
