@@ -689,6 +689,7 @@ export type Database = {
           auto_response_delay_ms: number
           avatar_url: string | null
           brand_voice: string | null
+          brand_voice_description: string | null
           company_name: string | null
           created_at: string
           current_team_id: string | null
@@ -698,8 +699,21 @@ export type Database = {
           lead_keywords: string[] | null
           monthly_interactions_limit: number | null
           monthly_interactions_used: number | null
+          notify_browser_push: boolean | null
+          notify_daily_digest: boolean | null
+          notify_reviews_below_stars: number | null
+          notify_slack_enabled: boolean | null
+          notify_slack_webhook_url: string | null
+          notify_urgent_interactions: boolean | null
           plan: string | null
+          response_length: string | null
+          response_signature: string | null
+          response_tone: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
           updated_at: string
+          use_emojis: boolean | null
           user_id: string
         }
         Insert: {
@@ -710,6 +724,7 @@ export type Database = {
           auto_response_delay_ms?: number
           avatar_url?: string | null
           brand_voice?: string | null
+          brand_voice_description?: string | null
           company_name?: string | null
           created_at?: string
           current_team_id?: string | null
@@ -719,8 +734,21 @@ export type Database = {
           lead_keywords?: string[] | null
           monthly_interactions_limit?: number | null
           monthly_interactions_used?: number | null
+          notify_browser_push?: boolean | null
+          notify_daily_digest?: boolean | null
+          notify_reviews_below_stars?: number | null
+          notify_slack_enabled?: boolean | null
+          notify_slack_webhook_url?: string | null
+          notify_urgent_interactions?: boolean | null
           plan?: string | null
+          response_length?: string | null
+          response_signature?: string | null
+          response_tone?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
           updated_at?: string
+          use_emojis?: boolean | null
           user_id: string
         }
         Update: {
@@ -731,6 +759,7 @@ export type Database = {
           auto_response_delay_ms?: number
           avatar_url?: string | null
           brand_voice?: string | null
+          brand_voice_description?: string | null
           company_name?: string | null
           created_at?: string
           current_team_id?: string | null
@@ -740,8 +769,21 @@ export type Database = {
           lead_keywords?: string[] | null
           monthly_interactions_limit?: number | null
           monthly_interactions_used?: number | null
+          notify_browser_push?: boolean | null
+          notify_daily_digest?: boolean | null
+          notify_reviews_below_stars?: number | null
+          notify_slack_enabled?: boolean | null
+          notify_slack_webhook_url?: string | null
+          notify_urgent_interactions?: boolean | null
           plan?: string | null
+          response_length?: string | null
+          response_signature?: string | null
+          response_tone?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
           updated_at?: string
+          use_emojis?: boolean | null
           user_id?: string
         }
         Relationships: [
