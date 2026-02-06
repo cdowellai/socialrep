@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { DashboardTrendChart } from "@/components/dashboard/DashboardTrendChart";
 import { PlatformBreakdownChart } from "@/components/dashboard/PlatformBreakdownChart";
+import { KPICard } from "@/components/dashboard/KPICard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useInteractions } from "@/hooks/useInteractions";
 import { useReviews } from "@/hooks/useReviews";
@@ -17,15 +19,88 @@ import {
   Star,
   Users,
   TrendingUp,
-  ArrowUpRight,
   Sparkles,
   AlertCircle,
   CheckCircle2,
   RefreshCw,
   Beaker,
   AlertTriangle,
+  Clock,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+
+// Helper to calculate stats for a date range
+function getStatsForPeriod(
+  interactions: any[],
+  reviews: any[],
+  startDate: Date,
+  endDate: Date
+) {
+  const periodInteractions = interactions.filter((i) => {
+    const date = new Date(i.created_at);
+    return date >= startDate && date < endDate;
+  });
+
+  const periodReviews = reviews.filter((r) => {
+    const date = new Date(r.created_at);
+    return date >= startDate && date < endDate;
+  });
+
+  const pending = periodInteractions.filter((i) => i.status === "pending").length;
+  const responded = periodInteractions.filter((i) => i.status === "responded").length;
+  const urgent = periodInteractions.filter((i) => (i.urgency_score || 0) >= 7).length;
+  const avgRating =
+    periodReviews.length > 0
+      ? periodReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / periodReviews.length
+      : 0;
+  const responseRate =
+    periodInteractions.length > 0
+      ? (responded / periodInteractions.length) * 100
+      : 0;
+
+  // Calculate average response time (in hours)
+  const respondedWithTime = periodInteractions.filter(
+    (i) => i.status === "responded" && i.responded_at
+  );
+  let avgResponseTime = 0;
+  if (respondedWithTime.length > 0) {
+    const totalTime = respondedWithTime.reduce((sum, i) => {
+      const created = new Date(i.created_at).getTime();
+      const responded = new Date(i.responded_at).getTime();
+      return sum + (responded - created);
+    }, 0);
+    avgResponseTime = totalTime / respondedWithTime.length / (1000 * 60 * 60); // Convert to hours
+  }
+
+  return {
+    pending,
+    responded,
+    urgent,
+    avgRating,
+    responseRate,
+    avgResponseTime,
+    totalInteractions: periodInteractions.length,
+  };
+}
+
+// Calculate percentage change between two values
+function calculateTrend(current: number, previous: number): number {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return ((current - previous) / previous) * 100;
+}
+
+// Format response time for display
+function formatResponseTime(hours: number): string {
+  if (hours < 1) {
+    const minutes = Math.round(hours * 60);
+    return `${minutes}m`;
+  }
+  if (hours < 24) {
+    return `${hours.toFixed(1)}h`;
+  }
+  const days = hours / 24;
+  return `${days.toFixed(1)}d`;
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -38,15 +113,51 @@ export default function Dashboard() {
 
   const loading = interactionsLoading || reviewsLoading || leadsLoading;
 
-  // Calculate stats
+  // Calculate current and previous period stats for trends
+  const { currentStats, previousStats, trends } = useMemo(() => {
+    const now = new Date();
+    const currentPeriodStart = new Date(now);
+    currentPeriodStart.setDate(currentPeriodStart.getDate() - 7);
+    
+    const previousPeriodStart = new Date(currentPeriodStart);
+    previousPeriodStart.setDate(previousPeriodStart.getDate() - 7);
+
+    const current = getStatsForPeriod(interactions, reviews, currentPeriodStart, now);
+    const previous = getStatsForPeriod(interactions, reviews, previousPeriodStart, currentPeriodStart);
+
+    return {
+      currentStats: current,
+      previousStats: previous,
+      trends: {
+        pending: calculateTrend(current.pending, previous.pending),
+        urgent: calculateTrend(current.urgent, previous.urgent),
+        avgRating: calculateTrend(current.avgRating, previous.avgRating),
+        responseRate: calculateTrend(current.responseRate, previous.responseRate),
+        avgResponseTime: calculateTrend(current.avgResponseTime, previous.avgResponseTime),
+      },
+    };
+  }, [interactions, reviews]);
+
+  // Calculate overall stats (not just current period)
   const pendingInteractions = interactions.filter(i => i.status === "pending").length;
   const respondedInteractions = interactions.filter(i => i.status === "responded").length;
   const urgentInteractions = interactions.filter(i => (i.urgency_score || 0) >= 7).length;
   const avgRating = reviews.length > 0 
     ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
     : "0.0";
-  const qualifiedLeads = leads.filter(l => l.status === "qualified").length;
   const recentInteractions = interactions.slice(0, 5);
+
+  // Calculate overall average response time
+  const respondedWithTime = interactions.filter(
+    (i) => i.status === "responded" && i.responded_at
+  );
+  const avgResponseTimeHours = respondedWithTime.length > 0
+    ? respondedWithTime.reduce((sum, i) => {
+        const created = new Date(i.created_at).getTime();
+        const responded = new Date(i.responded_at!).getTime();
+        return sum + (responded - created);
+      }, 0) / respondedWithTime.length / (1000 * 60 * 60)
+    : 0;
 
   const handleSeedData = async () => {
     if (!user) return;
@@ -76,51 +187,12 @@ export default function Dashboard() {
     navigate(filterParam ? `${href}?${filterParam}` : href);
   };
 
-  const stats = [
-    {
-      title: "Pending Messages",
-      value: pendingInteractions,
-      icon: MessageSquare,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
-      href: "/dashboard/inbox",
-      filterParam: "status=pending",
-    },
-    {
-      title: "Urgent Items",
-      value: urgentInteractions,
-      icon: AlertTriangle,
-      color: "text-sentiment-negative",
-      bgColor: "bg-sentiment-negative/10",
-      href: "/dashboard/inbox",
-      filterParam: "urgent=true",
-    },
-    {
-      title: "Avg. Review Rating",
-      value: avgRating,
-      icon: Star,
-      color: "text-sentiment-positive",
-      bgColor: "bg-sentiment-positive/10",
-      href: "/dashboard/reviews",
-    },
-    {
-      title: "Response Rate",
-      value: interactions.length > 0 
-        ? `${Math.round((respondedInteractions / interactions.length) * 100)}%` 
-        : "0%",
-      icon: TrendingUp,
-      color: "text-sentiment-positive",
-      bgColor: "bg-sentiment-positive/10",
-      href: "/dashboard/analytics",
-    },
-  ];
-
   if (loading) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map(i => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {[1, 2, 3, 4, 5].map(i => (
               <Card key={i}>
                 <CardContent className="p-6">
                   <Skeleton className="h-10 w-10 rounded-lg mb-4" />
@@ -172,28 +244,55 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((stat) => (
-            <button
-              key={stat.title}
-              onClick={() => handleStatClick(stat.href, stat.filterParam)}
-              className="text-left w-full"
-            >
-              <Card className="hover:border-primary/30 transition-colors cursor-pointer h-full">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`h-10 w-10 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
-                      <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                    </div>
-                    <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <p className="text-3xl font-bold">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground">{stat.title}</p>
-                </CardContent>
-              </Card>
-            </button>
-          ))}
+        {/* Stats Grid - 5 KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <KPICard
+            title="Pending Messages"
+            value={pendingInteractions}
+            icon={MessageSquare}
+            color="text-primary"
+            bgColor="bg-primary/10"
+            onClick={() => handleStatClick("/dashboard/inbox", "status=pending")}
+            trend={{ value: trends.pending, isPositive: false }}
+          />
+          <KPICard
+            title="Urgent Items"
+            value={urgentInteractions}
+            icon={AlertTriangle}
+            color="text-sentiment-negative"
+            bgColor="bg-sentiment-negative/10"
+            onClick={() => handleStatClick("/dashboard/inbox", "urgent=true")}
+            trend={{ value: trends.urgent, isPositive: false }}
+          />
+          <KPICard
+            title="Avg. Review Rating"
+            value={avgRating}
+            icon={Star}
+            color="text-sentiment-positive"
+            bgColor="bg-sentiment-positive/10"
+            onClick={() => handleStatClick("/dashboard/reviews")}
+            trend={{ value: trends.avgRating, isPositive: true }}
+          />
+          <KPICard
+            title="Response Rate"
+            value={interactions.length > 0 
+              ? `${Math.round((respondedInteractions / interactions.length) * 100)}%` 
+              : "0%"}
+            icon={TrendingUp}
+            color="text-sentiment-positive"
+            bgColor="bg-sentiment-positive/10"
+            onClick={() => handleStatClick("/dashboard/analytics")}
+            trend={{ value: trends.responseRate, isPositive: true }}
+          />
+          <KPICard
+            title="Avg. Response Time"
+            value={avgResponseTimeHours > 0 ? formatResponseTime(avgResponseTimeHours) : "—"}
+            icon={Clock}
+            color="text-blue-500"
+            bgColor="bg-blue-500/10"
+            onClick={() => handleStatClick("/dashboard/analytics")}
+            trend={{ value: trends.avgResponseTime, isPositive: false }}
+          />
         </div>
 
         {/* Charts Grid */}
@@ -228,8 +327,9 @@ export default function Dashboard() {
                       key={interaction.id}
                       className="flex items-start gap-3 p-3 rounded-lg bg-muted/50"
                     >
+                      {/* Sentiment Dot */}
                       <div
-                        className={`w-2 h-2 rounded-full mt-2 ${
+                        className={`w-2.5 h-2.5 rounded-full mt-2 flex-shrink-0 ${
                           interaction.sentiment === "positive"
                             ? "bg-sentiment-positive"
                             : interaction.sentiment === "negative"
@@ -237,6 +337,7 @@ export default function Dashboard() {
                             : "bg-sentiment-neutral"
                         }`}
                       />
+                      
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-sm font-medium">
@@ -245,11 +346,24 @@ export default function Dashboard() {
                           <Badge variant="outline" className="text-xs capitalize">
                             {interaction.platform}
                           </Badge>
-                          {interaction.status === "pending" ? (
-                            <AlertCircle className="h-3 w-3 text-sentiment-neutral ml-auto" />
-                          ) : (
-                            <CheckCircle2 className="h-3 w-3 text-sentiment-positive ml-auto" />
-                          )}
+                          
+                          <div className="ml-auto flex items-center gap-2">
+                            {/* Assigned Team Member Avatar */}
+                            {interaction.assigned_to && (
+                              <Avatar className="h-5 w-5">
+                                <AvatarImage src="" />
+                                <AvatarFallback className="text-[8px] bg-primary text-primary-foreground">
+                                  A
+                                </AvatarFallback>
+                              </Avatar>
+                            )}
+                            
+                            {interaction.status === "pending" ? (
+                              <AlertCircle className="h-3.5 w-3.5 text-sentiment-neutral" />
+                            ) : (
+                              <CheckCircle2 className="h-3.5 w-3.5 text-sentiment-positive" />
+                            )}
+                          </div>
                         </div>
                         <p className="text-sm text-muted-foreground line-clamp-2">
                           {interaction.content}
