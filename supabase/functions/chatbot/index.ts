@@ -32,6 +32,13 @@ const DEFAULT_HANDOFF_KEYWORDS = [
   "representative",
 ];
 
+// Constants for validation
+const MAX_MESSAGES_PER_REQUEST = 50;
+const MAX_MESSAGE_CONTENT_LENGTH = 10000;
+const MAX_MESSAGES_PER_MINUTE = 10;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -50,11 +57,103 @@ serve(async (req) => {
     const body: ChatRequest = await req.json();
     const { messages, userId, conversationId, visitorId, visitorName, visitorEmail } = body;
 
+    // Basic required field validation
     if (!messages?.length || !userId || !visitorId) {
       return new Response(
         JSON.stringify({ error: "Missing required fields: messages, userId, visitorId" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Validate userId format (must be valid UUID)
+    if (!UUID_REGEX.test(userId)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid userId format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate conversationId format if provided
+    if (conversationId && !UUID_REGEX.test(conversationId)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid conversationId format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate email format if provided
+    if (visitorEmail && !EMAIL_REGEX.test(visitorEmail)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid email format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate message array size
+    if (messages.length > MAX_MESSAGES_PER_REQUEST) {
+      return new Response(
+        JSON.stringify({ error: `Too many messages. Maximum ${MAX_MESSAGES_PER_REQUEST} allowed.` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate each message in the array
+    for (const msg of messages) {
+      if (!msg.role || !msg.content) {
+        return new Response(
+          JSON.stringify({ error: "Invalid message format: each message must have role and content" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (msg.content.length > MAX_MESSAGE_CONTENT_LENGTH) {
+        return new Response(
+          JSON.stringify({ error: `Message content too long. Maximum ${MAX_MESSAGE_CONTENT_LENGTH} characters allowed.` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Validate conversation ownership if conversationId is provided
+    if (conversationId) {
+      const { data: existingConv, error: convLookupError } = await supabase
+        .from("chatbot_conversations")
+        .select("visitor_id, user_id")
+        .eq("id", conversationId)
+        .single();
+
+      if (convLookupError || !existingConv) {
+        return new Response(
+          JSON.stringify({ error: "Conversation not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Verify the conversation belongs to the correct visitor and user
+      if (existingConv.visitor_id !== visitorId || existingConv.user_id !== userId) {
+        return new Response(
+          JSON.stringify({ error: "Invalid conversation access" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Rate limiting: Check recent messages for this conversation or visitor
+    const rateLimitConversationId = conversationId;
+    if (rateLimitConversationId) {
+      const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+      const { data: recentMessages, error: rateLimitError } = await supabase
+        .from("chatbot_messages")
+        .select("id")
+        .eq("conversation_id", rateLimitConversationId)
+        .eq("role", "user")
+        .gte("created_at", oneMinuteAgo);
+
+      if (!rateLimitError && recentMessages && recentMessages.length >= MAX_MESSAGES_PER_MINUTE) {
+        return new Response(
+          JSON.stringify({ error: "Rate limit exceeded. Please wait before sending more messages." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Get or create conversation
