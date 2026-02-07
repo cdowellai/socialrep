@@ -1,4 +1,4 @@
-import { Check, Zap, AlertTriangle } from "lucide-react";
+import { Check, Zap, AlertTriangle, Bot, TrendingUp, Users, MessageSquare, Star, ThumbsUp, Clock } from "lucide-react";
 
 const features = [
   {
@@ -65,63 +65,129 @@ export function SolutionSection() {
                 </div>
                 <div className="flex-1 flex justify-center">
                   <div className="px-4 py-1 rounded-md bg-background/50 text-xs text-muted-foreground">
-                    app.socialrep.ai/inbox
+                    app.socialrep.ai/dashboard
                   </div>
                 </div>
               </div>
 
               {/* Dashboard Content */}
               <div className="p-4 bg-gradient-card">
-                {/* Stat Cards */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="p-3 rounded-xl bg-background border border-border">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-muted-foreground">Pending</span>
-                      <span className="px-2 py-0.5 rounded-full bg-sentiment-positive/10 text-sentiment-positive text-xs font-medium">
-                        Live
-                      </span>
+                {/* KPI Stats Row */}
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                  <div className="p-2 rounded-lg bg-background border border-border text-center">
+                    <div className="flex items-center justify-center mb-1">
+                      <MessageSquare className="h-3.5 w-3.5 text-primary" />
                     </div>
-                    <div className="text-2xl font-bold">24</div>
+                    <div className="text-lg font-bold">127</div>
+                    <div className="text-[10px] text-muted-foreground">Inbox</div>
                   </div>
-                  <div className="p-3 rounded-xl bg-background border border-border">
-                    <div className="text-xs text-muted-foreground mb-1">Responded Today</div>
-                    <div className="text-2xl font-bold">89</div>
+                  <div className="p-2 rounded-lg bg-background border border-border text-center">
+                    <div className="flex items-center justify-center mb-1">
+                      <ThumbsUp className="h-3.5 w-3.5 text-sentiment-positive" />
+                    </div>
+                    <div className="text-lg font-bold">84%</div>
+                    <div className="text-[10px] text-muted-foreground">Sentiment</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-background border border-border text-center">
+                    <div className="flex items-center justify-center mb-1">
+                      <Users className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div className="text-lg font-bold">23</div>
+                    <div className="text-[10px] text-muted-foreground">Leads</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-background border border-border text-center">
+                    <div className="flex items-center justify-center mb-1">
+                      <Clock className="h-3.5 w-3.5 text-sentiment-neutral" />
+                    </div>
+                    <div className="text-lg font-bold">1.2h</div>
+                    <div className="text-[10px] text-muted-foreground">Avg Time</div>
                   </div>
                 </div>
 
                 {/* Comment Feed */}
-                <div className="space-y-3">
-                  {/* Comment 1 */}
+                <div className="space-y-2.5">
+                  {/* Comment 1 - Instagram with AI Draft */}
                   <div className="p-3 rounded-xl bg-background border border-border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center text-xs text-primary-foreground font-medium">
-                        SD
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#833AB4] via-[#E1306C] to-[#F77737] flex items-center justify-center text-xs text-white font-medium">
+                          IG
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium">@sarah_designs</span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-sentiment-positive/10 text-sentiment-positive">Positive</span>
+                            <span className="text-[10px] text-muted-foreground">2m ago</span>
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-sm font-medium">@sarah_designs</span>
+                      <Star className="h-4 w-4 text-sentiment-neutral" />
                     </div>
-                    <p className="text-sm mb-2">Do you guys deliver to Miami?</p>
+                    <p className="text-sm mb-2">Love this product! Do you ship to Miami? 🙌</p>
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-medium">
-                      <Zap className="h-3 w-3" />
-                      AI Draft Ready — Click to send
+                      <Bot className="h-3 w-3" />
+                      AI Draft Ready — "Thanks so much! Yes, we ship to..."
                     </div>
                   </div>
 
-                  {/* Comment 2 */}
-                  <div className="p-3 rounded-xl bg-background border border-border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                        MT
+                  {/* Comment 2 - Facebook Complaint */}
+                  <div className="p-3 rounded-xl bg-background border border-sentiment-negative/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-[#1877F2] flex items-center justify-center text-xs text-white font-medium">
+                          FB
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium">Mike Thompson</span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-sentiment-negative/10 text-sentiment-negative">Negative</span>
+                            <span className="text-[10px] text-muted-foreground">15m ago</span>
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-sm font-medium">@mike_thompson</span>
+                      <TrendingUp className="h-4 w-4 text-sentiment-negative" />
                     </div>
-                    <p className="text-sm mb-2">Still waiting on my order from last week...</p>
+                    <p className="text-sm mb-2">Still waiting on my order from last week. No response to emails.</p>
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-sentiment-negative/10 text-sentiment-negative text-xs font-medium">
                       <AlertTriangle className="h-3 w-3" />
-                      Priority — Complaint detected
+                      Priority — Escalated to Support Team
+                    </div>
+                  </div>
+
+                  {/* Comment 3 - Google Review */}
+                  <div className="p-3 rounded-xl bg-background border border-border">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-[#4285F4] flex items-center justify-center text-xs text-white font-medium">
+                          G
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium">Alex Chen</span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <div className="flex">
+                              {[1,2,3,4,5].map((i) => (
+                                <Star key={i} className="h-2.5 w-2.5 text-sentiment-neutral fill-sentiment-neutral" />
+                              ))}
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">Review</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-sm mb-2">"Outstanding service and quick delivery. Highly recommend!"</p>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-sentiment-positive/10 text-sentiment-positive text-xs font-medium">
+                      <Zap className="h-3 w-3" />
+                      Auto-responded with thank you template
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Floating Badge */}
+            <div className="absolute -bottom-4 -right-4 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg flex items-center gap-2">
+              <Bot className="h-4 w-4" />
+              AI Chatbot Active
             </div>
           </div>
         </div>
