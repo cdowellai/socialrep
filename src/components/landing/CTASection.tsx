@@ -6,13 +6,6 @@ import { ArrowRight } from "lucide-react";
 export function CTASection() {
   const [authModal, setAuthModal] = useState(false);
 
-  const handleScrollToPricing = () => {
-    const element = document.querySelector("#pricing");
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   return (
     <>
       <section className="py-24 relative overflow-hidden">
@@ -36,24 +29,14 @@ export function CTASection() {
               Set up your account in minutes. No credit card required.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button
-                size="xl"
-                className="bg-white text-primary hover:bg-white/90 shadow-xl"
-                onClick={() => setAuthModal(true)}
-              >
-                Start Free Trial
-                <ArrowRight className="h-5 w-5 ml-2" />
-              </Button>
-              <Button
-                size="xl"
-                variant="outline"
-                className="border-white/30 text-white hover:bg-white/10"
-                onClick={handleScrollToPricing}
-              >
-                See Plans
-              </Button>
-            </div>
+            <Button
+              size="xl"
+              className="bg-white text-primary hover:bg-white/90 shadow-xl"
+              onClick={() => setAuthModal(true)}
+            >
+              Start Free Trial
+              <ArrowRight className="h-5 w-5 ml-2" />
+            </Button>
           </div>
         </div>
       </section>
