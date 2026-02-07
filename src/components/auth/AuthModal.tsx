@@ -149,6 +149,8 @@ export function AuthModal({ isOpen, onClose, defaultTab = "login" }: AuthModalPr
               <Input
                 id="email"
                 type="email"
+                name="email"
+                autoComplete="username email"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -166,6 +168,8 @@ export function AuthModal({ isOpen, onClose, defaultTab = "login" }: AuthModalPr
                 <Input
                   id="password"
                   type="password"
+                  name="password"
+                  autoComplete={tab === "signup" ? "new-password" : "current-password"}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
