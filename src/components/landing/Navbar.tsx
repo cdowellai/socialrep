@@ -1,19 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { useAuth } from "@/hooks/useAuth";
-import { useTheme } from "@/hooks/useTheme";
-import { Menu, X, Moon, Sun, MessageSquare } from "lucide-react";
+import { Menu, X, MessageSquare } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [authModal, setAuthModal] = useState<{ isOpen: boolean; tab: "login" | "signup" }>({
     isOpen: false,
     tab: "login",
   });
   const { user, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navLinks = [
     { href: "#features", label: "Features" },
@@ -32,7 +40,13 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 glass">
+      <nav
+        className={cn(
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+          "bg-background/70 backdrop-blur-xl",
+          isScrolled && "border-b border-border shadow-sm"
+        )}
+      >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -43,7 +57,7 @@ export function Navbar() {
               <span className="font-bold text-xl">SocialRep</span>
             </Link>
 
-            {/* Desktop Navigation */}
+            {/* Desktop Navigation - Centered */}
             <div className="hidden md:flex items-center gap-8">
               {navLinks.map((link) => (
                 <a
@@ -59,9 +73,6 @@ export function Navbar() {
 
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-              </Button>
               {user ? (
                 <>
                   <Button variant="ghost" asChild>
@@ -91,9 +102,6 @@ export function Navbar() {
 
             {/* Mobile Menu Button */}
             <div className="flex md:hidden items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={toggleTheme}>
-                {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-              </Button>
               <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                 {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
@@ -103,7 +111,7 @@ export function Navbar() {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden border-t border-border bg-background">
+          <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-xl">
             <div className="container mx-auto px-4 py-4 space-y-4">
               {navLinks.map((link) => (
                 <a

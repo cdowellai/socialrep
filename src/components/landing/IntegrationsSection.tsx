@@ -1,73 +1,99 @@
-const socialPlatforms = [
-  { name: "Facebook", color: "bg-[#1877F2]" },
-  { name: "Instagram", color: "bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#F77737]" },
-  { name: "TikTok", color: "bg-[#000000] dark:bg-[#ffffff] dark:text-[#000000]" },
-  { name: "YouTube", color: "bg-[#FF0000]" },
-  { name: "LinkedIn", color: "bg-[#0A66C2]" },
-];
-
-const reviewPlatforms = [
-  { name: "Google Business", color: "bg-[#4285F4]" },
-  { name: "Trustpilot", color: "bg-[#00B67A]" },
-  { name: "Yelp", color: "bg-[#D32323]" },
-  { name: "BBB", color: "bg-[#005A8B]" },
-  { name: "Facebook Reviews", color: "bg-[#1877F2]" },
-  { name: "More", color: "bg-muted text-muted-foreground" },
-];
+import { useState } from "react";
 
 export function IntegrationsSection() {
+  const [hoveredPill, setHoveredPill] = useState<string | null>(null);
+
+  const socialPlatforms = [
+    { name: "Facebook", color: "bg-platform-facebook" },
+    { name: "Instagram", color: "bg-platform-instagram" },
+    { name: "TikTok", color: "bg-foreground" },
+    { name: "YouTube", color: "bg-destructive" },
+    { name: "LinkedIn", color: "bg-platform-linkedin" },
+  ];
+
+  const reviewPlatforms = [
+    { name: "Google Business", color: "bg-platform-google" },
+    { name: "Trustpilot", color: "bg-sentiment-positive" },
+    { name: "Yelp", color: "bg-destructive" },
+    { name: "BBB", color: "bg-platform-facebook" },
+    { name: "Facebook Reviews", color: "bg-platform-facebook" },
+  ];
+
   return (
-    <section id="integrations" className="py-24 bg-background">
+    <section id="integrations" className="py-24 bg-muted/30 border-t border-border">
       <div className="container mx-auto px-4">
+        {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent border border-primary/20 mb-6">
-            <span className="text-sm font-medium text-accent-foreground">
-              Integrations
-            </span>
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Connects to the platforms{" "}
-            <span className="text-gradient">you already use</span>
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-4">
+            Integrations
+          </p>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+            Connects to the platforms you already use
           </h2>
           <p className="text-lg text-muted-foreground">
-            Comments, DMs, and reviews—all in one dashboard.
+            Monitor and respond to comments, DMs, and reviews across every major platform — from one dashboard.
           </p>
         </div>
 
+        {/* Platform Pills */}
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Social Platforms */}
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-4 text-center">
+            <div className="text-sm font-medium text-muted-foreground mb-4 text-center">
               Social Platforms
-            </h3>
+            </div>
             <div className="flex flex-wrap justify-center gap-3">
-              {socialPlatforms.map((platform, index) => (
-                <div
-                  key={index}
-                  className={`px-5 py-2.5 rounded-full text-sm font-medium text-white ${platform.color} shadow-md hover:shadow-lg transition-shadow`}
+              {socialPlatforms.map((platform) => (
+                <button
+                  key={platform.name}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full bg-card border transition-all duration-200 ${
+                    hoveredPill === platform.name 
+                      ? "border-primary shadow-glow" 
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  onMouseEnter={() => setHoveredPill(platform.name)}
+                  onMouseLeave={() => setHoveredPill(null)}
                 >
-                  {platform.name}
-                </div>
+                  <div className={`w-2 h-2 rounded-full ${platform.color}`} />
+                  <span className="text-sm font-medium">{platform.name}</span>
+                </button>
               ))}
             </div>
           </div>
 
           {/* Review Platforms */}
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-4 text-center">
+            <div className="text-sm font-medium text-muted-foreground mb-4 text-center">
               Review Platforms
-            </h3>
+            </div>
             <div className="flex flex-wrap justify-center gap-3">
-              {reviewPlatforms.map((platform, index) => (
-                <div
-                  key={index}
-                  className={`px-5 py-2.5 rounded-full text-sm font-medium ${platform.name === "More" ? "" : "text-white"} ${platform.color} shadow-md hover:shadow-lg transition-shadow`}
+              {reviewPlatforms.map((platform) => (
+                <button
+                  key={platform.name}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full bg-card border transition-all duration-200 ${
+                    hoveredPill === platform.name 
+                      ? "border-primary shadow-glow" 
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  onMouseEnter={() => setHoveredPill(platform.name)}
+                  onMouseLeave={() => setHoveredPill(null)}
                 >
-                  {platform.name}
-                </div>
+                  <div className={`w-2 h-2 rounded-full ${platform.color}`} />
+                  <span className="text-sm font-medium">{platform.name}</span>
+                </button>
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Footer text */}
+        <div className="text-center mt-12">
+          <p className="text-sm text-muted-foreground">
+            New integrations added regularly.{" "}
+            <a href="#" className="text-primary hover:underline">
+              Request an integration →
+            </a>
+          </p>
         </div>
       </div>
     </section>
