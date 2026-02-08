@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useNavigate } from "react-router-dom";
 
 const planFeatures = {
   starter: [
@@ -16,22 +17,28 @@ const planFeatures = {
     { text: "Email support", included: true },
     { text: "Chatbot widget", included: false },
     { text: "Automations", included: false },
+    { text: "Lead generation", included: false },
   ],
   professional: [
     { text: "5,000 interactions/month", included: true },
     { text: "7 connected platforms", included: true },
-    { text: "Advanced AI + brand voice", included: true },
+    { text: "Advanced AI with brand voice", included: true },
+    { text: "Review management", included: true },
+    { text: "Priority support", included: true },
     { text: "Chatbot widget", included: true },
-    { text: "Automations & lead gen", included: true },
-    { text: "Full analytics & reports", included: true },
+    { text: "Automations", included: true },
+    { text: "Lead generation", included: true },
+    { text: "Full analytics", included: true },
     { text: "5 team seats", included: true },
   ],
   agency: [
     { text: "Unlimited interactions", included: true },
     { text: "Unlimited platforms", included: true },
     { text: "Custom AI training", included: true },
-    { text: "White-label reports", included: true },
-    { text: "CRM integrations + API", included: true },
+    { text: "All Professional features", included: true },
+    { text: "CRM integrations", included: true },
+    { text: "API access", included: true },
+    { text: "White-label options", included: true },
     { text: "15 team seats", included: true },
     { text: "Dedicated support", included: true },
   ],
@@ -39,7 +46,8 @@ const planFeatures = {
 
 export function PricingSection() {
   const { user } = useAuth();
-  const { plans, createCheckoutSession } = useSubscription();
+  const { plans, createCheckoutSession, loading: subLoading } = useSubscription();
+  const navigate = useNavigate();
   const [authModal, setAuthModal] = useState(false);
   const [isAnnual, setIsAnnual] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
@@ -49,6 +57,7 @@ export function PricingSection() {
     if (!plan) return;
 
     if (!user) {
+      // Store selected plan in localStorage for post-auth checkout
       localStorage.setItem("pending_checkout_plan", plan.id);
       localStorage.setItem("pending_checkout_period", isAnnual ? "annual" : "monthly");
       setAuthModal(true);
@@ -82,7 +91,7 @@ export function PricingSection() {
       planKey: "starter",
       monthlyPrice: starterPlan?.monthly_price || 79,
       annualPrice: starterPlan?.annual_price || 63,
-      description: "For small businesses getting started.",
+      description: "For small businesses getting started",
       features: planFeatures.starter,
       popular: false,
       plan: starterPlan,
@@ -92,7 +101,7 @@ export function PricingSection() {
       planKey: "professional",
       monthlyPrice: professionalPlan?.monthly_price || 199,
       annualPrice: professionalPlan?.annual_price || 159,
-      description: "For growing businesses and small teams.",
+      description: "For growing businesses",
       features: planFeatures.professional,
       popular: true,
       plan: professionalPlan,
@@ -102,7 +111,7 @@ export function PricingSection() {
       planKey: "agency",
       monthlyPrice: agencyPlan?.monthly_price || 499,
       annualPrice: agencyPlan?.annual_price || 399,
-      description: "For agencies managing multiple clients.",
+      description: "For agencies and large teams",
       features: planFeatures.agency,
       popular: false,
       plan: agencyPlan,
@@ -114,18 +123,16 @@ export function PricingSection() {
       <section id="pricing" className="py-24 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto mb-8">
-            <p className="text-sm font-medium uppercase tracking-wider text-primary mb-3">
-              Simple pricing
-            </p>
-            <h2 className="font-display text-3xl md:text-4xl lg:text-5xl mb-4">
-              Start free. Upgrade when you're ready.
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Simple, Transparent{" "}
+              <span className="text-gradient">Pricing</span>
             </h2>
-            <p className="text-lg text-muted-foreground">
-              14-day free trial on every plan. No credit card required.
+            <p className="text-lg text-muted-foreground mb-2">
+              Start with a 14-day free trial on any plan. No credit card required.
             </p>
           </div>
 
-          {/* Billing Toggle */}
+          {/* Monthly/Annual Toggle */}
           <div className="flex items-center justify-center gap-4 mb-12">
             <span className={`text-sm font-medium ${!isAnnual ? "text-foreground" : "text-muted-foreground"}`}>
               Monthly
@@ -144,7 +151,7 @@ export function PricingSection() {
             )}
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {displayPlans.map((plan, index) => (
               <div
                 key={index}
@@ -163,7 +170,7 @@ export function PricingSection() {
                 <div className="mb-6">
                   <h3 className="font-semibold text-lg mb-2">{plan.name}</h3>
                   <div className="flex items-baseline gap-1">
-                    <span className="font-display text-4xl">
+                    <span className="text-4xl font-bold">
                       ${isAnnual ? plan.annualPrice : plan.monthlyPrice}
                     </span>
                     <span className="text-muted-foreground">/mo</span>
@@ -194,8 +201,8 @@ export function PricingSection() {
                 </ul>
 
                 <Button
-                  variant={plan.popular ? "default" : "outline"}
-                  className={plan.popular ? "bg-gradient-primary hover:opacity-90 text-white" : ""}
+                  variant={plan.popular ? "hero" : "outline"}
+                  className="w-full"
                   onClick={() => handlePlanSelect(plan.planKey)}
                   disabled={loadingPlan === plan.plan?.id}
                 >
@@ -211,6 +218,7 @@ export function PricingSection() {
         isOpen={authModal} 
         onClose={() => {
           setAuthModal(false);
+          // Clear pending checkout if user cancels auth
           localStorage.removeItem("pending_checkout_plan");
           localStorage.removeItem("pending_checkout_period");
         }} 

@@ -81,8 +81,8 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["DM Sans", "system-ui", "sans-serif"],
-        display: ["Instrument Serif", "Georgia", "serif"],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        display: ["Cal Sans", "Inter", "system-ui", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {

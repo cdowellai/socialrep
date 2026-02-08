@@ -2,65 +2,104 @@ import { Star } from "lucide-react";
 
 const testimonials = [
   {
-    quote: "We were using Hootsuite for monitoring and a spreadsheet for reviews. SocialRep replaced both in a day. The AI responses actually sound like us — not like a chatbot from 2019.",
-    name: "Maria K.",
-    role: "Owner, Coastal Dental Group",
-    initials: "MK",
-    color: "bg-pink-500",
+    name: "Sarah Johnson",
+    role: "Marketing Director",
+    company: "TechStart Inc.",
+    avatar: "SJ",
+    content:
+      "SocialRep AI has completely transformed how we manage our online presence. Response time dropped from 4 hours to 15 minutes, and our customer satisfaction scores are through the roof!",
+    rating: 5,
   },
   {
-    quote: "I manage social for 12 restaurants. Before SocialRep, a bad review could sit for a week. Now I get flagged in minutes, AI drafts a response, and I approve. Response time went from 3 days to 2 hours.",
-    name: "James T.",
-    role: "Director, Fork & Flame Digital",
-    initials: "JT",
-    color: "bg-blue-500",
+    name: "Michael Chen",
+    role: "Founder & CEO",
+    company: "EcoGreen Products",
+    avatar: "MC",
+    content:
+      "The AI-generated responses are incredibly on-brand. I was skeptical at first, but after training it with our brand voice, it feels like having a full-time social media team.",
+    rating: 5,
   },
   {
-    quote: "The reports alone justify the cost. My clients used to ask 'what are we paying you for?' Now I send a PDF every Monday showing exactly what we handled and the sentiment shift.",
-    name: "Rachel D.",
-    role: "Founder, Bright Social Agency",
-    initials: "RD",
-    color: "bg-emerald-500",
+    name: "Emily Rodriguez",
+    role: "Customer Success Manager",
+    company: "CloudServe Solutions",
+    avatar: "ER",
+    content:
+      "We manage 15+ social accounts and hundreds of reviews daily. SocialRep AI handles 80% of interactions automatically, freeing our team to focus on complex issues.",
+    rating: 5,
+  },
+  {
+    name: "David Kim",
+    role: "Operations Director",
+    company: "Restaurant Group",
+    avatar: "DK",
+    content:
+      "Review management across Google, Yelp, and TripAdvisor used to be a nightmare. Now it's all in one place with AI-suggested responses. Game changer!",
+    rating: 5,
+  },
+  {
+    name: "Lisa Thompson",
+    role: "Brand Manager",
+    company: "Fashion Forward",
+    avatar: "LT",
+    content:
+      "The sentiment analysis is spot-on. We catch negative mentions before they escalate, and the proactive listening feature has helped us identify trending topics to capitalize on.",
+    rating: 5,
+  },
+  {
+    name: "James Wilson",
+    role: "Digital Marketing Lead",
+    company: "AutoDealer Network",
+    avatar: "JW",
+    content:
+      "Lead generation from social interactions was always manual. Now SocialRep AI automatically detects and syncs potential leads to our CRM. Brilliant!",
+    rating: 5,
   },
 ];
 
 export function TestimonialsSection() {
   return (
-    <section className="py-24 bg-background">
+    <section id="testimonials" className="py-24 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <p className="text-sm font-medium uppercase tracking-wider text-primary mb-3">
-            From real beta users
-          </p>
-          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl mb-4">
-            They tried everything else first
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Loved by{" "}
+            <span className="text-gradient">10,000+ Businesses</span>
           </h2>
-          <p className="text-muted-foreground text-lg">
-            Here's what early users say after switching to SocialRep.
+          <p className="text-lg text-muted-foreground">
+            See what our customers are saying about SocialRep AI
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {testimonials.map((testimonial, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {testimonials.map((testimonial, index) => (
             <div
-              key={i}
-              className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+              key={index}
+              className="p-6 rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-lg transition-all duration-300"
             >
-              <div className="flex gap-0.5 mb-4">
-                {[...Array(5)].map((_, j) => (
-                  <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />
+              {/* Rating */}
+              <div className="flex gap-1 mb-4">
+                {[...Array(testimonial.rating)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className="h-4 w-4 fill-sentiment-neutral text-sentiment-neutral"
+                  />
                 ))}
               </div>
-              <p className="text-sm text-muted-foreground italic mb-6 leading-relaxed">
-                "{testimonial.quote}"
-              </p>
+
+              {/* Content */}
+              <p className="text-muted-foreground mb-6">"{testimonial.content}"</p>
+
+              {/* Author */}
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-full ${testimonial.color} flex items-center justify-center text-sm font-medium text-white`}>
-                  {testimonial.initials}
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
+                  {testimonial.avatar}
                 </div>
                 <div>
-                  <p className="font-semibold text-sm">{testimonial.name}</p>
-                  <p className="text-xs text-muted-foreground">{testimonial.role}</p>
+                  <p className="font-semibold">{testimonial.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {testimonial.role}, {testimonial.company}
+                  </p>
                 </div>
               </div>
             </div>
