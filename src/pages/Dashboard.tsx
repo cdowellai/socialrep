@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { DashboardTrendChart } from "@/components/dashboard/DashboardTrendChart";
 import { PlatformBreakdownChart } from "@/components/dashboard/PlatformBreakdownChart";
@@ -7,23 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/hooks/useAuth";
 import { useInteractions } from "@/hooks/useInteractions";
 import { useReviews } from "@/hooks/useReviews";
 import { useLeads } from "@/hooks/useLeads";
-import { seedSampleData } from "@/lib/sampleData";
-import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   MessageSquare,
   Star,
   Users,
   TrendingUp,
-  Sparkles,
   AlertCircle,
   CheckCircle2,
-  RefreshCw,
-  Beaker,
   AlertTriangle,
   Clock,
 } from "lucide-react";
@@ -103,13 +97,10 @@ function formatResponseTime(hours: number): string {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const { interactions, loading: interactionsLoading, refetch: refetchInteractions } = useInteractions();
-  const { reviews, loading: reviewsLoading, refetch: refetchReviews } = useReviews();
-  const { leads, loading: leadsLoading, refetch: refetchLeads } = useLeads();
-  const [seeding, setSeeding] = useState(false);
+  const { interactions, loading: interactionsLoading } = useInteractions();
+  const { reviews, loading: reviewsLoading } = useReviews();
+  const { loading: leadsLoading } = useLeads();
 
   const loading = interactionsLoading || reviewsLoading || leadsLoading;
 
@@ -159,30 +150,6 @@ export default function Dashboard() {
       }, 0) / respondedWithTime.length / (1000 * 60 * 60)
     : 0;
 
-  const handleSeedData = async () => {
-    if (!user) return;
-    
-    setSeeding(true);
-    const result = await seedSampleData(user.id);
-    
-    if (result.success) {
-      toast({
-        title: "Sample data loaded!",
-        description: "Your sandbox is ready with sample interactions, reviews, and leads.",
-      });
-      refetchInteractions();
-      refetchReviews();
-      refetchLeads();
-    } else {
-      toast({
-        title: "Error",
-        description: result.error,
-        variant: "destructive",
-      });
-    }
-    setSeeding(false);
-  };
-
   const handleStatClick = (href: string, filterParam?: string) => {
     navigate(filterParam ? `${href}?${filterParam}` : href);
   };
@@ -207,43 +174,11 @@ export default function Dashboard() {
     );
   }
 
-  const hasNoData = interactions.length === 0 && reviews.length === 0 && leads.length === 0;
+  
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Sandbox Banner */}
-        <Card className="border-primary/30 bg-primary/5">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <Beaker className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold flex items-center gap-2">
-                    Sandbox Mode
-                    <Badge variant="outline" className="text-xs">Development</Badge>
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Working with sample data. No live integrations connected.
-                  </p>
-                </div>
-              </div>
-              {hasNoData && (
-                <Button onClick={handleSeedData} disabled={seeding}>
-                  {seeding ? (
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-4 w-4 mr-2" />
-                  )}
-                  Load Sample Data
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Stats Grid - 5 KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <KPICard
@@ -316,9 +251,7 @@ export default function Dashboard() {
                 <div className="text-center py-8 text-muted-foreground">
                   <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-50" />
                   <p>No interactions yet</p>
-                  <Button variant="link" onClick={handleSeedData} disabled={seeding}>
-                    Load sample data to get started
-                  </Button>
+                  <p className="text-sm mt-2">Connect a platform to start receiving interactions</p>
                 </div>
               ) : (
                 <div className="space-y-3">

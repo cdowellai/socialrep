@@ -13,13 +13,11 @@ import {
   Plus,
   RefreshCw,
   Trash2,
-  ExternalLink,
   Loader2,
   Facebook,
   Instagram,
   Linkedin,
   Youtube,
-  Sparkles,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -264,13 +262,6 @@ export function PlatformsSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-3 rounded-lg bg-accent/50 border border-primary/20 mb-4">
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              Running in Sandbox Mode — OAuth connections simulated for demo purposes
-            </p>
-          </div>
-
           {socialPlatforms.map((platform) => {
             const connected = isConnected(platform.id);
             const connection = getConnection(platform.id);
