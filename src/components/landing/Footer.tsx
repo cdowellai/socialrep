@@ -6,31 +6,25 @@ export function Footer() {
     { label: "Privacy", href: "#" },
     { label: "Terms", href: "#" },
     { label: "Contact", href: "#" },
-    { label: "Pricing", href: "#pricing" },
     { label: "Twitter", href: "#" },
   ];
 
-  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (href.startsWith("#")) {
-      e.preventDefault();
-      const element = document.querySelector(href);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
-    }
-  };
-
   return (
     <footer className="bg-card border-t border-border">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
-              <MessageSquare className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-lg">SocialRep</span>
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-lg bg-gradient-primary flex items-center justify-center">
+                <MessageSquare className="h-3.5 w-3.5 text-primary-foreground" />
+              </div>
+              <span className="font-semibold">SocialRep</span>
+            </Link>
+            <span className="text-sm text-muted-foreground hidden md:inline">
+              © 2026 SocialRep. All rights reserved.
+            </span>
+          </div>
 
           {/* Links */}
           <nav className="flex flex-wrap justify-center gap-6">
@@ -38,7 +32,6 @@ export function Footer() {
               <a
                 key={link.label}
                 href={link.href}
-                onClick={(e) => handleSmoothScroll(e, link.href)}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {link.label}
@@ -46,9 +39,9 @@ export function Footer() {
             ))}
           </nav>
 
-          {/* Copyright */}
-          <p className="text-sm text-muted-foreground">
-            © 2025 SocialRep. All rights reserved.
+          {/* Mobile Copyright */}
+          <p className="text-sm text-muted-foreground md:hidden">
+            © 2026 SocialRep. All rights reserved.
           </p>
         </div>
       </div>
