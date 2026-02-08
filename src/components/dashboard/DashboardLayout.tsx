@@ -29,17 +29,29 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StreamsSidebarMenu } from "@/components/sidebar/StreamsSidebarMenu";
+import { OnboardingTour } from "@/components/onboarding";
+
+// Tour target IDs for onboarding
+const tourTargets: Record<string, string> = {
+  "/dashboard": "overview",
+  "/dashboard/inbox": "smart-inbox",
+  "/dashboard/content": "content",
+  "/dashboard/reviews": "reviews",
+  "/dashboard/leads": "leads",
+  "/dashboard/analytics": "analytics",
+  "/dashboard/settings": "settings",
+};
 
 const sidebarLinks = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Overview" },
-  { href: "/dashboard/inbox", icon: MessageSquare, label: "Smart Inbox" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Overview", tourId: "overview" },
+  { href: "/dashboard/inbox", icon: MessageSquare, label: "Smart Inbox", tourId: "smart-inbox" },
   // Streams is handled separately with StreamsSidebarMenu
-  { href: "/dashboard/content", icon: PenLine, label: "Content" },
-  { href: "/dashboard/reviews", icon: Star, label: "Reviews" },
-  { href: "/dashboard/leads", icon: Users, label: "Leads" },
-  { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics" },
+  { href: "/dashboard/content", icon: PenLine, label: "Content", tourId: "content" },
+  { href: "/dashboard/reviews", icon: Star, label: "Reviews", tourId: "reviews" },
+  { href: "/dashboard/leads", icon: Users, label: "Leads", tourId: "leads" },
+  { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics", tourId: "analytics" },
   { href: "/dashboard/chatbot", icon: Bot, label: "Chatbot" },
-  { href: "/dashboard/settings", icon: Settings, label: "Settings" },
+  { href: "/dashboard/settings", icon: Settings, label: "Settings", tourId: "settings" },
 ];
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
@@ -79,6 +91,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 <li key={link.href}>
                   <Link
                     to={link.href}
+                    data-tour={link.tourId}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                       isActive
@@ -99,7 +112,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             })}
             
             {/* Expandable Streams Menu */}
-            <li>
+            <li data-tour="streams">
               <StreamsSidebarMenu />
             </li>
             
@@ -109,6 +122,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 <li key={link.href}>
                   <Link
                     to={link.href}
+                    data-tour={link.tourId}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                       isActive
@@ -199,6 +213,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Content */}
         <main className="flex-1 p-6 overflow-auto">{children}</main>
       </div>
+      
+      {/* Onboarding Tour */}
+      <OnboardingTour />
     </div>
   );
 }
