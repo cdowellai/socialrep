@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Bell,
   Bot,
+  PenLine,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StreamsSidebarMenu } from "@/components/sidebar/StreamsSidebarMenu";
@@ -33,6 +34,7 @@ const sidebarLinks = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Overview" },
   { href: "/dashboard/inbox", icon: MessageSquare, label: "Smart Inbox" },
   // Streams is handled separately with StreamsSidebarMenu
+  { href: "/dashboard/content", icon: PenLine, label: "Content" },
   { href: "/dashboard/reviews", icon: Star, label: "Reviews" },
   { href: "/dashboard/leads", icon: Users, label: "Leads" },
   { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics" },

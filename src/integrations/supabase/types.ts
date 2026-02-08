@@ -690,6 +690,7 @@ export type Database = {
           max_ai_responses: number
           max_interactions: number
           max_platforms: number
+          max_posts: number | null
           max_team_seats: number
           monthly_price: number
           name: string
@@ -706,6 +707,7 @@ export type Database = {
           max_ai_responses?: number
           max_interactions?: number
           max_platforms?: number
+          max_posts?: number | null
           max_team_seats?: number
           monthly_price?: number
           name: string
@@ -722,12 +724,40 @@ export type Database = {
           max_ai_responses?: number
           max_interactions?: number
           max_platforms?: number
+          max_posts?: number | null
           max_team_seats?: number
           monthly_price?: number
           name?: string
           stripe_annual_price_id?: string | null
           stripe_monthly_price_id?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      post_usage: {
+        Row: {
+          id: string
+          period_end: string
+          period_start: string
+          posts_used: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          period_end?: string
+          period_start?: string
+          posts_used?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          period_end?: string
+          period_start?: string
+          posts_used?: number | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1020,6 +1050,111 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      scheduled_posts: {
+        Row: {
+          ai_generated: boolean | null
+          approval_required: boolean | null
+          approved_at: string | null
+          approved_by: string | null
+          content: string
+          created_at: string
+          id: string
+          is_recurring: boolean | null
+          link_preview: Json | null
+          link_url: string | null
+          media_urls: string[] | null
+          optimal_time_enabled: boolean | null
+          platform_account_ids: string[] | null
+          platform_post_ids: Json | null
+          platforms: string[]
+          predicted_engagement: Json | null
+          publish_errors: Json | null
+          published_at: string | null
+          recurrence_rule: Json | null
+          rejection_reason: string | null
+          scheduled_for: string | null
+          source_interaction_id: string | null
+          status: Database["public"]["Enums"]["post_status"] | null
+          team_id: string | null
+          timezone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_generated?: boolean | null
+          approval_required?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_recurring?: boolean | null
+          link_preview?: Json | null
+          link_url?: string | null
+          media_urls?: string[] | null
+          optimal_time_enabled?: boolean | null
+          platform_account_ids?: string[] | null
+          platform_post_ids?: Json | null
+          platforms?: string[]
+          predicted_engagement?: Json | null
+          publish_errors?: Json | null
+          published_at?: string | null
+          recurrence_rule?: Json | null
+          rejection_reason?: string | null
+          scheduled_for?: string | null
+          source_interaction_id?: string | null
+          status?: Database["public"]["Enums"]["post_status"] | null
+          team_id?: string | null
+          timezone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_generated?: boolean | null
+          approval_required?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_recurring?: boolean | null
+          link_preview?: Json | null
+          link_url?: string | null
+          media_urls?: string[] | null
+          optimal_time_enabled?: boolean | null
+          platform_account_ids?: string[] | null
+          platform_post_ids?: Json | null
+          platforms?: string[]
+          predicted_engagement?: Json | null
+          publish_errors?: Json | null
+          published_at?: string | null
+          recurrence_rule?: Json | null
+          rejection_reason?: string | null
+          scheduled_for?: string | null
+          source_interaction_id?: string | null
+          status?: Database["public"]["Enums"]["post_status"] | null
+          team_id?: string | null
+          timezone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_posts_source_interaction_id_fkey"
+            columns: ["source_interaction_id"]
+            isOneToOne: false
+            referencedRelation: "interactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_posts_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stream_read_state: {
         Row: {
@@ -1337,6 +1472,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_post_usage: {
+        Args: { p_user_id: string }
+        Returns: {
+          period_end: string
+          period_start: string
+          posts_used: number
+        }[]
+      }
       get_user_team_id: { Args: { _user_id: string }; Returns: string }
       get_user_usage: {
         Args: { p_user_id: string }
@@ -1356,6 +1499,7 @@ export type Database = {
         Returns: boolean
       }
       increment_ai_usage: { Args: { p_user_id: string }; Returns: undefined }
+      increment_post_usage: { Args: { p_user_id: string }; Returns: undefined }
       is_team_admin: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
@@ -1388,6 +1532,14 @@ export type Database = {
       interaction_status: "pending" | "responded" | "escalated" | "archived"
       interaction_type: "comment" | "dm" | "mention" | "review" | "post"
       lead_status: "new" | "contacted" | "qualified" | "converted" | "lost"
+      post_status:
+        | "draft"
+        | "pending_approval"
+        | "scheduled"
+        | "publishing"
+        | "published"
+        | "failed"
+        | "cancelled"
       sentiment_type: "positive" | "neutral" | "negative"
       team_role: "owner" | "admin" | "member" | "viewer"
     }
@@ -1540,6 +1692,15 @@ export const Constants = {
       interaction_status: ["pending", "responded", "escalated", "archived"],
       interaction_type: ["comment", "dm", "mention", "review", "post"],
       lead_status: ["new", "contacted", "qualified", "converted", "lost"],
+      post_status: [
+        "draft",
+        "pending_approval",
+        "scheduled",
+        "publishing",
+        "published",
+        "failed",
+        "cancelled",
+      ],
       sentiment_type: ["positive", "neutral", "negative"],
       team_role: ["owner", "admin", "member", "viewer"],
     },
