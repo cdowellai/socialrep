@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
+import { useInteractions } from "@/hooks/useInteractions";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -44,6 +45,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { interactions } = useInteractions();
+  
+  const pendingCount = interactions.filter(i => i.status === "pending").length;
 
   const handleSignOut = async () => {
     await signOut();
@@ -82,9 +86,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                   >
                     <link.icon className="h-5 w-5" />
                     {link.label}
-                    {link.label === "Smart Inbox" && (
+                    {link.label === "Smart Inbox" && pendingCount > 0 && (
                       <span className="ml-auto px-2 py-0.5 rounded-full bg-destructive text-destructive-foreground text-xs">
-                        12
+                        {pendingCount}
                       </span>
                     )}
                   </Link>
