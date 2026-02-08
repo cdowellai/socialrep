@@ -8,35 +8,37 @@ export function CTASection() {
 
   return (
     <>
-      <section className="py-24 relative overflow-hidden">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-primary opacity-95" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCA0LTRzNCAyIDQgNC0yIDQtNCA0LTQtMi00LTR6bTAtMzBjMC0yIDItNCA0LTRzNCAyIDQgNC0yIDQtNCA0LTQtMi00LTR6TTYgMzRjMC0yIDItNCA0LTRzNCAyIDQgNC0yIDQtNCA0LTQtMi00LTR6bTAtMzBjMC0yIDItNCA0LTRzNCAyIDQgNC0yIDQtNCA0LTQtMi00LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
-        
+      <section className="py-24 relative overflow-hidden bg-foreground">
+        {/* Subtle radial glow from bottom center */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm mb-8">
-              <span className="text-sm font-medium text-white">
-                Get Started
-              </span>
-            </div>
-
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-              Ready to take control of your engagement?
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-background mb-6">
+              Every unanswered message is a customer choosing someone else.
             </h2>
 
-            <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
-              Set up your account in minutes. No credit card required.
+            <p className="text-lg text-background/70 mb-10 max-w-2xl mx-auto">
+              Connect your accounts, train your AI, and start responding 10x faster — all in the next 15 minutes.
             </p>
 
-            <Button
-              size="xl"
-              className="bg-white text-primary hover:bg-white/90 shadow-xl"
-              onClick={() => setAuthModal(true)}
-            >
-              Start Free Trial
-              <ArrowRight className="h-5 w-5 ml-2" />
-            </Button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button
+                size="lg"
+                className="bg-background text-foreground hover:bg-background/90"
+                onClick={() => setAuthModal(true)}
+              >
+                Start Free Trial
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-background/30 text-background hover:bg-background/10"
+              >
+                Talk to Sales
+              </Button>
+            </div>
           </div>
         </div>
       </section>
