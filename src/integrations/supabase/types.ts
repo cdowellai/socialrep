@@ -786,6 +786,10 @@ export type Database = {
           notify_slack_enabled: boolean | null
           notify_slack_webhook_url: string | null
           notify_urgent_interactions: boolean | null
+          onboarding_completed: boolean | null
+          onboarding_completed_at: string | null
+          onboarding_skipped: boolean | null
+          onboarding_variant: string | null
           plan: string | null
           response_length: string | null
           response_signature: string | null
@@ -821,6 +825,10 @@ export type Database = {
           notify_slack_enabled?: boolean | null
           notify_slack_webhook_url?: string | null
           notify_urgent_interactions?: boolean | null
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_skipped?: boolean | null
+          onboarding_variant?: string | null
           plan?: string | null
           response_length?: string | null
           response_signature?: string | null
@@ -856,6 +864,10 @@ export type Database = {
           notify_slack_enabled?: boolean | null
           notify_slack_webhook_url?: string | null
           notify_urgent_interactions?: boolean | null
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_skipped?: boolean | null
+          onboarding_variant?: string | null
           plan?: string | null
           response_length?: string | null
           response_signature?: string | null
