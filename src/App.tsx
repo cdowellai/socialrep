@@ -13,6 +13,7 @@ import ReviewsPage from "./pages/Reviews";
 import LeadsPage from "./pages/Leads";
 import AnalyticsPage from "./pages/Analytics";
 import ChatbotPage from "./pages/Chatbot";
+import ContentPage from "./pages/Content";
 import SettingsPage from "./pages/Settings";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -95,6 +96,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <ChatbotPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/content"
+        element={
+          <ProtectedRoute>
+            <ContentPage />
           </ProtectedRoute>
         }
       />
