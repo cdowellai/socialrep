@@ -146,7 +146,7 @@ export function FeaturesSection() {
           <FeatureRow
             reverse
             title="Know what's working. Prove it with data."
-            description="Track response times, sentiment trends, review volume, and team performance across every platform. Export clean PDF reports in one click — whether you're reporting to yourself, your boss, or your clients."
+            description="Track response times, sentiment trends, review volume, and team performance across every platform. See your reputation improving in real time — and export clean PDF reports when you need to share results."
             bullets={[
               "Response time, sentiment, and interaction volume over time",
               "Team performance tracking — see who's handling what",

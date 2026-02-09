@@ -14,7 +14,7 @@ const columns = [
   {
     icon: TrendingUp,
     title: "Reputation Analytics",
-    description: "Track your response times, sentiment trends, review volume, and team performance. Know exactly what's working and what needs attention.",
+    description: "Track your response times, sentiment trends, review volume, and team performance across every platform. See what's working, spot issues early, and export reports in one click.",
   },
 ];
 
