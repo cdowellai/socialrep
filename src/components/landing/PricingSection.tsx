@@ -31,12 +31,12 @@ const planFeatures = {
   agency: [
     { text: "Unlimited interactions", included: true },
     { text: "Unlimited platforms", included: true },
-    { text: "Custom AI training per client", included: true },
+    { text: "Custom AI training per workspace", included: true },
     { text: "White-label reports", included: true },
     { text: "CRM integrations + API access", included: true },
     { text: "15 team seats", included: true },
     { text: "Client workspaces", included: true },
-    { text: "Dedicated account manager", included: true },
+    { text: "Dedicated support", included: true },
   ],
 };
 
@@ -105,7 +105,7 @@ export function PricingSection() {
       planKey: "agency",
       monthlyPrice: agencyPlan?.monthly_price || 499,
       annualPrice: agencyPlan?.annual_price || 399,
-      description: "For agencies managing multiple client accounts.",
+      description: "For teams and agencies managing multiple accounts.",
       features: planFeatures.agency,
       popular: false,
       plan: agencyPlan,
@@ -114,13 +114,10 @@ export function PricingSection() {
 
   return (
     <>
-      <section id="pricing" className="py-24 bg-muted/30">
+      <section id="pricing" className="py-24">
         <div className="container mx-auto px-4">
-          {/* Header */}
           <div className="text-center max-w-3xl mx-auto mb-8">
-            <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-4">
-              Pricing
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-4">Pricing</p>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
               Simple plans that scale with you.
             </h2>
@@ -129,35 +126,20 @@ export function PricingSection() {
             </p>
           </div>
 
-          {/* Billing Toggle */}
           <div className="flex items-center justify-center gap-4 mb-12">
-            <span className={`text-sm font-medium ${!isAnnual ? "text-foreground" : "text-muted-foreground"}`}>
-              Monthly
-            </span>
-            <Switch
-              checked={isAnnual}
-              onCheckedChange={setIsAnnual}
-            />
-            <span className={`text-sm font-medium ${isAnnual ? "text-foreground" : "text-muted-foreground"}`}>
-              Annual
-            </span>
+            <span className={`text-sm font-medium ${!isAnnual ? "text-foreground" : "text-muted-foreground"}`}>Monthly</span>
+            <Switch checked={isAnnual} onCheckedChange={setIsAnnual} />
+            <span className={`text-sm font-medium ${isAnnual ? "text-foreground" : "text-muted-foreground"}`}>Annual</span>
             {isAnnual && (
-              <Badge className="bg-sentiment-positive text-primary-foreground">
-                Save 20%
-              </Badge>
+              <Badge className="bg-sentiment-positive text-primary-foreground">Save 20%</Badge>
             )}
           </div>
 
-          {/* Pricing Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {displayPlans.map((plan, index) => (
               <div
                 key={index}
-                className={`relative p-6 rounded-2xl bg-card border ${
-                  plan.popular
-                    ? "border-primary shadow-glow"
-                    : "border-border"
-                } flex flex-col`}
+                className={`relative p-6 rounded-2xl bg-card border ${plan.popular ? "border-primary shadow-glow" : "border-border"} flex flex-col`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">
@@ -168,19 +150,11 @@ export function PricingSection() {
                 <div className="mb-6">
                   <h3 className="font-semibold text-lg mb-2">{plan.name}</h3>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold">
-                      ${isAnnual ? plan.annualPrice : plan.monthlyPrice}
-                    </span>
+                    <span className="text-4xl font-bold">${isAnnual ? plan.annualPrice : plan.monthlyPrice}</span>
                     <span className="text-muted-foreground">/mo</span>
                   </div>
-                  {isAnnual && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      billed annually
-                    </p>
-                  )}
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {plan.description}
-                  </p>
+                  {isAnnual && <p className="text-xs text-muted-foreground mt-1">billed annually</p>}
+                  <p className="text-sm text-muted-foreground mt-2">{plan.description}</p>
                 </div>
 
                 <ul className="space-y-3 mb-8 flex-1">
@@ -191,9 +165,7 @@ export function PricingSection() {
                       ) : (
                         <X className="h-4 w-4 text-muted-foreground/50 mt-0.5 shrink-0" />
                       )}
-                      <span className={feature.included ? "" : "text-muted-foreground/50"}>
-                        {feature.text}
-                      </span>
+                      <span className={feature.included ? "" : "text-muted-foreground/50"}>{feature.text}</span>
                     </li>
                   ))}
                 </ul>
@@ -215,23 +187,22 @@ export function PricingSection() {
             ))}
           </div>
 
-          {/* Enterprise CTA */}
           <div className="text-center mt-12">
             <p className="text-sm text-muted-foreground">
-              Need more? Contact us for Enterprise pricing with custom limits, SSO, and SLA guarantees.
+              Need something custom? Contact us for Enterprise pricing.
             </p>
           </div>
         </div>
       </section>
 
-      <AuthModal 
-        isOpen={authModal} 
+      <AuthModal
+        isOpen={authModal}
         onClose={() => {
           setAuthModal(false);
           localStorage.removeItem("pending_checkout_plan");
           localStorage.removeItem("pending_checkout_period");
-        }} 
-        defaultTab="signup" 
+        }}
+        defaultTab="signup"
       />
     </>
   );

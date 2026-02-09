@@ -49,7 +49,6 @@ export function Navbar() {
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
                 <MessageSquare className="h-4 w-4 text-primary-foreground" />
@@ -57,7 +56,6 @@ export function Navbar() {
               <span className="font-bold text-xl">SocialRep</span>
             </Link>
 
-            {/* Desktop Navigation - Centered */}
             <div className="hidden md:flex items-center gap-8">
               {navLinks.map((link) => (
                 <a
@@ -71,7 +69,6 @@ export function Navbar() {
               ))}
             </div>
 
-            {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-3">
               {user ? (
                 <>
@@ -100,7 +97,6 @@ export function Navbar() {
               )}
             </div>
 
-            {/* Mobile Menu Button */}
             <div className="flex md:hidden items-center gap-2">
               <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                 {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -109,7 +105,6 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-xl">
             <div className="container mx-auto px-4 py-4 space-y-4">
