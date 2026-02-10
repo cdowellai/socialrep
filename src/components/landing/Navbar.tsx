@@ -89,7 +89,10 @@ export function Navbar() {
                   </Button>
                   <Button
                     variant="hero"
-                    onClick={() => setAuthModal({ isOpen: true, tab: "signup" })}
+                    onClick={() => {
+                      const el = document.querySelector("#pricing");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
                   >
                     Start Free Trial
                   </Button>
@@ -144,7 +147,8 @@ export function Navbar() {
                       variant="hero"
                       className="w-full"
                       onClick={() => {
-                        setAuthModal({ isOpen: true, tab: "signup" });
+                        const el = document.querySelector("#pricing");
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
                         setIsMenuOpen(false);
                       }}
                     >
