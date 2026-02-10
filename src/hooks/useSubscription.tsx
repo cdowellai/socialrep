@@ -58,7 +58,7 @@ interface SubscriptionContextType {
   isPastDue: boolean;
   trialDaysRemaining: number;
   refreshSubscription: () => Promise<void>;
-  createCheckoutSession: (planId: string, billingPeriod: "monthly" | "annual") => Promise<string | null>;
+  createCheckoutSession: (planId: string, billingPeriod: "monthly" | "annual", includeTrial?: boolean) => Promise<string | null>;
   createPortalSession: () => Promise<string | null>;
 }
 
@@ -173,7 +173,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           }
 
           const response = await supabase.functions.invoke("create-checkout-session", {
-            body: { plan_id: pendingPlanId, billing_period: pendingPeriod },
+            body: { plan_id: pendingPlanId, billing_period: pendingPeriod, include_trial: true },
           });
 
           if (response.error) {
@@ -223,13 +223,13 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     ? Math.max(0, Math.ceil((new Date(subscription.trial_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : 0;
 
-  const createCheckoutSession = async (planId: string, billingPeriod: "monthly" | "annual"): Promise<string | null> => {
+  const createCheckoutSession = async (planId: string, billingPeriod: "monthly" | "annual", includeTrial: boolean = false): Promise<string | null> => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
       const response = await supabase.functions.invoke("create-checkout-session", {
-        body: { plan_id: planId, billing_period: billingPeriod },
+        body: { plan_id: planId, billing_period: billingPeriod, include_trial: includeTrial },
       });
 
       if (response.error) throw response.error;
