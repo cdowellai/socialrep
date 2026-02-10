@@ -34,7 +34,7 @@ export function HeroSection() {
 
   return (
     <>
-      <section className="relative min-h-screen flex flex-col items-center pt-24 pb-16 overflow-hidden">
+      <section className="relative min-h-screen flex flex-col items-center pt-32 md:pt-40 pb-16 overflow-hidden">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="container mx-auto px-4 relative z-10">
