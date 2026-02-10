@@ -31,8 +31,9 @@ const tourSteps: Step[] = [
         </p>
       </div>
     ),
-    placement: "right",
+    placement: "right-start",
     title: "Smart Inbox",
+    floaterProps: { offset: 16 },
   },
   {
     target: '[data-tour="streams"]',
@@ -45,8 +46,9 @@ const tourSteps: Step[] = [
         </p>
       </div>
     ),
-    placement: "right",
+    placement: "right-start",
     title: "Streams",
+    floaterProps: { offset: 16 },
   },
   {
     target: '[data-tour="content"]',
@@ -59,8 +61,9 @@ const tourSteps: Step[] = [
         </p>
       </div>
     ),
-    placement: "right",
+    placement: "right-start",
     title: "Content",
+    floaterProps: { offset: 16 },
   },
   {
     target: '[data-tour="reviews"]',
@@ -73,8 +76,9 @@ const tourSteps: Step[] = [
         </p>
       </div>
     ),
-    placement: "right",
+    placement: "right-start",
     title: "Reviews",
+    floaterProps: { offset: 16 },
   },
   {
     target: '[data-tour="leads"]',
@@ -87,8 +91,9 @@ const tourSteps: Step[] = [
         </p>
       </div>
     ),
-    placement: "right",
+    placement: "right-start",
     title: "Leads",
+    floaterProps: { offset: 16 },
   },
   {
     target: '[data-tour="analytics"]',
@@ -101,8 +106,9 @@ const tourSteps: Step[] = [
         </p>
       </div>
     ),
-    placement: "right",
+    placement: "right-start",
     title: "Analytics",
+    floaterProps: { offset: 16 },
   },
   {
     target: '[data-tour="settings"]',
@@ -115,8 +121,9 @@ const tourSteps: Step[] = [
         </p>
       </div>
     ),
-    placement: "right",
+    placement: "right-start",
     title: "Settings",
+    floaterProps: { offset: 16 },
   },
 ];
 
