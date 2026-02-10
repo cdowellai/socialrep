@@ -14,7 +14,10 @@ import {
   Sparkles,
   Link2,
   Mail,
+  MessageSquareOff,
+  Settings,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { ReviewFilters } from "@/components/reviews/ReviewFilters";
 import { AIRespondAllModal } from "@/components/reviews/AIRespondAllModal";
 import { ReviewRequestModal } from "@/components/reviews/ReviewRequestModal";
@@ -58,94 +61,9 @@ export default function ReviewsPage() {
     await respondToReviews(responses);
   };
 
-  // Use database data or fallback to mock for demo
-  const displayStats = stats.totalReviews > 0 ? stats : {
-    averageRating: 4.7,
-    totalReviews: 1284,
-    responseRate: 94,
-    pendingCount: 12,
-    ratingDistribution: [
-      { stars: 5, count: 856, percentage: 67 },
-      { stars: 4, count: 257, percentage: 20 },
-      { stars: 3, count: 95, percentage: 7 },
-      { stars: 2, count: 51, percentage: 4 },
-      { stars: 1, count: 25, percentage: 2 },
-    ],
-    platforms: [
-      { name: "Google", rating: 4.8, count: 543, trend: "up" },
-      { name: "Yelp", rating: 4.5, count: 312, trend: "up" },
-      { name: "Facebook", rating: 4.7, count: 245, trend: "down" },
-      { name: "TripAdvisor", rating: 4.6, count: 184, trend: "up" },
-    ],
-  };
-
-  // Use database reviews or mock for demo
-  const displayReviews = reviews.length > 0 ? reviews : [
-    {
-      id: "1",
-      user_id: "",
-      platform: "google" as const,
-      reviewer_name: "Alex Thompson",
-      reviewer_avatar: null,
-      rating: 5,
-      content: "Absolutely fantastic service! The team went above and beyond to help me. Highly recommend to anyone looking for quality and professionalism.",
-      response: null,
-      responded_at: null,
-      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      updated_at: new Date().toISOString(),
-      external_id: null,
-      review_url: null,
-      is_featured: false,
-    },
-    {
-      id: "2",
-      user_id: "",
-      platform: "yelp" as const,
-      reviewer_name: "Maria Garcia",
-      reviewer_avatar: null,
-      rating: 4,
-      content: "Good experience overall. The product quality is great, but shipping took a bit longer than expected. Will definitely order again though!",
-      response: "Thank you so much for your kind words, Maria! We're thrilled you enjoyed our product quality. We're working on improving our shipping times and appreciate your patience. Looking forward to serving you again!",
-      responded_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-      created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      updated_at: new Date().toISOString(),
-      external_id: null,
-      review_url: null,
-      is_featured: false,
-    },
-    {
-      id: "3",
-      user_id: "",
-      platform: "facebook" as const,
-      reviewer_name: "David Kim",
-      reviewer_avatar: null,
-      rating: 3,
-      content: "Service was okay. Had some communication issues but they resolved it eventually. Room for improvement in customer support response times.",
-      response: "We sincerely apologize for the communication issues you experienced, David. Your feedback is invaluable, and we're actively working to improve our response times. Please reach out directly if there's anything more we can do.",
-      responded_at: new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString(),
-      created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-      updated_at: new Date().toISOString(),
-      external_id: null,
-      review_url: null,
-      is_featured: false,
-    },
-    {
-      id: "4",
-      user_id: "",
-      platform: "google" as const,
-      reviewer_name: "Jennifer Lee",
-      reviewer_avatar: null,
-      rating: 5,
-      content: "Best purchase I've made! The quality exceeded my expectations and the customer service team was incredibly helpful and responsive.",
-      response: null,
-      responded_at: null,
-      created_at: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(),
-      updated_at: new Date().toISOString(),
-      external_id: null,
-      review_url: null,
-      is_featured: false,
-    },
-  ];
+  const navigate = useNavigate();
+  const displayStats = stats;
+  const displayReviews = reviews;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -196,10 +114,6 @@ export default function ReviewsPage() {
                   <Star className="h-5 w-5 text-sentiment-neutral fill-sentiment-neutral" />
                   <span className="text-sm text-muted-foreground">Avg Rating</span>
                 </div>
-                <div className="flex items-center gap-1 text-sm text-sentiment-positive">
-                  +0.2
-                  <ArrowUpRight className="h-4 w-4" />
-                </div>
               </div>
               <div className="text-4xl font-bold">{displayStats.averageRating}</div>
               <div className="flex gap-0.5 mt-2">
@@ -213,9 +127,6 @@ export default function ReviewsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm text-muted-foreground">Total Reviews</span>
-                <div className="flex items-center gap-1 text-sm text-sentiment-positive">
-                  +48 this month
-                </div>
               </div>
               <div className="text-4xl font-bold">{displayStats.totalReviews.toLocaleString()}</div>
             </CardContent>
@@ -226,10 +137,6 @@ export default function ReviewsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm text-muted-foreground">Response Rate</span>
-                <div className="flex items-center gap-1 text-sm text-sentiment-positive">
-                  +5%
-                  <ArrowUpRight className="h-4 w-4" />
-                </div>
               </div>
               <div className="text-4xl font-bold">{displayStats.responseRate}%</div>
               <Progress value={displayStats.responseRate} className="mt-2" />
@@ -292,40 +199,46 @@ export default function ReviewsPage() {
               <CardTitle>By Platform</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {displayStats.platforms.map((platform) => (
-                  <button
-                    key={platform.name}
-                    className="w-full flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                    onClick={() => setFilters({ ...filters, platform: platform.name.toLowerCase() })}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-background flex items-center justify-center border">
-                        <span className="text-sm font-bold">{platform.name[0]}</span>
-                      </div>
-                      <div className="text-left">
-                        <p className="font-medium">{platform.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {platform.count} reviews
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 fill-sentiment-neutral text-sentiment-neutral" />
-                          <span className="font-semibold">{platform.rating}</span>
+              {displayStats.platforms.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground text-sm">
+                  No platform data yet.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {displayStats.platforms.map((platform) => (
+                    <button
+                      key={platform.name}
+                      className="w-full flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                      onClick={() => setFilters({ ...filters, platform: platform.name.toLowerCase() })}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-lg bg-background flex items-center justify-center border">
+                          <span className="text-sm font-bold">{platform.name[0]}</span>
+                        </div>
+                        <div className="text-left">
+                          <p className="font-medium">{platform.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {platform.count} reviews
+                          </p>
                         </div>
                       </div>
-                      {platform.trend === "up" ? (
-                        <TrendingUp className="h-4 w-4 text-sentiment-positive" />
-                      ) : (
-                        <TrendingDown className="h-4 w-4 text-sentiment-negative" />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <div className="flex items-center gap-1">
+                            <Star className="h-4 w-4 fill-sentiment-neutral text-sentiment-neutral" />
+                            <span className="font-semibold">{platform.rating}</span>
+                          </div>
+                        </div>
+                        {platform.trend === "up" ? (
+                          <TrendingUp className="h-4 w-4 text-sentiment-positive" />
+                        ) : (
+                          <TrendingDown className="h-4 w-4 text-sentiment-negative" />
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -366,8 +279,16 @@ export default function ReviewsPage() {
                 ))}
               </div>
             ) : displayReviews.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                No reviews found matching your filters.
+              <div className="text-center py-16">
+                <MessageSquareOff className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                <p className="text-lg font-medium mb-1">No reviews yet</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Connect a platform to start monitoring your reviews
+                </p>
+                <Button variant="outline" onClick={() => navigate("/dashboard/settings?tab=platforms")}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Connect a Platform
+                </Button>
               </div>
             ) : (
               <div className="space-y-4">
