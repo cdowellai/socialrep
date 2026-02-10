@@ -27,6 +27,7 @@ import { InteractionReplyInput } from "./InteractionReplyInput";
 import { InteractionThread } from "./InteractionThread";
 import { InteractionResolutionBadge } from "./InteractionResolutionBadge";
 import { StreamCardAssignDropdown } from "./StreamCardAssignDropdown";
+import { CommentActionButtons } from "./CommentActionButtons";
 import { useInteractionReplies } from "@/hooks/useInteractionReplies";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
@@ -220,6 +221,21 @@ export function StreamCard({
           assignedTo={(interaction as any).assigned_to}
         />
       </div>
+
+      {/* Comment Actions (Reply, Hide, PM, Delete) */}
+      {(interaction.interaction_type === "comment" || interaction.interaction_type === "mention" || interaction.interaction_type === "review") && (
+        <CommentActionButtons
+          platform={interaction.platform}
+          authorName={interaction.author_name}
+          isHidden={(interaction.metadata as any)?.hidden === true}
+          onReply={() => setIsThreadOpen(true)}
+          onHide={() => onArchive?.(interaction)}
+          onUnhide={() => onMarkResponded?.(interaction)}
+          onSendPM={(message) => console.log("Send PM:", message)}
+          onDelete={() => onArchive?.(interaction)}
+          className="mb-2"
+        />
+      )}
 
       {/* AI Suggestion */}
       {showAiSuggestions && status === "pending" && (

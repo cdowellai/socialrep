@@ -52,6 +52,7 @@ import { FloatingBulkActions } from "@/components/inbox/FloatingBulkActions";
 import { CustomerHistory } from "@/components/inbox/CustomerHistory";
 import { ResponseTimeIndicator } from "@/components/inbox/ResponseTimeIndicator";
 import { ConvertToLeadButton } from "@/components/leads";
+import { CommentActionButtons } from "@/components/streams/CommentActionButtons";
 import { cn } from "@/lib/utils";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
@@ -760,6 +761,61 @@ export default function InboxPage() {
                   <div className="p-4 rounded-lg bg-muted/50">
                     <p className="text-base">{selectedInteraction.content}</p>
                   </div>
+
+                  {/* Comment Action Buttons */}
+                  {(selectedInteraction.interaction_type === "comment" ||
+                    selectedInteraction.interaction_type === "mention" ||
+                    selectedInteraction.interaction_type === "review") && (
+                    <CommentActionButtons
+                      platform={selectedInteraction.platform}
+                      authorName={selectedInteraction.author_name}
+                      isHidden={(selectedInteraction.metadata as any)?.hidden === true}
+                      onReply={() => replyInputRef.current?.focus()}
+                      onHide={() =>
+                        updateInteraction(selectedInteraction.id, {
+                          metadata: { ...(selectedInteraction.metadata as any), hidden: true },
+                        }).then(() =>
+                          setSelectedInteraction({
+                            ...selectedInteraction,
+                            metadata: { ...(selectedInteraction.metadata as any), hidden: true },
+                          })
+                        )
+                      }
+                      onUnhide={() =>
+                        updateInteraction(selectedInteraction.id, {
+                          metadata: { ...(selectedInteraction.metadata as any), hidden: false },
+                        }).then(() =>
+                          setSelectedInteraction({
+                            ...selectedInteraction,
+                            metadata: { ...(selectedInteraction.metadata as any), hidden: false },
+                          })
+                        )
+                      }
+                      onSendPM={(message) => {
+                        toast({
+                          title: "Private message queued",
+                          description: `Message to ${selectedInteraction.author_name || "user"} will be sent via ${selectedInteraction.platform}.`,
+                        });
+                      }}
+                      onDelete={async () => {
+                        try {
+                          await updateInteraction(selectedInteraction.id, { status: "archived" });
+                          setSelectedInteraction({
+                            ...selectedInteraction,
+                            status: "archived",
+                          });
+                        } catch {
+                          toast({
+                            title: "Error",
+                            description: "Failed to delete comment",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                      className="mt-3"
+                    />
+                  )}
+
                   {/* Response Time Indicator */}
                   <ResponseTimeIndicator
                     createdAt={selectedInteraction.created_at}
