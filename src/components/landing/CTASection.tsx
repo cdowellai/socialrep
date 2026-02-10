@@ -18,17 +18,10 @@ export function CTASection() {
           <p className="text-lg opacity-70 mb-10 max-w-xl mx-auto">
             Connect your accounts, train your AI, and start responding faster — all in the next 15 minutes.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex items-center justify-center">
             <Button variant="hero" size="lg" onClick={() => setAuthModal(true)}>
               Start Free Trial
               <ArrowRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-white/30 text-white hover:bg-white/10 hover:text-white"
-            >
-              Talk to Sales
             </Button>
           </div>
         </div>
