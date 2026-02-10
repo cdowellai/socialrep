@@ -48,6 +48,7 @@ export function BillingSettings() {
     trialDaysRemaining,
     createCheckoutSession,
     createPortalSession,
+    refreshSubscription,
   } = useSubscription();
 
   const [isAnnual, setIsAnnual] = useState(false);
@@ -55,6 +56,32 @@ export function BillingSettings() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [connectedPlatforms, setConnectedPlatforms] = useState(0);
   const [teamSeats, setTeamSeats] = useState(1);
+
+  // Fallback: verify session with Stripe directly after successful checkout redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("success") === "true" && user) {
+      const verifyAndSync = async () => {
+        try {
+          const response = await supabase.functions.invoke("verify-session");
+          if (response.data?.status === "synced") {
+            await refreshSubscription();
+            toast({
+              title: "Plan upgraded!",
+              description: "Your subscription has been activated successfully.",
+            });
+          }
+        } catch (err) {
+          console.error("Session verification error:", err);
+        }
+        // Clean up URL params
+        const url = new URL(window.location.href);
+        url.searchParams.delete("success");
+        window.history.replaceState({}, "", url.toString());
+      };
+      verifyAndSync();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user) {

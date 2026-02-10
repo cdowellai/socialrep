@@ -17,7 +17,8 @@ serve(async (req) => {
 
   try {
     const body = await req.text();
-    const event = stripe.webhooks.constructEvent(body, signature, endpointSecret);
+    // Use constructEventAsync for Deno compatibility
+    const event = await stripe.webhooks.constructEventAsync(body, signature, endpointSecret);
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -56,8 +57,8 @@ serve(async (req) => {
             billing_period: billingPeriod,
             current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
             current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            trial_end: subscription.trial_end 
-              ? new Date(subscription.trial_end * 1000).toISOString() 
+            trial_end: subscription.trial_end
+              ? new Date(subscription.trial_end * 1000).toISOString()
               : null,
           }, { onConflict: "user_id" });
 
@@ -69,7 +70,7 @@ serve(async (req) => {
         const periodStart = new Date();
         periodStart.setDate(1);
         periodStart.setHours(0, 0, 0, 0);
-        
+
         const periodEnd = new Date(periodStart);
         periodEnd.setMonth(periodEnd.getMonth() + 1);
 
@@ -87,17 +88,54 @@ serve(async (req) => {
         break;
       }
 
+      case "customer.subscription.created": {
+        // Handle subscription creation (covers cases where checkout.session.completed metadata might be missing)
+        const subscription = event.data.object as Stripe.Subscription;
+        const customerId = subscription.customer as string;
+        const userId = subscription.metadata?.supabase_user_id;
+
+        if (userId) {
+          const priceId = subscription.items.data[0]?.price.id;
+          const { data: plan } = await supabaseAdmin
+            .from("plans")
+            .select("id")
+            .or(`stripe_monthly_price_id.eq.${priceId},stripe_annual_price_id.eq.${priceId}`)
+            .single();
+
+          const billingPeriod = subscription.items.data[0]?.price.recurring?.interval === "year"
+            ? "annual"
+            : "monthly";
+
+          await supabaseAdmin
+            .from("subscriptions")
+            .upsert({
+              user_id: userId,
+              plan_id: plan?.id || "",
+              stripe_customer_id: customerId,
+              stripe_subscription_id: subscription.id,
+              status: subscription.status === "trialing" ? "trialing" : "active",
+              billing_period: billingPeriod,
+              current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              trial_end: subscription.trial_end
+                ? new Date(subscription.trial_end * 1000).toISOString()
+                : null,
+            }, { onConflict: "user_id" });
+
+          console.log("Subscription.created handled for user:", userId);
+        }
+        break;
+      }
+
       case "invoice.paid": {
         const invoice = event.data.object as Stripe.Invoice;
         const subscriptionId = invoice.subscription as string;
 
         if (!subscriptionId) break;
 
-        // Get subscription from Stripe
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const customerId = invoice.customer as string;
 
-        // Find user by stripe customer id
         const { data: subData } = await supabaseAdmin
           .from("subscriptions")
           .select("user_id")
@@ -105,7 +143,6 @@ serve(async (req) => {
           .single();
 
         if (subData) {
-          // Update subscription status
           await supabaseAdmin
             .from("subscriptions")
             .update({
@@ -115,11 +152,10 @@ serve(async (req) => {
             })
             .eq("user_id", subData.user_id);
 
-          // Reset usage for new period
           const periodStart = new Date();
           periodStart.setDate(1);
           periodStart.setHours(0, 0, 0, 0);
-          
+
           const periodEnd = new Date(periodStart);
           periodEnd.setMonth(periodEnd.getMonth() + 1);
 
@@ -170,18 +206,16 @@ serve(async (req) => {
           .single();
 
         if (subData) {
-          // Get plan from metadata or price lookup
           const priceId = subscription.items.data[0]?.price.id;
-          
-          // Find matching plan
+
           const { data: plan } = await supabaseAdmin
             .from("plans")
             .select("id")
             .or(`stripe_monthly_price_id.eq.${priceId},stripe_annual_price_id.eq.${priceId}`)
             .single();
 
-          const billingPeriod = subscription.items.data[0]?.price.recurring?.interval === "year" 
-            ? "annual" 
+          const billingPeriod = subscription.items.data[0]?.price.recurring?.interval === "year"
+            ? "annual"
             : "monthly";
 
           await supabaseAdmin
@@ -189,7 +223,7 @@ serve(async (req) => {
             .update({
               plan_id: plan?.id || subData.user_id,
               billing_period: billingPeriod,
-              status: subscription.status === "trialing" ? "trialing" : 
+              status: subscription.status === "trialing" ? "trialing" :
                       subscription.status === "active" ? "active" :
                       subscription.status === "past_due" ? "past_due" : "canceled",
               cancel_at_period_end: subscription.cancel_at_period_end,
