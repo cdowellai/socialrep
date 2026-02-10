@@ -95,7 +95,7 @@ export function AnalyticsPaywall() {
 
   return (
     <div className="relative">
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-background via-background/95 to-transparent z-10">
+      <div className="absolute inset-0 flex items-start justify-center pt-8 bg-gradient-to-t from-background via-background/95 to-transparent z-10">
         <Card className="max-w-lg mx-4 border-primary/20 shadow-lg">
           <CardHeader className="text-center pb-4">
             <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
