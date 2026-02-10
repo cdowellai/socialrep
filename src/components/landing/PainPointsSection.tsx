@@ -1,18 +1,20 @@
-const painCards = [
+import { MessageSquareOff, Clock, Copy, type LucideIcon } from "lucide-react";
+
+const painCards: { icon: LucideIcon; title: string; body: string; stat: string }[] = [
   {
-    emoji: "📱",
+    icon: MessageSquareOff,
     title: "Comments pile up. Customers move on.",
     body: "You're running ads, posting content, getting traction — but who has time to respond to every comment, DM, and review across 6 platforms? They add up fast. And every one you miss is a customer who stops waiting.",
     stat: "→ The average business misses 62% of social messages",
   },
   {
-    emoji: "⏱️",
+    icon: Clock,
     title: "Slow replies cost you real money.",
     body: "When someone leaves a review or asks a question, they expect a fast response. Every hour you wait, the chance of winning them back drops. Your competitor down the street? They're already replying.",
     stat: "→ Customers expect a response within hours, not days",
   },
   {
-    emoji: "🤖",
+    icon: Copy,
     title: "Generic responses do more harm than good.",
     body: "Customers can spot a template from a mile away. 'Thanks for your feedback!' doesn't cut it. You need responses that sound like they came from a human who actually read the message.",
     stat: "→ Personalized responses get 4x more engagement",
@@ -40,7 +42,9 @@ export function PainPointsSection() {
               key={i}
               className="rounded-xl border border-background/10 p-6 flex flex-col"
             >
-              <span className="text-3xl mb-4">{card.emoji}</span>
+              <div className="w-10 h-10 rounded-lg bg-primary/15 flex items-center justify-center mb-4">
+                <card.icon className="h-5 w-5 text-primary" />
+              </div>
               <h3 className="font-semibold text-lg mb-3">{card.title}</h3>
               <p className="text-sm leading-relaxed opacity-80 flex-1">{card.body}</p>
               <div className="border-t border-background/10 mt-6 pt-4">
