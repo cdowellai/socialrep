@@ -93,13 +93,19 @@ export function useTeam() {
         .from("teams")
         .select("*")
         .eq("id", teamId)
-        .single();
+        .maybeSingle();
 
-      if (teamError) throw teamError;
+      if (teamError || !teamData) {
+        // Team not found or inaccessible — treat as no team
+        setTeam(null);
+        setMembers([]);
+        setLoading(false);
+        return;
+      }
       setTeam(teamData);
 
       // Fetch team members with profile info
-      const { data: membersData, error: membersError } = await supabase
+      const { data: membersData } = await supabase
         .from("team_members")
         .select(`
           *,
@@ -111,8 +117,6 @@ export function useTeam() {
         `)
         .eq("team_id", teamId)
         .not("accepted_at", "is", null);
-
-      if (membersError) throw membersError;
 
       // Transform members data
       const transformedMembers = (membersData || []).map((m: any) => ({
