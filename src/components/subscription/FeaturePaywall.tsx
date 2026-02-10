@@ -94,44 +94,42 @@ export function AnalyticsPaywall() {
   };
 
   return (
-    <div className="relative">
-      <div className="absolute inset-0 flex items-start justify-center pt-8 bg-gradient-to-t from-background via-background/95 to-transparent z-10">
-        <Card className="max-w-lg mx-4 border-primary/20 shadow-lg">
-          <CardHeader className="text-center pb-4">
-            <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-              <Sparkles className="h-7 w-7 text-primary" />
-            </div>
-            <CardTitle>Unlock Full Analytics</CardTitle>
-            <CardDescription>
-              Get detailed insights, exportable reports, and team performance tracking
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                Detailed platform breakdowns
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                Team performance metrics
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                Exportable PDF reports
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                Sentiment trend analysis
-              </li>
-            </ul>
-            <Button onClick={handleUpgrade} className="w-full" variant="hero">
-              Upgrade to Professional
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="flex justify-center">
+      <Card className="max-w-lg w-full border-primary/20 shadow-lg">
+        <CardHeader className="text-center pb-4">
+          <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+            <Sparkles className="h-7 w-7 text-primary" />
+          </div>
+          <CardTitle>Unlock Full Analytics</CardTitle>
+          <CardDescription>
+            Get detailed insights, exportable reports, and team performance tracking
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+              Detailed platform breakdowns
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+              Team performance metrics
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+              Exportable PDF reports
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+              Sentiment trend analysis
+            </li>
+          </ul>
+          <Button onClick={handleUpgrade} className="w-full" variant="hero">
+            Upgrade to Professional
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

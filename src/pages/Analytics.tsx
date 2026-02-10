@@ -177,22 +177,9 @@ export default function AnalyticsPage() {
 
           {/* Paywall for non-full analytics users */}
           {!hasFullAnalytics ? (
-            <div className="relative min-h-[600px]">
-              {/* Blurred preview of charts */}
-              <div className="space-y-6 blur-sm opacity-50 pointer-events-none">
-                <InteractionVolumeChart
-                  platformTrends={data?.platformTrends || null}
-                  loading={loading}
-                  granularity={granularity}
-                  onGranularityChange={setGranularity}
-                />
-                <ResponsePerformanceChart
-                  platformBreakdown={data?.platformBreakdown || null}
-                  loading={loading}
-                />
-              </div>
+            <section>
               <AnalyticsPaywall />
-            </div>
+            </section>
           ) : (
             <>
               {/* Section 2: Interaction Volume */}
