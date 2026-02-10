@@ -64,7 +64,7 @@ export function useTeam() {
         .from("profiles")
         .select("current_team_id")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       let teamId = profile?.current_team_id;
 
@@ -76,7 +76,7 @@ export function useTeam() {
           .eq("user_id", user.id)
           .not("accepted_at", "is", null)
           .limit(1)
-          .single();
+          .maybeSingle();
 
         teamId = membership?.team_id;
       }
