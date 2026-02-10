@@ -58,8 +58,7 @@ export function IntegrationsSection() {
 
         <div className="text-center mt-10">
           <p className="text-sm text-muted-foreground">
-            New integrations added regularly.{" "}
-            <a href="#" className="text-primary hover:underline font-medium">Request an integration →</a>
+            And many more integrations available.
           </p>
         </div>
       </div>
