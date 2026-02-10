@@ -28,7 +28,7 @@ serve(async (req) => {
       throw new Error("Unauthorized");
     }
 
-    const { plan_id, billing_period } = await req.json();
+    const { plan_id, billing_period, include_trial } = await req.json();
 
     if (!plan_id || !billing_period) {
       throw new Error("Missing plan_id or billing_period");
@@ -77,6 +77,17 @@ serve(async (req) => {
     }
 
     // Create checkout session
+    const subscriptionData: any = {
+      metadata: {
+        supabase_user_id: userData.user.id,
+        plan_id: plan_id,
+        billing_period: billing_period,
+      },
+    };
+    if (include_trial) {
+      subscriptionData.trial_period_days = 14;
+    }
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [
@@ -86,14 +97,7 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      subscription_data: {
-        trial_period_days: 14,
-        metadata: {
-          supabase_user_id: userData.user.id,
-          plan_id: plan_id,
-          billing_period: billing_period,
-        },
-      },
+      subscription_data: subscriptionData,
       success_url: `https://socialrep.lovable.app/dashboard/settings?tab=billing&success=true`,
       cancel_url: `https://socialrep.lovable.app/dashboard/settings?tab=billing&canceled=true`,
       metadata: {

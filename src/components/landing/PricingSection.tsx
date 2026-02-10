@@ -64,7 +64,7 @@ export function PricingSection() {
   const handleCheckout = async (planId: string, period: "monthly" | "annual") => {
     setLoadingPlan(planId);
     try {
-      const url = await createCheckoutSession(planId, period);
+      const url = await createCheckoutSession(planId, period, true);
       if (url) {
         window.location.href = url;
       }
