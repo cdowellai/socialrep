@@ -139,7 +139,7 @@ export function PricingSection() {
             {displayPlans.map((plan, index) => (
               <div
                 key={index}
-                className={`relative p-6 rounded-2xl bg-card border ${plan.popular ? "border-primary shadow-glow" : "border-border"} flex flex-col`}
+                className={`relative p-6 rounded-2xl bg-card border-2 ${plan.popular ? "border-primary shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.35)] scale-[1.02]" : "border-border"} flex flex-col transition-all`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">

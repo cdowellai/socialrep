@@ -1,17 +1,17 @@
 const socialPlatforms = [
-  { name: "Facebook", color: "hsl(221, 44%, 41%)" },
-  { name: "Instagram", color: "hsl(330, 72%, 52%)" },
-  { name: "TikTok", color: "hsl(0, 0%, 10%)" },
-  { name: "YouTube", color: "hsl(0, 84%, 50%)" },
-  { name: "LinkedIn", color: "hsl(201, 100%, 35%)" },
+  { name: "Facebook", color: "#1877F2" },
+  { name: "Instagram", color: "#E4405F" },
+  { name: "TikTok", color: "#000000" },
+  { name: "YouTube", color: "#FF0000" },
+  { name: "LinkedIn", color: "#0A66C2" },
 ];
 
 const reviewPlatforms = [
-  { name: "Google Business", color: "hsl(12, 83%, 55%)" },
-  { name: "Trustpilot", color: "hsl(152, 76%, 43%)" },
-  { name: "Yelp", color: "hsl(0, 84%, 60%)" },
-  { name: "BBB", color: "hsl(210, 60%, 40%)" },
-  { name: "Facebook Reviews", color: "hsl(221, 44%, 41%)" },
+  { name: "Google Business", color: "#4285F4" },
+  { name: "Trustpilot", color: "#00B67A" },
+  { name: "Yelp", color: "#D32323" },
+  { name: "BBB", color: "#003DA5" },
+  { name: "Facebook Reviews", color: "#1877F2" },
 ];
 
 function PlatformPill({ name, color }: { name: string; color: string }) {

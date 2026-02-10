@@ -142,15 +142,15 @@ export function HeroSection() {
                           {conv.initials}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-semibold truncate">{conv.name}</span>
+                    <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold text-foreground truncate">{conv.name}</span>
                             <span className="text-[9px] text-muted-foreground">· {conv.platform}</span>
                           </div>
-                          <p className="text-[11px] text-muted-foreground truncate">{conv.message}</p>
+                          <p className="text-[11px] text-foreground/60 truncate">{conv.message}</p>
                         </div>
                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
                           <span className="text-[9px] text-muted-foreground">{conv.time}</span>
-                          <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-medium ${conv.tagClass}`}>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${conv.tagClass}`}>
                             {conv.tag}
                           </span>
                         </div>

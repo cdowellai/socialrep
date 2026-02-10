@@ -1,11 +1,8 @@
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
-import { WhatIsSection } from "@/components/landing/WhatIsSection";
-import { PainPointsSection } from "@/components/landing/PainPointsSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { ComparisonSection } from "@/components/landing/ComparisonSection";
 import { IntegrationsSection } from "@/components/landing/IntegrationsSection";
-import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 import { CTASection } from "@/components/landing/CTASection";
@@ -16,12 +13,9 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <HeroSection />
-      <WhatIsSection />
-      <PainPointsSection />
       <FeaturesSection />
       <ComparisonSection />
       <IntegrationsSection />
-      <HowItWorksSection />
       <PricingSection />
       <FAQSection />
       <CTASection />

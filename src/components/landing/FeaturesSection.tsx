@@ -103,7 +103,7 @@ export function FeaturesSection() {
   return (
     <section id="features" className="py-24">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-3xl mx-auto mb-20">
+        <div className="text-center max-w-3xl mx-auto mb-12">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-4">Features</p>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
             Everything you need. Nothing you don't.
@@ -113,7 +113,7 @@ export function FeaturesSection() {
           </p>
         </div>
 
-        <div className="space-y-24 max-w-6xl mx-auto">
+        <div className="space-y-16 max-w-6xl mx-auto">
           {/* Feature 1: AI Responses */}
           <FeatureRow
             title="AI that writes like you, not like a robot"
