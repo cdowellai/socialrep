@@ -6,6 +6,13 @@ import { ArrowRight, Search, Star, MoreHorizontal, RefreshCw, LayoutDashboard, I
 export function HeroSection() {
   const [authModal, setAuthModal] = useState(false);
 
+  const handleScrollToPricing = () => {
+    const element = document.querySelector("#pricing");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   const handleScrollToHowItWorks = () => {
     const element = document.querySelector("#how-it-works");
     if (element) {
@@ -51,7 +58,7 @@ export function HeroSection() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-              <Button variant="hero" size="xl" onClick={() => setAuthModal(true)}>
+              <Button variant="hero" size="xl" onClick={handleScrollToPricing}>
                 Start Free Trial
                 <ArrowRight className="h-5 w-5" />
               </Button>
