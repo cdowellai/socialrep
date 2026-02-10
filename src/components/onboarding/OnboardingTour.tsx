@@ -141,13 +141,13 @@ export function OnboardingTour() {
   const location = useLocation();
   const navigate = useNavigate();
   const [run, setRun] = useState(false);
+  const [activeTarget, setActiveTarget] = useState<string | null>(null);
 
   const steps = variant === "condensed" ? condensedSteps : tourSteps;
 
   // Only run on dashboard
   useEffect(() => {
     if (showTour && location.pathname === "/dashboard" && !isLoading) {
-      // Small delay to ensure DOM is ready
       const timer = setTimeout(() => setRun(true), 500);
       return () => clearTimeout(timer);
     } else {
@@ -155,8 +155,34 @@ export function OnboardingTour() {
     }
   }, [showTour, location.pathname, isLoading]);
 
+  // Elevate the active tour target so it's visible above the overlay
+  useEffect(() => {
+    const prev = document.querySelector("[data-tour-active]");
+    if (prev) {
+      prev.removeAttribute("data-tour-active");
+    }
+    if (activeTarget && run) {
+      const el = document.querySelector(activeTarget);
+      if (el) {
+        el.setAttribute("data-tour-active", "true");
+      }
+    }
+    return () => {
+      const el = document.querySelector("[data-tour-active]");
+      if (el) el.removeAttribute("data-tour-active");
+    };
+  }, [activeTarget, run]);
+
   const handleCallback = (data: CallBackProps) => {
     const { status, action, index, type } = data;
+
+    // Track the current target for z-index elevation
+    if (type === EVENTS.STEP_BEFORE || type === EVENTS.TOOLTIP) {
+      const step = steps[index];
+      if (step?.target && typeof step.target === "string") {
+        setActiveTarget(step.target);
+      }
+    }
 
     // Update current step for progress tracking
     if (type === EVENTS.STEP_AFTER || type === EVENTS.TARGET_NOT_FOUND) {

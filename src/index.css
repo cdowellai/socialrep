@@ -345,3 +345,12 @@
     }
   }
 }
+
+/* Onboarding tour: keep highlighted sidebar items visible above overlay */
+[data-tour-active="true"] {
+  position: relative !important;
+  z-index: 10001 !important;
+  background-color: hsl(var(--sidebar-accent)) !important;
+  border-radius: 0.5rem;
+  font-weight: 600 !important;
+}
