@@ -125,7 +125,31 @@ export function TeamManagement() {
 
   const maxSeats = currentPlan?.max_team_seats ?? 1;
   const planName = currentPlan?.display_name ?? "Free";
-  const totalOccupied = members.length + invitations.length;
+  const isEffectiveAdmin = isAdmin || (team && user && team.owner_id === user.id);
+  const isEffectiveOwner = isOwner || (team && user && team.owner_id === user.id);
+
+  // Build display members: always ensure the owner row exists
+  const ownerInMembers = members.some((m) => m.role === "owner");
+  const displayMembers: TeamMember[] = ownerInMembers
+    ? members
+    : [
+        {
+          id: "owner-synthetic",
+          team_id: team?.id || "",
+          user_id: user?.id || "",
+          role: "owner" as TeamRole,
+          invited_by: null,
+          invited_at: team?.created_at || new Date().toISOString(),
+          accepted_at: team?.created_at || new Date().toISOString(),
+          created_at: team?.created_at || new Date().toISOString(),
+          full_name: user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Owner",
+          email: user?.email || "",
+          avatar_url: user?.user_metadata?.avatar_url || null,
+        },
+        ...members,
+      ];
+
+  const totalOccupied = displayMembers.length + invitations.length;
   const seatsDisplay = maxSeats === -1 ? "∞" : maxSeats;
   const seatPercent = maxSeats === -1 ? 0 : (totalOccupied / maxSeats) * 100;
 
@@ -309,10 +333,10 @@ export function TeamManagement() {
               <Users className="h-5 w-5" />
               Team Members
             </CardTitle>
-            {isAdmin && (
+            {isEffectiveAdmin && (
               <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm">
+                  <Button>
                     <Plus className="h-4 w-4 mr-2" />
                     Invite Team Member
                   </Button>
@@ -394,7 +418,7 @@ export function TeamManagement() {
             </TableHeader>
             <TableBody>
               {/* Active Members — owner first */}
-              {[...members]
+              {[...displayMembers]
                 .sort((a, b) => {
                   if (a.role === "owner") return -1;
                   if (b.role === "owner") return 1;
@@ -403,8 +427,8 @@ export function TeamManagement() {
                 .map((member) => {
                   const RoleIcon = roleIcons[member.role];
                   const isCurrentUser = member.user_id === user?.id;
-                  const canModify = isAdmin && !isCurrentUser && member.role !== "owner";
-                  const canChangeRole = isOwner && member.role !== "owner";
+                  const canModify = isEffectiveAdmin && !isCurrentUser && member.role !== "owner";
+                  const canChangeRole = isEffectiveOwner && member.role !== "owner";
 
                   return (
                     <TableRow key={member.id}>
@@ -510,7 +534,7 @@ export function TeamManagement() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {isAdmin && (
+                      {isEffectiveAdmin && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -529,7 +553,7 @@ export function TeamManagement() {
                 );
               })}
 
-              {members.length === 0 && invitations.length === 0 && (
+              {displayMembers.length === 0 && invitations.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                     No team members yet.
