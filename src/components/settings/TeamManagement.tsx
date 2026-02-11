@@ -1,4 +1,5 @@
 import { useState } from "react";
+import React from "react";
 import { useTeam, type TeamRole, type TeamMember, type TeamInvitation } from "@/hooks/useTeam";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -10,6 +11,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -26,7 +36,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
@@ -36,13 +45,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Users,
   Crown,
   Shield,
   User,
   Eye,
   Mail,
-  Trash2,
   Clock,
   Plus,
   Loader2,
@@ -52,9 +68,11 @@ import {
   X,
   MoreHorizontal,
   UserMinus,
-  UserCog,
+  ArrowUpRight,
+  RefreshCw,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const roleIcons: Record<TeamRole, typeof Crown> = {
   owner: Crown,
@@ -80,6 +98,7 @@ const roleColors: Record<TeamRole, string> = {
 export function TeamManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { plan: currentPlan } = useSubscription();
   const {
     team,
@@ -96,24 +115,27 @@ export function TeamManagement() {
     cancelInvitation,
   } = useTeam();
 
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<TeamRole>("member");
   const [inviting, setInviting] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [teamNameInput, setTeamNameInput] = useState("");
+  const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
 
   const maxSeats = currentPlan?.max_team_seats ?? 1;
   const planName = currentPlan?.display_name ?? "Free";
+  const totalOccupied = members.length + invitations.length;
+  const seatsDisplay = maxSeats === -1 ? "∞" : maxSeats;
+  const seatPercent = maxSeats === -1 ? 0 : (totalOccupied / maxSeats) * 100;
 
   const handleInvite = async () => {
-    if (!inviteEmail) return;
+    if (!inviteEmail.trim()) return;
 
-    // Enforce seat limit
-    const totalSeats = members.length + invitations.length;
-    if (maxSeats !== -1 && totalSeats >= maxSeats) {
+    if (maxSeats !== -1 && totalOccupied >= maxSeats) {
       toast({
         title: "Seat limit reached",
-        description: `You've reached your ${maxSeats} seat limit on the ${planName} Plan. Upgrade your plan to add more team members.`,
+        description: `You've reached your seat limit on the ${planName} plan (${maxSeats} seats). Upgrade to add more.`,
         variant: "destructive",
       });
       return;
@@ -121,13 +143,14 @@ export function TeamManagement() {
 
     try {
       setInviting(true);
-      await inviteMember(inviteEmail, inviteRole);
+      await inviteMember(inviteEmail.trim(), inviteRole);
       toast({
         title: "Invitation sent",
-        description: `${inviteEmail} has been invited to the team`,
+        description: `${inviteEmail} has been invited as ${roleLabels[inviteRole]}`,
       });
       setInviteEmail("");
       setInviteRole("member");
+      setInviteOpen(false);
     } catch (err) {
       toast({
         title: "Error",
@@ -143,44 +166,29 @@ export function TeamManagement() {
     try {
       await updateMemberRole(memberId, role);
       toast({ title: "Role updated" });
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to update role",
-        variant: "destructive",
-      });
+    } catch {
+      toast({ title: "Error", description: "Failed to update role", variant: "destructive" });
     }
   };
 
-  const handleRemoveMember = async (memberId: string, memberName: string) => {
+  const handleRemoveMember = async () => {
+    if (!removeTarget) return;
     try {
-      await removeMember(memberId);
-      toast({
-        title: "Member removed",
-        description: `${memberName} has been removed from the team`,
-      });
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to remove member",
-        variant: "destructive",
-      });
+      await removeMember(removeTarget.id);
+      toast({ title: "Member removed", description: `${removeTarget.name} has been removed` });
+    } catch {
+      toast({ title: "Error", description: "Failed to remove member", variant: "destructive" });
+    } finally {
+      setRemoveTarget(null);
     }
   };
 
-  const handleCancelInvitation = async (invitationId: string, email: string) => {
+  const handleCancelInvitation = async (id: string, email: string) => {
     try {
-      await cancelInvitation(invitationId);
-      toast({
-        title: "Invitation cancelled",
-        description: `Invitation to ${email} has been cancelled`,
-      });
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to cancel invitation",
-        variant: "destructive",
-      });
+      await cancelInvitation(id);
+      toast({ title: "Invitation cancelled", description: `Invitation to ${email} cancelled` });
+    } catch {
+      toast({ title: "Error", description: "Failed to cancel invitation", variant: "destructive" });
     }
   };
 
@@ -190,19 +198,15 @@ export function TeamManagement() {
       await updateTeamName(teamNameInput.trim());
       setEditingName(false);
       toast({ title: "Team name updated" });
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to update team name",
-        variant: "destructive",
-      });
+    } catch {
+      toast({ title: "Error", description: "Failed to update team name", variant: "destructive" });
     }
   };
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-36 w-full" />
         <Skeleton className="h-64 w-full" />
       </div>
     );
@@ -215,7 +219,7 @@ export function TeamManagement() {
           <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">No Team Found</h3>
           <p className="text-muted-foreground">
-            You're not part of any team yet. Please sign in again to create your team.
+            Your team will be created automatically. Please sign in again.
           </p>
         </CardContent>
       </Card>
@@ -224,7 +228,7 @@ export function TeamManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Team Info Card */}
+      {/* Team Overview Card */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -239,8 +243,8 @@ export function TeamManagement() {
                       value={teamNameInput}
                       onChange={(e) => setTeamNameInput(e.target.value)}
                       className="h-8 w-48"
-                      placeholder="Team name"
                       autoFocus
+                      onKeyDown={(e) => e.key === "Enter" && handleSaveTeamName()}
                     />
                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleSaveTeamName}>
                       <Check className="h-4 w-4" />
@@ -257,19 +261,15 @@ export function TeamManagement() {
                         size="icon"
                         variant="ghost"
                         className="h-6 w-6"
-                        onClick={() => {
-                          setTeamNameInput(team.name);
-                          setEditingName(true);
-                        }}
+                        onClick={() => { setTeamNameInput(team.name); setEditingName(true); }}
                       >
                         <Edit2 className="h-3 w-3" />
                       </Button>
                     )}
                   </div>
                 )}
-                <CardDescription>
-                  {members.length} member{members.length !== 1 ? "s" : ""}
-                  {invitations.length > 0 && ` • ${invitations.length} pending invitation${invitations.length !== 1 ? "s" : ""}`}
+                <CardDescription className="mt-1">
+                  {planName} Plan
                 </CardDescription>
               </div>
             </div>
@@ -282,288 +282,285 @@ export function TeamManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <div className="flex items-center justify-between text-sm mb-1">
-                <span className="text-muted-foreground">Seats used</span>
-                <span className="font-medium">{members.length} of {maxSeats === -1 ? "∞" : maxSeats}</span>
-              </div>
-              <Progress value={maxSeats === -1 ? 0 : (members.length / maxSeats) * 100} className="h-2" />
-            </div>
-            <Badge variant="outline" className="text-xs">
-              {planName} Plan
-            </Badge>
+          <div className="flex items-center justify-between text-sm mb-2">
+            <span className="text-muted-foreground">Seats used</span>
+            <span className="font-medium">{totalOccupied} of {seatsDisplay}</span>
           </div>
+          <Progress value={Math.min(seatPercent, 100)} className="h-2" />
+          {maxSeats !== -1 && totalOccupied >= maxSeats && (
+            <p className="text-xs text-destructive mt-2 flex items-center gap-1">
+              Seat limit reached.{" "}
+              <button
+                onClick={() => navigate("/dashboard/settings?tab=billing")}
+                className="underline hover:no-underline font-medium inline-flex items-center gap-0.5"
+              >
+                Upgrade plan <ArrowUpRight className="h-3 w-3" />
+              </button>
+            </p>
+          )}
         </CardContent>
       </Card>
 
-      {/* Invite Member Card - Admin Only */}
-      {isAdmin && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Plus className="h-5 w-5" />
-              Invite Team Member
-            </CardTitle>
-            <CardDescription>
-              Invite new members to collaborate on your social media management
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <Label htmlFor="email" className="sr-only">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="colleague@company.com"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                />
-              </div>
-              <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as TeamRole)}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="viewer">Viewer</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button onClick={handleInvite} disabled={!inviteEmail || inviting}>
-                {inviting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <Mail className="h-4 w-4 mr-2" />
-                    Invite
-                  </>
-                )}
-              </Button>
-            </div>
-            <div className="mt-3 text-xs text-muted-foreground">
-              <p><strong>Admin:</strong> Can manage team members and all settings</p>
-              <p><strong>Member:</strong> Can respond to messages and manage interactions</p>
-              <p><strong>Viewer:</strong> Can view interactions but cannot respond</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Team Members List */}
+      {/* Team Members */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Team Members
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Team Members
+            </CardTitle>
+            {isAdmin && (
+              <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Invite Team Member
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Invite Team Member</DialogTitle>
+                    <DialogDescription>
+                      Send an invitation to join your team. They'll get access once they sign up or accept.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="invite-email">Email address</Label>
+                      <Input
+                        id="invite-email"
+                        type="email"
+                        placeholder="colleague@company.com"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleInvite()}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Role</Label>
+                      <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as TeamRole)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">
+                            <div className="flex items-center gap-2">
+                              <Shield className="h-4 w-4" />
+                              Admin — Full management access
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="member">
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4" />
+                              Member — Can respond & manage interactions
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="viewer">
+                            <div className="flex items-center gap-2">
+                              <Eye className="h-4 w-4" />
+                              Viewer — Read-only access
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancel</Button>
+                    <Button onClick={handleInvite} disabled={!inviteEmail.trim() || inviting}>
+                      {inviting ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Mail className="h-4 w-4 mr-2" />
+                      )}
+                      Send Invitation
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {members.map((member) => (
-              <MemberRow
-                key={member.id}
-                member={member}
-                currentUserId={user?.id || ""}
-                isAdmin={isAdmin}
-                isOwner={isOwner}
-                onUpdateRole={handleUpdateRole}
-                onRemove={handleRemoveMember}
-              />
-            ))}
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="w-12"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {/* Active Members — owner first */}
+              {[...members]
+                .sort((a, b) => {
+                  if (a.role === "owner") return -1;
+                  if (b.role === "owner") return 1;
+                  return 0;
+                })
+                .map((member) => {
+                  const RoleIcon = roleIcons[member.role];
+                  const isCurrentUser = member.user_id === user?.id;
+                  const canModify = isAdmin && !isCurrentUser && member.role !== "owner";
+                  const canChangeRole = isOwner && member.role !== "owner";
+
+                  return (
+                    <TableRow key={member.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={member.avatar_url || undefined} />
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                              {(member.full_name || member.email || "?").charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">
+                            {member.full_name || "—"}
+                            {isCurrentUser && (
+                              <span className="text-xs text-muted-foreground ml-2">(you)</span>
+                            )}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{member.email || "—"}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={roleColors[member.role]}>
+                          <RoleIcon className="h-3 w-3 mr-1" />
+                          {roleLabels[member.role]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                          Active
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {canModify && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {canChangeRole && (
+                                <>
+                                  <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "admin")}>
+                                    <Shield className="h-4 w-4 mr-2" /> Make Admin
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "member")}>
+                                    <User className="h-4 w-4 mr-2" /> Make Member
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "viewer")}>
+                                    <Eye className="h-4 w-4 mr-2" /> Make Viewer
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                </>
+                              )}
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() =>
+                                  setRemoveTarget({
+                                    id: member.id,
+                                    name: member.full_name || member.email || "this member",
+                                  })
+                                }
+                              >
+                                <UserMinus className="h-4 w-4 mr-2" /> Remove
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+
+              {/* Pending Invitations */}
+              {invitations.map((inv) => {
+                const RoleIcon = roleIcons[inv.role];
+                const daysLeft = Math.max(
+                  0,
+                  Math.ceil((new Date(inv.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                );
+
+                return (
+                  <TableRow key={inv.id} className="opacity-70">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <span className="text-muted-foreground italic">Pending</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{inv.email}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={roleColors[inv.role]}>
+                        <RoleIcon className="h-3 w-3 mr-1" />
+                        {roleLabels[inv.role]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Invited · {daysLeft}d left
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {isAdmin && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleCancelInvitation(inv.id, inv.email)}>
+                              <X className="h-4 w-4 mr-2" /> Cancel Invite
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+
+              {members.length === 0 && invitations.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    No team members yet.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      {/* Pending Invitations - Admin Only */}
-      {isAdmin && invitations.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Pending Invitations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {invitations.map((invitation) => (
-                <InvitationRow
-                  key={invitation.id}
-                  invitation={invitation}
-                  onCancel={handleCancelInvitation}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Remove Confirmation Dialog */}
+      <AlertDialog open={!!removeTarget} onOpenChange={(open) => !open && setRemoveTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove team member?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {removeTarget?.name} from the team? They will lose access to all team resources.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleRemoveMember}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
-
-interface MemberRowProps {
-  member: TeamMember;
-  currentUserId: string;
-  isAdmin: boolean;
-  isOwner: boolean;
-  onUpdateRole: (memberId: string, role: TeamRole) => void;
-  onRemove: (memberId: string, memberName: string) => void;
-}
-
-function MemberRow({ member, currentUserId, isAdmin, isOwner, onUpdateRole, onRemove }: MemberRowProps) {
-  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
-  const RoleIcon = roleIcons[member.role];
-  const isCurrentUser = member.user_id === currentUserId;
-  const canModify = isAdmin && !isCurrentUser && member.role !== "owner";
-  const canChangeRole = isOwner && member.role !== "owner";
-
-  // Calculate last active (using accepted_at as proxy for now)
-  const lastActive = member.accepted_at
-    ? new Date(member.accepted_at).toLocaleDateString()
-    : "Never";
-
-  return (
-    <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
-      <div className="flex items-center gap-3">
-        <Avatar className="h-10 w-10">
-          <AvatarImage src={member.avatar_url || undefined} />
-          <AvatarFallback className="bg-primary/10 text-primary">
-            {(member.full_name || member.email || "?").charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-medium">
-              {member.full_name || member.email || "Unknown"}
-            </span>
-            {isCurrentUser && (
-              <Badge variant="outline" className="text-xs">You</Badge>
-            )}
-            <Badge className="bg-sentiment-positive/10 text-sentiment-positive text-xs">
-              Active
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>{member.email}</span>
-            <span>•</span>
-            <span>Last active: {lastActive}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Badge className={roleColors[member.role]}>
-          <RoleIcon className="h-3 w-3 mr-1" />
-          {roleLabels[member.role]}
-        </Badge>
-
-        {canModify && (
-          <>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {canChangeRole && (
-                  <>
-                    <DropdownMenuItem onClick={() => onUpdateRole(member.id, "admin")}>
-                      <Shield className="h-4 w-4 mr-2" />
-                      Make Admin
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onUpdateRole(member.id, "member")}>
-                      <User className="h-4 w-4 mr-2" />
-                      Make Member
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onUpdateRole(member.id, "viewer")}>
-                      <Eye className="h-4 w-4 mr-2" />
-                      Make Viewer
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={() => setShowRemoveDialog(true)}
-                >
-                  <UserMinus className="h-4 w-4 mr-2" />
-                  Remove from team
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Remove team member?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to remove {member.full_name || member.email} from the team?
-                    They will lose access to all team resources.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    onClick={() => {
-                      onRemove(member.id, member.full_name || member.email || "Unknown");
-                      setShowRemoveDialog(false);
-                    }}
-                  >
-                    Remove
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-interface InvitationRowProps {
-  invitation: TeamInvitation;
-  onCancel: (invitationId: string, email: string) => void;
-}
-
-function InvitationRow({ invitation, onCancel }: InvitationRowProps) {
-  const RoleIcon = roleIcons[invitation.role];
-  const expiresAt = new Date(invitation.expires_at);
-  const daysLeft = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-
-  return (
-    <div className="flex items-center justify-between p-3 rounded-lg border bg-card">
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-          <Mail className="h-5 w-5 text-muted-foreground" />
-        </div>
-        <div>
-          <span className="font-medium">{invitation.email}</span>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Badge variant="outline" className={roleColors[invitation.role]}>
-              <RoleIcon className="h-3 w-3 mr-1" />
-              {roleLabels[invitation.role]}
-            </Badge>
-            <span>• Expires in {daysLeft} day{daysLeft !== 1 ? "s" : ""}</span>
-          </div>
-        </div>
-      </div>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-destructive hover:text-destructive"
-        onClick={() => onCancel(invitation.id, invitation.email)}
-      >
-        <X className="h-4 w-4 mr-1" />
-        Cancel
-      </Button>
-    </div>
-  );
-}
-
-// Need to import React for createElement
-import React from "react";
