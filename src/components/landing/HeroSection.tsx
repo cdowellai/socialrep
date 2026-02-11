@@ -62,9 +62,6 @@ export function HeroSection() {
                 Start Free Trial
                 <ArrowRight className="h-5 w-5" />
               </Button>
-              <Button variant="outline" size="lg" onClick={handleScrollToHowItWorks}>
-                See How It Works
-              </Button>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: "0.3s" }}>
