@@ -214,33 +214,58 @@ export function PlatformsSettings() {
     }
   };
 
-  const handleRefresh = async (platformId: string) => {
+  const handleSyncNow = async (platformId: string) => {
     const connection = connectedPlatforms.find((p) => p.platform === platformId);
     if (!connection) return;
 
     setRefreshingPlatform(platformId);
     try {
-      const { error } = await supabase
-        .from("connected_platforms")
-        .update({ last_synced_at: new Date().toISOString() })
-        .eq("id", connection.id);
+      // For Facebook/Instagram, trigger actual sync via meta-oauth edge function
+      if (platformId === "facebook" || platformId === "instagram") {
+        console.log(`[SyncNow] Triggering sync for ${platformId}...`);
+        const { data, error } = await supabase.functions.invoke("meta-oauth", {
+          body: { action: "sync_interactions" },
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      setConnectedPlatforms((prev) =>
-        prev.map((p) =>
-          p.id === connection.id ? { ...p, last_synced_at: new Date().toISOString() } : p
-        )
-      );
+        console.log(`[SyncNow] Sync result:`, data);
 
-      toast({
-        title: "Connection refreshed",
-        description: "Platform connection has been refreshed.",
-      });
+        setConnectedPlatforms((prev) =>
+          prev.map((p) =>
+            p.id === connection.id ? { ...p, last_synced_at: new Date().toISOString() } : p
+          )
+        );
+
+        toast({
+          title: "Sync complete",
+          description: `Synced ${data?.synced || 0} interactions from Facebook. ${data?.errors || 0} errors.`,
+        });
+      } else {
+        // For other platforms, just update the timestamp
+        const { error } = await supabase
+          .from("connected_platforms")
+          .update({ last_synced_at: new Date().toISOString() })
+          .eq("id", connection.id);
+
+        if (error) throw error;
+
+        setConnectedPlatforms((prev) =>
+          prev.map((p) =>
+            p.id === connection.id ? { ...p, last_synced_at: new Date().toISOString() } : p
+          )
+        );
+
+        toast({
+          title: "Connection refreshed",
+          description: "Platform connection has been refreshed.",
+        });
+      }
     } catch (err) {
+      console.error("Sync error:", err);
       toast({
-        title: "Error",
-        description: "Failed to refresh connection.",
+        title: "Sync failed",
+        description: "Failed to sync data. Check console for details.",
         variant: "destructive",
       });
     } finally {
@@ -323,13 +348,14 @@ export function PlatformsSettings() {
                   {connected ? (
                     <>
                       <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRefresh(platform.id)}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSyncNow(platform.id)}
                         disabled={refreshingPlatform === platform.id}
-                        title="Refresh connection"
+                        title="Sync data now"
                       >
-                        <RefreshCw className={`h-4 w-4 ${refreshingPlatform === platform.id ? "animate-spin" : ""}`} />
+                        <RefreshCw className={`h-4 w-4 mr-1 ${refreshingPlatform === platform.id ? "animate-spin" : ""}`} />
+                        {refreshingPlatform === platform.id ? "Syncing..." : "Sync Now"}
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>

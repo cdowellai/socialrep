@@ -85,7 +85,7 @@ serve(async (req) => {
 
         const shortLivedToken = tokenData.access_token;
 
-        // Step 2: Exchange for long-lived token
+        // Step 2: Exchange for long-lived token (60 days)
         const longLivedUrl = `${META_GRAPH_URL}/oauth/access_token?grant_type=fb_exchange_token&client_id=${encodeURIComponent(META_APP_ID)}&client_secret=${encodeURIComponent(META_APP_SECRET)}&fb_exchange_token=${encodeURIComponent(shortLivedToken)}`;
         const longLivedRes = await fetch(longLivedUrl);
         const longLivedData = await longLivedRes.json();
@@ -100,9 +100,9 @@ serve(async (req) => {
 
         const longLivedToken = longLivedData.access_token;
 
-        // Step 3: Fetch user's Facebook Pages
+        // Step 3: Fetch user's Facebook Pages (these return PAGE access tokens, not user tokens)
         const pagesRes = await fetch(
-          `${META_GRAPH_URL}/me/accounts?fields=id,name,access_token,picture{url},instagram_business_account&access_token=${encodeURIComponent(longLivedToken)}`
+          `${META_GRAPH_URL}/me/accounts?fields=id,name,access_token,picture{url}&access_token=${encodeURIComponent(longLivedToken)}`
         );
         const pagesData = await pagesRes.json();
 
@@ -114,15 +114,15 @@ serve(async (req) => {
           );
         }
 
-        // Store the user-level long-lived token temporarily
-        // Return pages for selection
+        // The access_token in each page object is the PAGE Access Token (not user token)
         const pages = (pagesData.data || []).map((page: any) => ({
           id: page.id,
           name: page.name,
-          access_token: page.access_token,
+          access_token: page.access_token, // This IS the Page Access Token
           picture_url: page.picture?.data?.url || null,
-          instagram_business_account: page.instagram_business_account?.id || null,
         }));
+
+        console.log(`Found ${pages.length} Facebook Pages for user ${user.id}`);
 
         return new Response(
           JSON.stringify({
@@ -135,7 +135,7 @@ serve(async (req) => {
       }
 
       case "connect_pages": {
-        const { pages, user_token } = body;
+        const { pages } = body;
         if (!pages || !Array.isArray(pages) || pages.length === 0) {
           return new Response(
             JSON.stringify({ error: "pages array is required" }),
@@ -146,7 +146,7 @@ serve(async (req) => {
         const connected = [];
 
         for (const page of pages) {
-          // Store Facebook Page connection
+          // Store Facebook Page connection with the PAGE access token
           const { data: fbConn, error: fbErr } = await supabase
             .from("connected_platforms")
             .upsert(
@@ -155,7 +155,7 @@ serve(async (req) => {
                 platform: "facebook",
                 platform_account_id: page.id,
                 platform_account_name: page.name,
-                access_token: page.access_token,
+                access_token: page.access_token, // Page Access Token
                 is_active: true,
                 last_synced_at: new Date().toISOString(),
               },
@@ -168,40 +168,29 @@ serve(async (req) => {
             console.error("Error storing FB page:", fbErr);
           } else {
             connected.push({ platform: "facebook", ...fbConn });
+            console.log(`Connected Facebook Page: ${page.name} (${page.id})`);
           }
+        }
 
-          // If page has Instagram business account, store that too
-          if (page.instagram_business_account_id) {
-            // Fetch Instagram account details
-            const igRes = await fetch(
-              `${META_GRAPH_URL}/${encodeURIComponent(page.instagram_business_account_id)}?fields=id,name,username,profile_picture_url&access_token=${encodeURIComponent(page.access_token)}`
-            );
-            const igData = await igRes.json();
-
-            if (!igData.error) {
-              const { data: igConn, error: igErr } = await supabase
-                .from("connected_platforms")
-                .upsert(
-                  {
-                    user_id: user.id,
-                    platform: "instagram",
-                    platform_account_id: igData.id,
-                    platform_account_name: igData.username || igData.name || `IG: ${page.name}`,
-                    access_token: page.access_token, // Use page token for IG
-                    is_active: true,
-                    last_synced_at: new Date().toISOString(),
-                  },
-                  { onConflict: "user_id,platform,platform_account_id" }
-                )
-                .select()
-                .single();
-
-              if (igErr) {
-                console.error("Error storing IG account:", igErr);
-              } else {
-                connected.push({ platform: "instagram", ...igConn });
+        // Subscribe pages to webhooks
+        const supabaseProjectUrl = Deno.env.get("SUPABASE_URL")!;
+        for (const page of pages) {
+          try {
+            const subscribeRes = await fetch(
+              `${META_GRAPH_URL}/${encodeURIComponent(page.id)}/subscribed_apps`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  subscribed_fields: "feed,messages,message_deliveries",
+                  access_token: page.access_token,
+                }),
               }
-            }
+            );
+            const subscribeData = await subscribeRes.json();
+            console.log(`Webhook subscription for page ${page.id}:`, JSON.stringify(subscribeData));
+          } catch (err) {
+            console.error(`Failed to subscribe page ${page.id} to webhooks:`, err);
           }
         }
 
@@ -211,117 +200,169 @@ serve(async (req) => {
         );
       }
 
-      case "sync_interactions": {
-        // Fetch interactions from connected Facebook pages and Instagram accounts
+      case "subscribe_webhooks": {
+        // Manually subscribe all connected pages to webhooks
         const { data: platforms } = await supabase
           .from("connected_platforms")
           .select("*")
           .eq("user_id", user.id)
-          .in("platform", ["facebook", "instagram"])
+          .eq("platform", "facebook")
           .eq("is_active", true);
 
         if (!platforms || platforms.length === 0) {
           return new Response(
-            JSON.stringify({ error: "No connected Meta platforms found" }),
+            JSON.stringify({ error: "No connected Facebook pages found" }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
 
-        const allInteractions = [];
-
+        const results = [];
         for (const platform of platforms) {
           if (!platform.access_token || !platform.platform_account_id) continue;
 
-          if (platform.platform === "facebook") {
-            // Fetch page posts and comments
-            const postsRes = await fetch(
-              `${META_GRAPH_URL}/${encodeURIComponent(platform.platform_account_id)}/posts?fields=id,message,created_time,comments{id,message,from,created_time}&limit=25&access_token=${encodeURIComponent(platform.access_token)}`
-            );
-            const postsData = await postsRes.json();
-
-            if (postsData.data) {
-              for (const post of postsData.data) {
-                if (post.comments?.data) {
-                  for (const comment of post.comments.data) {
-                    allInteractions.push({
-                      user_id: user.id,
-                      external_id: comment.id,
-                      platform: "facebook",
-                      interaction_type: "comment",
-                      content: comment.message || "",
-                      author_name: comment.from?.name || "Unknown",
-                      author_handle: comment.from?.id || null,
-                      post_url: `https://facebook.com/${post.id}`,
-                      created_at: comment.created_time,
-                    });
-                  }
-                }
+          try {
+            const subscribeRes = await fetch(
+              `${META_GRAPH_URL}/${encodeURIComponent(platform.platform_account_id)}/subscribed_apps`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  subscribed_fields: "feed,messages,message_deliveries",
+                  access_token: platform.access_token,
+                }),
               }
-            }
-
-            // Fetch page conversations (DMs)
-            const convoRes = await fetch(
-              `${META_GRAPH_URL}/${encodeURIComponent(platform.platform_account_id)}/conversations?fields=participants,messages.limit(5){message,from,created_time}&limit=25&access_token=${encodeURIComponent(platform.access_token)}`
             );
-            const convoData = await convoRes.json();
+            const subscribeData = await subscribeRes.json();
+            console.log(`Webhook subscription for ${platform.platform_account_name}:`, JSON.stringify(subscribeData));
+            results.push({
+              page: platform.platform_account_name,
+              success: subscribeData.success === true,
+              details: subscribeData,
+            });
+          } catch (err) {
+            console.error(`Failed to subscribe ${platform.platform_account_name}:`, err);
+            results.push({
+              page: platform.platform_account_name,
+              success: false,
+              error: String(err),
+            });
+          }
+        }
 
-            if (convoData.data) {
-              for (const convo of convoData.data) {
-                if (convo.messages?.data) {
-                  for (const msg of convo.messages.data) {
-                    allInteractions.push({
-                      user_id: user.id,
-                      external_id: msg.id,
-                      platform: "facebook",
-                      interaction_type: "dm",
-                      content: msg.message || "",
-                      author_name: msg.from?.name || "Unknown",
-                      author_handle: msg.from?.id || null,
-                      created_at: msg.created_time,
-                    });
-                  }
+        return new Response(
+          JSON.stringify({ success: true, results }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      case "sync_interactions": {
+        // Fetch interactions from connected Facebook pages
+        const { data: platforms } = await supabase
+          .from("connected_platforms")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("platform", "facebook")
+          .eq("is_active", true);
+
+        if (!platforms || platforms.length === 0) {
+          return new Response(
+            JSON.stringify({ error: "No connected Facebook pages found" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        console.log(`Starting sync for ${platforms.length} connected Facebook page(s)`);
+
+        const allInteractions = [];
+
+        for (const platform of platforms) {
+          if (!platform.access_token || !platform.platform_account_id) {
+            console.log(`Skipping platform ${platform.id}: missing token or account ID`);
+            continue;
+          }
+
+          const pageId = platform.platform_account_id;
+          const pageToken = platform.access_token;
+
+          // 1. Fetch page feed (posts + comments) using the PAGE token
+          console.log(`Fetching feed for page ${pageId}...`);
+          const feedRes = await fetch(
+            `${META_GRAPH_URL}/${encodeURIComponent(pageId)}/feed?fields=id,message,from,created_time,comments{id,message,from,created_time}&limit=25&access_token=${encodeURIComponent(pageToken)}`
+          );
+          const feedData = await feedRes.json();
+
+          if (feedData.error) {
+            console.error(`Feed fetch error for page ${pageId}:`, JSON.stringify(feedData.error));
+          } else {
+            console.log(`Feed response for page ${pageId}: ${feedData.data?.length || 0} posts`);
+            for (const post of feedData.data || []) {
+              if (post.comments?.data) {
+                console.log(`Post ${post.id}: ${post.comments.data.length} comments`);
+                for (const comment of post.comments.data) {
+                  allInteractions.push({
+                    user_id: user.id,
+                    external_id: comment.id,
+                    platform: "facebook" as const,
+                    interaction_type: "comment" as const,
+                    content: comment.message || "",
+                    author_name: comment.from?.name || "Unknown",
+                    author_handle: comment.from?.id || null,
+                    post_url: `https://facebook.com/${post.id}`,
+                    created_at: comment.created_time,
+                    status: "pending" as const,
+                  });
                 }
               }
             }
           }
 
-          if (platform.platform === "instagram") {
-            // Fetch IG media and comments
-            const mediaRes = await fetch(
-              `${META_GRAPH_URL}/${encodeURIComponent(platform.platform_account_id)}/media?fields=id,caption,timestamp,comments{id,text,username,timestamp}&limit=25&access_token=${encodeURIComponent(platform.access_token)}`
-            );
-            const mediaData = await mediaRes.json();
+          // 2. Fetch page conversations (DMs) using the PAGE token
+          console.log(`Fetching conversations for page ${pageId}...`);
+          const convoRes = await fetch(
+            `${META_GRAPH_URL}/${encodeURIComponent(pageId)}/conversations?fields=participants,messages.limit(10){message,from,created_time}&limit=25&access_token=${encodeURIComponent(pageToken)}`
+          );
+          const convoData = await convoRes.json();
 
-            if (mediaData.data) {
-              for (const media of mediaData.data) {
-                if (media.comments?.data) {
-                  for (const comment of media.comments.data) {
-                    allInteractions.push({
-                      user_id: user.id,
-                      external_id: comment.id,
-                      platform: "instagram",
-                      interaction_type: "comment",
-                      content: comment.text || "",
-                      author_name: comment.username || "Unknown",
-                      author_handle: comment.username || null,
-                      post_url: `https://instagram.com/p/${media.id}`,
-                      created_at: comment.timestamp,
-                    });
-                  }
+          if (convoData.error) {
+            console.error(`Conversations fetch error for page ${pageId}:`, JSON.stringify(convoData.error));
+          } else {
+            console.log(`Conversations response for page ${pageId}: ${convoData.data?.length || 0} conversations`);
+            for (const convo of convoData.data || []) {
+              if (convo.messages?.data) {
+                for (const msg of convo.messages.data) {
+                  allInteractions.push({
+                    user_id: user.id,
+                    external_id: msg.id || `dm_${Date.now()}_${Math.random()}`,
+                    platform: "facebook" as const,
+                    interaction_type: "dm" as const,
+                    content: msg.message || "",
+                    author_name: msg.from?.name || "Unknown",
+                    author_handle: msg.from?.id || null,
+                    created_at: msg.created_time,
+                    status: "pending" as const,
+                  });
                 }
               }
             }
           }
         }
 
+        console.log(`Total interactions to upsert: ${allInteractions.length}`);
+
         // Upsert interactions to avoid duplicates
         let inserted = 0;
+        let errors = 0;
         for (const interaction of allInteractions) {
           const { error: upsertErr } = await supabase
             .from("interactions")
             .upsert(interaction, { onConflict: "external_id,user_id" });
 
-          if (!upsertErr) inserted++;
+          if (upsertErr) {
+            errors++;
+            console.error("Upsert error:", JSON.stringify(upsertErr));
+          } else {
+            inserted++;
+          }
         }
 
         // Update last_synced_at
@@ -332,8 +373,10 @@ serve(async (req) => {
             .eq("id", platform.id);
         }
 
+        console.log(`Sync complete: ${inserted} synced, ${errors} errors, ${allInteractions.length} total`);
+
         return new Response(
-          JSON.stringify({ success: true, synced: inserted, total: allInteractions.length }),
+          JSON.stringify({ success: true, synced: inserted, errors, total: allInteractions.length }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -362,7 +405,7 @@ serve(async (req) => {
           );
         }
 
-        // Get the platform connection
+        // Get the platform connection (use Page token)
         const { data: platformConn } = await supabase
           .from("connected_platforms")
           .select("*")
@@ -382,7 +425,7 @@ serve(async (req) => {
         let replyResult;
 
         if (interaction.interaction_type === "comment") {
-          // Reply to comment
+          // Reply to comment using Page token
           const replyRes = await fetch(
             `${META_GRAPH_URL}/${encodeURIComponent(interaction.external_id!)}/comments`,
             {
@@ -413,6 +456,7 @@ serve(async (req) => {
         }
 
         if (replyResult?.error) {
+          console.error("Reply error:", JSON.stringify(replyResult.error));
           return new Response(
             JSON.stringify({ error: "Failed to post reply", details: replyResult.error }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
