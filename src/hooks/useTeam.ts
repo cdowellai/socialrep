@@ -132,8 +132,9 @@ export function useTeam() {
       const currentMember = transformedMembers.find((m: TeamMember) => m.user_id === user.id);
       setUserRole(currentMember?.role || null);
 
-      // Fetch pending invitations (only for admins)
-      if (currentMember?.role === "owner" || currentMember?.role === "admin") {
+      // Fetch pending invitations (for admins or team owner)
+      const isAdminOrOwner = currentMember?.role === "owner" || currentMember?.role === "admin" || teamData.owner_id === user.id;
+      if (isAdminOrOwner) {
         const { data: invitationsData } = await supabase
           .from("team_invitations")
           .select("*")
