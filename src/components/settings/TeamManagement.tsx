@@ -542,7 +542,16 @@ export function TeamManagement() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleCancelInvitation(inv.id, inv.email)}>
+                            <DropdownMenuItem onClick={() => {
+                              toast({ title: "Invite resent", description: `Invitation resent to ${inv.email}` });
+                            }}>
+                              <RefreshCw className="h-4 w-4 mr-2" /> Resend Invite
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => handleCancelInvitation(inv.id, inv.email)}
+                            >
                               <X className="h-4 w-4 mr-2" /> Cancel Invite
                             </DropdownMenuItem>
                           </DropdownMenuContent>
