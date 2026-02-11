@@ -16,6 +16,7 @@ import ChatbotPage from "./pages/Chatbot";
 import ContentPage from "./pages/Content";
 import SettingsPage from "./pages/Settings";
 import ResetPassword from "./pages/ResetPassword";
+import MetaCallback from "./pages/MetaCallback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -112,6 +113,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/auth/meta/callback"
+        element={
+          <ProtectedRoute>
+            <MetaCallback />
           </ProtectedRoute>
         }
       />

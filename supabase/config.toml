@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.verify-session]
 verify_jwt = false
+
+[functions.meta-oauth]
+verify_jwt = false
