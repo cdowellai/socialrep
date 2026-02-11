@@ -70,8 +70,6 @@ export function HeroSection() {
             <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: "0.3s" }}>
               <span>14-Day Free Trial</span>
               <span className="hidden sm:inline text-border">·</span>
-              <span>No Credit Card Required</span>
-              <span className="hidden sm:inline text-border">·</span>
               <span>Cancel Anytime</span>
             </div>
           </div>
