@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTeam, type TeamRole, type TeamMember, type TeamInvitation } from "@/hooks/useTeam";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { useSubscription } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,14 +77,10 @@ const roleColors: Record<TeamRole, string> = {
   viewer: "bg-gray-500/10 text-gray-600 border-gray-500/20",
 };
 
-interface PlanLimits {
-  maxSeats: number;
-  planName: string;
-}
-
 export function TeamManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { plan: currentPlan } = useSubscription();
   const {
     team,
     members,
@@ -105,35 +101,23 @@ export function TeamManagement() {
   const [inviting, setInviting] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [teamNameInput, setTeamNameInput] = useState("");
-  const [planLimits, setPlanLimits] = useState<PlanLimits>({ maxSeats: 1, planName: "Free" });
 
-  useEffect(() => {
-    if (user) {
-      fetchPlanLimits();
-    }
-  }, [user]);
-
-  const fetchPlanLimits = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("profiles")
-      .select("plan")
-      .eq("user_id", user.id)
-      .single();
-
-    const planSeats: Record<string, { maxSeats: number; planName: string }> = {
-      free: { maxSeats: 1, planName: "Free" },
-      starter: { maxSeats: 2, planName: "Starter" },
-      professional: { maxSeats: 5, planName: "Professional" },
-      agency: { maxSeats: 15, planName: "Agency" },
-    };
-
-    const plan = data?.plan || "free";
-    setPlanLimits(planSeats[plan] || planSeats.free);
-  };
+  const maxSeats = currentPlan?.max_team_seats ?? 1;
+  const planName = currentPlan?.display_name ?? "Free";
 
   const handleInvite = async () => {
     if (!inviteEmail) return;
+
+    // Enforce seat limit
+    const totalSeats = members.length + invitations.length;
+    if (maxSeats !== -1 && totalSeats >= maxSeats) {
+      toast({
+        title: "Seat limit reached",
+        description: `You've reached your ${maxSeats} seat limit on the ${planName} Plan. Upgrade your plan to add more team members.`,
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       setInviting(true);
@@ -302,12 +286,12 @@ export function TeamManagement() {
             <div className="flex-1">
               <div className="flex items-center justify-between text-sm mb-1">
                 <span className="text-muted-foreground">Seats used</span>
-                <span className="font-medium">{members.length} of {planLimits.maxSeats}</span>
+                <span className="font-medium">{members.length} of {maxSeats === -1 ? "∞" : maxSeats}</span>
               </div>
-              <Progress value={(members.length / planLimits.maxSeats) * 100} className="h-2" />
+              <Progress value={maxSeats === -1 ? 0 : (members.length / maxSeats) * 100} className="h-2" />
             </div>
             <Badge variant="outline" className="text-xs">
-              {planLimits.planName} Plan
+              {planName} Plan
             </Badge>
           </div>
         </CardContent>

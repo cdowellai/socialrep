@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useInteractions } from "@/hooks/useInteractions";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -60,8 +61,10 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { interactions } = useInteractions();
+  const { plan, subscription } = useSubscription();
   
   const pendingCount = interactions.filter(i => i.status === "pending").length;
+  const planLabel = plan ? `${plan.display_name} Plan` : "Free Plan";
 
   const handleSignOut = async () => {
     await signOut();
@@ -150,7 +153,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{user?.email}</p>
-              <p className="text-xs text-muted-foreground">Free Plan</p>
+              <p className="text-xs text-muted-foreground">{planLabel}</p>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
