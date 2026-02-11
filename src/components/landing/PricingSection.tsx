@@ -122,7 +122,7 @@ export function PricingSection() {
               Simple plans that scale with you.
             </h2>
             <p className="text-lg text-muted-foreground">
-              Start with a 14-day free trial on any plan. No credit card required.
+              Start with a 14-day free trial on any plan.
             </p>
           </div>
 
