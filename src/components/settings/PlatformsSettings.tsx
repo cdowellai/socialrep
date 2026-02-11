@@ -129,11 +129,34 @@ export function PlatformsSettings() {
 
   const handleConnect = async (platform: SocialPlatform) => {
     if (!user) return;
+
+    // For Facebook and Instagram, use Meta OAuth
+    if (platform.id === "facebook" || platform.id === "instagram") {
+      setConnectingPlatform(platform.id);
+      try {
+        // Fetch app ID from backend
+        const { data: appData, error: appErr } = await supabase.functions.invoke("meta-oauth", {
+          body: { action: "get_app_id" },
+        });
+        if (appErr || !appData?.app_id) {
+          throw new Error("Failed to get Meta App ID");
+        }
+        const redirectUri = `${window.location.origin}/auth/meta/callback`;
+        const scope = "pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_engagement,pages_messaging,pages_read_user_content,email,instagram_basic,instagram_manage_comments,instagram_manage_messages";
+        const oauthUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${encodeURIComponent(appData.app_id)}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code&state=${encodeURIComponent(platform.id)}`;
+        window.location.href = oauthUrl;
+      } catch (err) {
+        console.error("Meta OAuth error:", err);
+        toast({ title: "Connection failed", description: "Failed to start Meta authorization.", variant: "destructive" });
+        setConnectingPlatform(null);
+      }
+      return;
+    }
+
     setConnectingPlatform(platform.id);
 
     try {
-      // For now, create a simulated connection
-      // In production, this would initiate OAuth flow
+      // For other platforms, create a simulated connection
       const { data, error } = await supabase
         .from("connected_platforms")
         .insert({
