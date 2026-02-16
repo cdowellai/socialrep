@@ -5,3 +5,4 @@ export { PlatformsSettings } from "./PlatformsSettings";
 export { NotificationsSettings } from "./NotificationsSettings";
 export { BillingSettings } from "./BillingSettings";
 export { AutomationSettings } from "./AutomationSettings";
+export { AssistantAccessSettings } from "./AssistantAccessSettings";

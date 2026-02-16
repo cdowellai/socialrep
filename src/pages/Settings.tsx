@@ -16,6 +16,7 @@ import {
   PlatformsSettings,
   NotificationsSettings,
   BillingSettings,
+  AssistantAccessSettings,
 } from "@/components/settings";
 import { FeaturePaywall } from "@/components/subscription";
 import {
@@ -27,6 +28,7 @@ import {
   Brain,
   Users,
   Save,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -100,7 +102,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid grid-cols-7 w-full">
+          <TabsList className="grid grid-cols-8 w-full">
             <TabsTrigger value="profile">
               <User className="h-4 w-4 mr-2" />
               Profile
@@ -128,6 +130,10 @@ export default function SettingsPage() {
             <TabsTrigger value="billing">
               <CreditCard className="h-4 w-4 mr-2" />
               Billing
+            </TabsTrigger>
+            <TabsTrigger value="assistant">
+              <ShieldCheck className="h-4 w-4 mr-2" />
+              Assistant
             </TabsTrigger>
           </TabsList>
 
@@ -215,6 +221,11 @@ export default function SettingsPage() {
           {/* Billing Tab */}
           <TabsContent value="billing" className="space-y-6">
             <BillingSettings />
+          </TabsContent>
+
+          {/* Assistant Access Tab */}
+          <TabsContent value="assistant" className="space-y-6">
+            <AssistantAccessSettings />
           </TabsContent>
         </Tabs>
       </div>
