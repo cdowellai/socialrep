@@ -58,6 +58,125 @@ export type Database = {
           },
         ]
       }
+      assistant_access: {
+        Row: {
+          auth_user_id: string | null
+          created_at: string
+          created_by: string
+          email: string
+          expires_at: string
+          force_password_reset: boolean | null
+          id: string
+          last_login_at: string | null
+          magic_link_expires_at: string | null
+          magic_link_token: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          role: string
+          status: string
+          team_id: string
+          temp_password_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          auth_user_id?: string | null
+          created_at?: string
+          created_by: string
+          email: string
+          expires_at: string
+          force_password_reset?: boolean | null
+          id?: string
+          last_login_at?: string | null
+          magic_link_expires_at?: string | null
+          magic_link_token?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          role: string
+          status?: string
+          team_id: string
+          temp_password_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auth_user_id?: string | null
+          created_at?: string
+          created_by?: string
+          email?: string
+          expires_at?: string
+          force_password_reset?: boolean | null
+          id?: string
+          last_login_at?: string | null
+          magic_link_expires_at?: string | null
+          magic_link_token?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          role?: string
+          status?: string
+          team_id?: string
+          temp_password_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_access_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assistant_access_audit_logs: {
+        Row: {
+          access_id: string | null
+          actor_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          target_email: string | null
+          team_id: string | null
+        }
+        Insert: {
+          access_id?: string | null
+          actor_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          target_email?: string | null
+          team_id?: string | null
+        }
+        Update: {
+          access_id?: string | null
+          actor_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          target_email?: string | null
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_access_audit_logs_access_id_fkey"
+            columns: ["access_id"]
+            isOneToOne: false
+            referencedRelation: "assistant_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assistant_access_audit_logs_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automation_rules: {
         Row: {
           action_config: Json
@@ -1484,6 +1603,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_assistant_access_expiry: { Args: never; Returns: undefined }
       get_user_post_usage: {
         Args: { p_user_id: string }
         Returns: {
