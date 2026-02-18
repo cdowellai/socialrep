@@ -14,6 +14,427 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_audit_logs: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          target_entity_id: string | null
+          target_entity_type: string | null
+          user_agent: string | null
+          workspace_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          target_entity_id?: string | null
+          target_entity_type?: string | null
+          user_agent?: string | null
+          workspace_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          target_entity_id?: string | null
+          target_entity_type?: string | null
+          user_agent?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_audit_logs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_execution_logs: {
+        Row: {
+          channel_type: Database["public"]["Enums"]["agent_channel_type"]
+          created_at: string
+          decision: Database["public"]["Enums"]["agent_decision"]
+          error_code: string | null
+          error_message: string | null
+          estimated_cost: number | null
+          id: string
+          item_id: string | null
+          latency_ms: number | null
+          model_name: string | null
+          prompt_hash: string | null
+          provider_id: string | null
+          response_excerpt: string | null
+          token_in: number | null
+          token_out: number | null
+          workspace_id: string
+        }
+        Insert: {
+          channel_type: Database["public"]["Enums"]["agent_channel_type"]
+          created_at?: string
+          decision: Database["public"]["Enums"]["agent_decision"]
+          error_code?: string | null
+          error_message?: string | null
+          estimated_cost?: number | null
+          id?: string
+          item_id?: string | null
+          latency_ms?: number | null
+          model_name?: string | null
+          prompt_hash?: string | null
+          provider_id?: string | null
+          response_excerpt?: string | null
+          token_in?: number | null
+          token_out?: number | null
+          workspace_id: string
+        }
+        Update: {
+          channel_type?: Database["public"]["Enums"]["agent_channel_type"]
+          created_at?: string
+          decision?: Database["public"]["Enums"]["agent_decision"]
+          error_code?: string | null
+          error_message?: string | null
+          estimated_cost?: number | null
+          id?: string
+          item_id?: string | null
+          latency_ms?: number | null
+          model_name?: string | null
+          prompt_hash?: string | null
+          provider_id?: string | null
+          response_excerpt?: string | null
+          token_in?: number | null
+          token_out?: number | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_execution_logs_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "agent_providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_execution_logs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_fallback_policies: {
+        Row: {
+          cooldown_seconds: number
+          created_at: string
+          failure_threshold: number
+          id: string
+          is_active: boolean
+          primary_provider_id: string | null
+          secondary_provider_id: string | null
+          tertiary_provider_id: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          cooldown_seconds?: number
+          created_at?: string
+          failure_threshold?: number
+          id?: string
+          is_active?: boolean
+          primary_provider_id?: string | null
+          secondary_provider_id?: string | null
+          tertiary_provider_id?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          cooldown_seconds?: number
+          created_at?: string
+          failure_threshold?: number
+          id?: string
+          is_active?: boolean
+          primary_provider_id?: string | null
+          secondary_provider_id?: string | null
+          tertiary_provider_id?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_fallback_policies_primary_provider_id_fkey"
+            columns: ["primary_provider_id"]
+            isOneToOne: false
+            referencedRelation: "agent_providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_fallback_policies_secondary_provider_id_fkey"
+            columns: ["secondary_provider_id"]
+            isOneToOne: false
+            referencedRelation: "agent_providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_fallback_policies_tertiary_provider_id_fkey"
+            columns: ["tertiary_provider_id"]
+            isOneToOne: false
+            referencedRelation: "agent_providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_fallback_policies_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_models: {
+        Row: {
+          context_window: number | null
+          created_at: string
+          id: string
+          input_cost_per_1k: number | null
+          is_enabled: boolean
+          model_name: string
+          output_cost_per_1k: number | null
+          provider_id: string
+        }
+        Insert: {
+          context_window?: number | null
+          created_at?: string
+          id?: string
+          input_cost_per_1k?: number | null
+          is_enabled?: boolean
+          model_name: string
+          output_cost_per_1k?: number | null
+          provider_id: string
+        }
+        Update: {
+          context_window?: number | null
+          created_at?: string
+          id?: string
+          input_cost_per_1k?: number | null
+          is_enabled?: boolean
+          model_name?: string
+          output_cost_per_1k?: number | null
+          provider_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_models_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "agent_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_providers: {
+        Row: {
+          base_url: string | null
+          created_at: string
+          created_by: string
+          default_model: string | null
+          encrypted_api_key: string | null
+          id: string
+          is_active: boolean
+          max_retries: number
+          name: string
+          org_id: string | null
+          provider_type: Database["public"]["Enums"]["agent_provider_type"]
+          rate_limit_per_minute: number
+          timeout_ms: number
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          base_url?: string | null
+          created_at?: string
+          created_by: string
+          default_model?: string | null
+          encrypted_api_key?: string | null
+          id?: string
+          is_active?: boolean
+          max_retries?: number
+          name: string
+          org_id?: string | null
+          provider_type: Database["public"]["Enums"]["agent_provider_type"]
+          rate_limit_per_minute?: number
+          timeout_ms?: number
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          base_url?: string | null
+          created_at?: string
+          created_by?: string
+          default_model?: string | null
+          encrypted_api_key?: string | null
+          id?: string
+          is_active?: boolean
+          max_retries?: number
+          name?: string
+          org_id?: string | null
+          provider_type?: Database["public"]["Enums"]["agent_provider_type"]
+          rate_limit_per_minute?: number
+          timeout_ms?: number
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_providers_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_routing_rules: {
+        Row: {
+          action_mode: Database["public"]["Enums"]["agent_action_mode"]
+          channel_type: Database["public"]["Enums"]["agent_channel_type"]
+          created_at: string
+          id: string
+          is_active: boolean
+          model_name: string | null
+          name: string
+          priority: number
+          provider_id: string | null
+          risk_level: Database["public"]["Enums"]["agent_risk_level"] | null
+          sentiment_class:
+            | Database["public"]["Enums"]["agent_sentiment_class"]
+            | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          action_mode?: Database["public"]["Enums"]["agent_action_mode"]
+          channel_type: Database["public"]["Enums"]["agent_channel_type"]
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_name?: string | null
+          name?: string
+          priority?: number
+          provider_id?: string | null
+          risk_level?: Database["public"]["Enums"]["agent_risk_level"] | null
+          sentiment_class?:
+            | Database["public"]["Enums"]["agent_sentiment_class"]
+            | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          action_mode?: Database["public"]["Enums"]["agent_action_mode"]
+          channel_type?: Database["public"]["Enums"]["agent_channel_type"]
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_name?: string | null
+          name?: string
+          priority?: number
+          provider_id?: string | null
+          risk_level?: Database["public"]["Enums"]["agent_risk_level"] | null
+          sentiment_class?:
+            | Database["public"]["Enums"]["agent_sentiment_class"]
+            | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_routing_rules_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "agent_providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_routing_rules_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_safety_policies: {
+        Row: {
+          allow_auto_send_low_risk: boolean
+          allow_auto_send_medium_risk: boolean
+          blocked_topics: string[]
+          confidence_threshold: number | null
+          created_at: string
+          created_by: string
+          escalation_keywords: string[]
+          hard_escalate_high_risk: boolean
+          id: string
+          is_active: boolean
+          max_response_length: number | null
+          pii_redaction_enabled: boolean
+          policy_name: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          allow_auto_send_low_risk?: boolean
+          allow_auto_send_medium_risk?: boolean
+          blocked_topics?: string[]
+          confidence_threshold?: number | null
+          created_at?: string
+          created_by: string
+          escalation_keywords?: string[]
+          hard_escalate_high_risk?: boolean
+          id?: string
+          is_active?: boolean
+          max_response_length?: number | null
+          pii_redaction_enabled?: boolean
+          policy_name: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          allow_auto_send_low_risk?: boolean
+          allow_auto_send_medium_risk?: boolean
+          blocked_topics?: string[]
+          confidence_threshold?: number | null
+          created_at?: string
+          created_by?: string
+          escalation_keywords?: string[]
+          hard_escalate_high_risk?: boolean
+          id?: string
+          is_active?: boolean
+          max_response_length?: number | null
+          pii_redaction_enabled?: boolean
+          policy_name?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_safety_policies_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_response_feedback: {
         Row: {
           created_at: string
@@ -1642,6 +2063,12 @@ export type Database = {
       }
     }
     Enums: {
+      agent_action_mode: "draft_only" | "auto_send" | "requires_approval"
+      agent_channel_type: "review" | "comment" | "dm"
+      agent_decision: "sent" | "draft" | "escalated" | "failed"
+      agent_provider_type: "openclaw" | "openai" | "openai_compatible"
+      agent_risk_level: "low" | "medium" | "high"
+      agent_sentiment_class: "positive" | "neutral" | "negative" | "mixed"
       interaction_platform:
         | "facebook"
         | "instagram"
@@ -1801,6 +2228,12 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      agent_action_mode: ["draft_only", "auto_send", "requires_approval"],
+      agent_channel_type: ["review", "comment", "dm"],
+      agent_decision: ["sent", "draft", "escalated", "failed"],
+      agent_provider_type: ["openclaw", "openai", "openai_compatible"],
+      agent_risk_level: ["low", "medium", "high"],
+      agent_sentiment_class: ["positive", "neutral", "negative", "mixed"],
       interaction_platform: [
         "facebook",
         "instagram",
