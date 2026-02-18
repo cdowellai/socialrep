@@ -18,6 +18,7 @@ import SettingsPage from "./pages/Settings";
 import ResetPassword from "./pages/ResetPassword";
 import MetaCallback from "./pages/MetaCallback";
 import NotFound from "./pages/NotFound";
+import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
@@ -124,6 +125,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/privacy" element={<Privacy />} />
       {/* Short-path redirects for production URLs */}
       <Route path="/login" element={<Index />} />
       <Route path="/overview" element={<Navigate to="/dashboard" replace />} />
