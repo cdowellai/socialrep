@@ -195,7 +195,7 @@ This indemnification obligation will survive the termination of your account and
   {
     title: "13. Dispute Resolution",
     content: `**13.1 Informal Resolution**
-Before filing any formal legal action, you agree to first attempt to resolve the dispute informally by contacting us at legal@socialrep.com. We will attempt to resolve the dispute within 30 days of receipt of your notice.
+Before filing any formal legal action, you agree to first attempt to resolve the dispute informally by contacting us at support@socialrep.ai. We will attempt to resolve the dispute within 30 days of receipt of your notice.
 
 **13.2 Binding Arbitration**
 If the dispute is not resolved informally, you and SocialRep agree to resolve it through binding arbitration administered by the American Arbitration Association (AAA) under its Commercial Arbitration Rules. Arbitration will take place in the state of Delaware, or remotely at your election.
@@ -227,7 +227,7 @@ You may not assign or transfer your rights or obligations under these Terms with
 SocialRep shall not be liable for any failure or delay in performance due to circumstances beyond our reasonable control, including natural disasters, pandemics, war, terrorism, government actions, power outages, internet disruptions, or third-party service failures.
 
 **14.6 Notices**
-We may provide notices to you via email to the address associated with your account or through the Service. You may provide notices to us at legal@socialrep.com. Notices are deemed received upon sending (for email) or posting (for in-Service notifications).
+We may provide notices to you via email to the address associated with your account or through the Service. You may provide notices to us at support@socialrep.ai. Notices are deemed received upon sending (for email) or posting (for in-Service notifications).
 
 **14.7 Modifications to These Terms**
 We may modify these Terms at any time by posting the revised Terms on our website. We will provide at least 14 days' notice of material changes via email. Your continued use of the Service after such notice constitutes acceptance of the modified Terms.`,
@@ -236,7 +236,7 @@ We may modify these Terms at any time by posting the revised Terms on our websit
     title: "15. Contact Information",
     content: `If you have any questions about these Terms, please contact us:
 
-**Email**: legal@socialrep.com
+**Email**: support@socialrep.ai
 **Support**: Use the in-app support feature or visit our help center
 **Mail**: SocialRep, Inc., Attn: Legal Department`,
   },

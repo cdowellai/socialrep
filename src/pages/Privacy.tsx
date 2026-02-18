@@ -176,7 +176,7 @@ You may disconnect any third-party platform from SocialRep at any time through S
 **Do Not Track**
 We respect Do Not Track (DNT) browser signals. When we detect a DNT signal, we limit data collection to what is strictly necessary for Service operation.
 
-To exercise any of these rights, contact us at privacy@socialrep.com or through the contact methods listed in Section 12.`,
+To exercise any of these rights, contact us at support@socialrep.ai or through the contact methods listed in Section 12.`,
   },
   {
     title: "8. Cookies and Tracking Technologies",
@@ -215,7 +215,7 @@ If you are located in the European Economic Area (EEA), United Kingdom, or Switz
     title: "10. Children's Privacy",
     content: `The Service is not intended for individuals under the age of 16. We do not knowingly collect personal information from children under 16. If we become aware that we have collected personal data from a child under 16, we will take steps to delete that information promptly.
 
-If you are a parent or guardian and believe that your child has provided us with personal information, please contact us at privacy@socialrep.com.`,
+If you are a parent or guardian and believe that your child has provided us with personal information, please contact us at support@socialrep.ai.`,
   },
   {
     title: "11. Changes to This Privacy Policy",
@@ -231,11 +231,11 @@ We encourage you to review this Privacy Policy periodically. Your continued use 
     title: "12. Contact Us",
     content: `If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us:
 
-**Email**: privacy@socialrep.com
+**Email**: support@socialrep.ai
 **Support**: Use the in-app support feature or visit our help center
 **Mail**: SocialRep, Inc., Attn: Privacy Team
 
-For GDPR-related inquiries, you may also contact our Data Protection Officer at dpo@socialrep.com.
+For GDPR-related inquiries, you may also contact our Data Protection Officer at support@socialrep.ai.
 
 If you are not satisfied with our response to a privacy concern, you have the right to lodge a complaint with your local data protection supervisory authority.`,
   },
