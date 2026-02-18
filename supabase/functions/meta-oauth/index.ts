@@ -884,6 +884,109 @@ serve(async (req) => {
         );
       }
 
+      // =========== HEALTH REPORT (structured JSON) ===========
+      case "health_report": {
+        const { data: fbPlatforms } = await supabase
+          .from("connected_platforms")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("platform", "facebook")
+          .eq("is_active", true);
+
+        if (!fbPlatforms || fbPlatforms.length === 0) {
+          return new Response(
+            JSON.stringify({ error: "No connected Facebook pages" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        const reports: any[] = [];
+        for (const p of fbPlatforms) {
+          const pageToken = p.access_token!;
+          const pageId = p.platform_account_id!;
+          const report: any = {
+            page_name: p.platform_account_name,
+            selected_page_id: pageId,
+            app_mode: "unknown",
+            granted_scopes: [],
+            missing_scopes: [],
+            token_valid: false,
+            token_expires_at: null,
+            webhook_status: "unknown",
+            last_sync_result: null,
+          };
+
+          // Token introspection
+          try {
+            const dbgRes = await fetch(
+              `${META_GRAPH_URL}/debug_token?input_token=${encodeURIComponent(pageToken)}&access_token=${encodeURIComponent(META_APP_ID!)}|${encodeURIComponent(META_APP_SECRET!)}`
+            );
+            const dbg = await dbgRes.json();
+            const d = dbg.data || {};
+            report.token_valid = !!d.is_valid;
+            report.token_expires_at = d.expires_at === 0 ? "never" : d.expires_at ? new Date(d.expires_at * 1000).toISOString() : null;
+            report.granted_scopes = d.scopes || [];
+            report.app_mode = d.application ? "check_dashboard" : "unknown";
+
+            const allDesired = [
+              "pages_show_list", "pages_read_engagement", "pages_read_user_content",
+              "pages_manage_metadata", "pages_manage_posts", "pages_manage_engagement", "pages_messaging",
+            ];
+            report.missing_scopes = allDesired.filter((s: string) => !report.granted_scopes.includes(s));
+          } catch (e) {
+            report.token_valid = false;
+            report.token_expires_at = `error: ${String(e)}`;
+          }
+
+          // Webhook status
+          try {
+            const subRes = await fetch(
+              `${META_GRAPH_URL}/${encodeURIComponent(pageId)}/subscribed_apps?access_token=${encodeURIComponent(pageToken)}`
+            );
+            const subData = await subRes.json();
+            if (subData.error) {
+              report.webhook_status = `error: ${subData.error.message}`;
+            } else if (subData.data && subData.data.length > 0) {
+              const fields = subData.data.flatMap((a: any) => a.subscribed_fields || []);
+              report.webhook_status = `subscribed (${fields.join(", ")})`;
+            } else {
+              report.webhook_status = "not_subscribed";
+            }
+          } catch (e) {
+            report.webhook_status = `error: ${String(e)}`;
+          }
+
+          // Last sync result
+          const { data: lastLog } = await supabase
+            .from("integration_run_logs")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("platform", "facebook")
+            .order("created_at", { ascending: false })
+            .limit(1);
+
+          if (lastLog && lastLog.length > 0) {
+            const l = lastLog[0];
+            report.last_sync_result = {
+              status: l.status,
+              started_at: l.started_at,
+              finished_at: l.finished_at,
+              fetched: l.fetched_count,
+              inserted: l.inserted_count,
+              errors: l.error_count,
+              token_status: l.token_status,
+            };
+          }
+
+          reports.push(report);
+        }
+
+        return new Response(
+          JSON.stringify({ success: true, health_reports: reports }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       // =========== GET SYNC LOGS ===========
       case "get_sync_logs": {
         const { data: logs } = await supabase
