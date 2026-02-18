@@ -19,7 +19,6 @@ import {
   AssistantAccessSettings,
 } from "@/components/settings";
 import { FeaturePaywall } from "@/components/subscription";
-import { AgentSettingsPage } from "@/components/agents";
 import {
   User,
   CreditCard,
@@ -30,7 +29,6 @@ import {
   Users,
   Save,
   ShieldCheck,
-  Cpu,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -104,7 +102,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid grid-cols-9 w-full">
+          <TabsList className="grid grid-cols-8 w-full">
             <TabsTrigger value="profile">
               <User className="h-4 w-4 mr-2" />
               Profile
@@ -116,10 +114,6 @@ export default function SettingsPage() {
             <TabsTrigger value="brand">
               <Brain className="h-4 w-4 mr-2" />
               Brand AI
-            </TabsTrigger>
-            <TabsTrigger value="agents">
-              <Cpu className="h-4 w-4 mr-2" />
-              AI Agents
             </TabsTrigger>
             <TabsTrigger value="automation">
               <Zap className="h-4 w-4 mr-2" />
@@ -199,11 +193,6 @@ export default function SettingsPage() {
                 requiredPlan="Professional"
               />
             )}
-          </TabsContent>
-
-          {/* AI Agents Tab */}
-          <TabsContent value="agents" className="space-y-6">
-            <AgentSettingsPage />
           </TabsContent>
 
           {/* Automation Tab */}

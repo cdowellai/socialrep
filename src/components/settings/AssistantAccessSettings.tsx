@@ -54,7 +54,7 @@ interface AuditLog {
 
 export function AssistantAccessSettings() {
   const { toast } = useToast();
-  const { team, isAdmin, loading: teamLoading, userRole } = useTeam();
+  const { team, isAdmin } = useTeam();
   const [records, setRecords] = useState<AccessRecord[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -217,17 +217,6 @@ export function AssistantAccessSettings() {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
-
-  if (teamLoading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12 text-muted-foreground">
-          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-          Loading access permissions…
-        </CardContent>
-      </Card>
-    );
-  }
 
   if (!isAdmin) {
     return (

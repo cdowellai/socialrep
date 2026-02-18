@@ -29,6 +29,3 @@ verify_jwt = false
 
 [functions.assistant-access]
 verify_jwt = false
-
-[functions.agent-management]
-verify_jwt = false
