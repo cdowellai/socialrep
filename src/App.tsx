@@ -124,6 +124,18 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      {/* Short-path redirects for production URLs */}
+      <Route path="/login" element={<Index />} />
+      <Route path="/overview" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/settings" element={<Navigate to="/dashboard/settings" replace />} />
+      <Route path="/reviews" element={<Navigate to="/dashboard/reviews" replace />} />
+      <Route path="/smart-inbox" element={<Navigate to="/dashboard/inbox" replace />} />
+      <Route path="/inbox" element={<Navigate to="/dashboard/inbox" replace />} />
+      <Route path="/leads" element={<Navigate to="/dashboard/leads" replace />} />
+      <Route path="/analytics" element={<Navigate to="/dashboard/analytics" replace />} />
+      <Route path="/chatbot" element={<Navigate to="/dashboard/chatbot" replace />} />
+      <Route path="/content" element={<Navigate to="/dashboard/content" replace />} />
+      <Route path="/streams" element={<Navigate to="/dashboard/streams" replace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
