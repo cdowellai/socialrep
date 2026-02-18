@@ -792,6 +792,63 @@ export type Database = {
         }
         Relationships: []
       }
+      integration_run_logs: {
+        Row: {
+          created_at: string
+          error_count: number | null
+          errors: Json | null
+          fetched_count: number | null
+          finished_at: string | null
+          id: string
+          inserted_count: number | null
+          metadata: Json | null
+          platform: string
+          run_type: string
+          skipped_count: number | null
+          started_at: string
+          status: string
+          token_status: string | null
+          updated_count: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_count?: number | null
+          errors?: Json | null
+          fetched_count?: number | null
+          finished_at?: string | null
+          id?: string
+          inserted_count?: number | null
+          metadata?: Json | null
+          platform: string
+          run_type?: string
+          skipped_count?: number | null
+          started_at?: string
+          status?: string
+          token_status?: string | null
+          updated_count?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_count?: number | null
+          errors?: Json | null
+          fetched_count?: number | null
+          finished_at?: string | null
+          id?: string
+          inserted_count?: number | null
+          metadata?: Json | null
+          platform?: string
+          run_type?: string
+          skipped_count?: number | null
+          started_at?: string
+          status?: string
+          token_status?: string | null
+          updated_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       interaction_replies: {
         Row: {
           content: string

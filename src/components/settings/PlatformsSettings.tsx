@@ -19,6 +19,14 @@ import {
   Linkedin,
   Youtube,
   Plug,
+  Stethoscope,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  Info,
+  History,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -31,9 +39,34 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import type { Tables } from "@/integrations/supabase/types";
 
 type ConnectedPlatform = Tables<"connected_platforms">;
+
+interface DiagnosticCheck {
+  name: string;
+  status: "pass" | "fail" | "warn" | "info";
+  detail: string;
+  action?: "reconnect" | "reselect_page";
+}
+
+interface SyncLog {
+  id: string;
+  run_type: string;
+  started_at: string;
+  finished_at: string | null;
+  status: string;
+  fetched_count: number;
+  inserted_count: number;
+  skipped_count: number;
+  error_count: number;
+  errors: any[];
+}
 
 interface SocialPlatform {
   id: string;
@@ -96,7 +129,20 @@ const socialPlatforms: SocialPlatform[] = [
   },
 ];
 
-const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const SYNC_INTERVAL_MS = 5 * 60 * 1000;
+
+function DiagnosticStatusIcon({ status }: { status: string }) {
+  switch (status) {
+    case "pass":
+      return <CheckCircle2 className="h-4 w-4 text-sentiment-positive shrink-0" />;
+    case "fail":
+      return <XCircle className="h-4 w-4 text-destructive shrink-0" />;
+    case "warn":
+      return <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0" />;
+    default:
+      return <Info className="h-4 w-4 text-muted-foreground shrink-0" />;
+  }
+}
 
 export function PlatformsSettings() {
   const { user } = useAuth();
@@ -109,19 +155,28 @@ export function PlatformsSettings() {
   const [testResult, setTestResult] = useState<string | null>(null);
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Diagnostics state
+  const [runningDiagnostics, setRunningDiagnostics] = useState(false);
+  const [diagnosticChecks, setDiagnosticChecks] = useState<DiagnosticCheck[] | null>(null);
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
+
+  // Sync logs state
+  const [syncLogs, setSyncLogs] = useState<SyncLog[] | null>(null);
+  const [logsOpen, setLogsOpen] = useState(false);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+
+  // Sync error details
+  const [lastSyncDetails, setLastSyncDetails] = useState<any>(null);
+  const [syncDetailsOpen, setSyncDetailsOpen] = useState(false);
+
   useEffect(() => {
-    if (user) {
-      fetchConnectedPlatforms();
-    }
+    if (user) fetchConnectedPlatforms();
   }, [user]);
 
   // Auto-sync polling
   const runAutoSync = useCallback(async () => {
     if (!user) return;
-
-    const hasFacebook = connectedPlatforms.some(
-      (p) => p.platform === "facebook" && p.is_active
-    );
+    const hasFacebook = connectedPlatforms.some((p) => p.platform === "facebook" && p.is_active);
     if (!hasFacebook) return;
 
     console.log(`[AutoSync] Running automatic sync at ${new Date().toISOString()}`);
@@ -134,7 +189,6 @@ export function PlatformsSettings() {
       } else {
         console.log("[AutoSync] Result:", data);
         if (data?.new_comments > 0 || data?.new_messages > 0) {
-          // Silently update last_synced_at in local state
           setConnectedPlatforms((prev) =>
             prev.map((p) =>
               p.platform === "facebook" ? { ...p, last_synced_at: new Date().toISOString() } : p
@@ -148,18 +202,12 @@ export function PlatformsSettings() {
   }, [user, connectedPlatforms]);
 
   useEffect(() => {
-    // Start auto-sync if we have connected Facebook pages
-    const hasFacebook = connectedPlatforms.some(
-      (p) => p.platform === "facebook" && p.is_active
-    );
-
+    const hasFacebook = connectedPlatforms.some((p) => p.platform === "facebook" && p.is_active);
     if (hasFacebook) {
-      // Clear existing interval
       if (syncIntervalRef.current) clearInterval(syncIntervalRef.current);
       syncIntervalRef.current = setInterval(runAutoSync, SYNC_INTERVAL_MS);
       console.log(`[AutoSync] Started polling every ${SYNC_INTERVAL_MS / 1000}s`);
     }
-
     return () => {
       if (syncIntervalRef.current) {
         clearInterval(syncIntervalRef.current);
@@ -175,7 +223,6 @@ export function PlatformsSettings() {
         .from("connected_platforms")
         .select("*")
         .eq("user_id", user.id);
-
       if (error) throw error;
       setConnectedPlatforms(data || []);
     } catch (err) {
@@ -187,22 +234,18 @@ export function PlatformsSettings() {
 
   const handleConnect = async (platform: SocialPlatform) => {
     if (!user) return;
-
     if (platform.id === "facebook" || platform.id === "instagram") {
       setConnectingPlatform(platform.id);
       try {
         const { data: appData, error: appErr } = await supabase.functions.invoke("meta-oauth", {
           body: { action: "get_app_id" },
         });
-        if (appErr || !appData?.app_id) {
-          throw new Error("Failed to get Meta App ID");
-        }
+        if (appErr || !appData?.app_id) throw new Error("Failed to get Meta App ID");
         const redirectUri = `${window.location.origin}/auth/meta/callback`;
         const scope = "pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_engagement,pages_read_user_content,email,public_profile,business_management";
         const oauthUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${encodeURIComponent(appData.app_id)}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code&state=${encodeURIComponent(platform.id)}`;
         window.location.href = oauthUrl;
       } catch (err) {
-        console.error("Meta OAuth error:", err);
         toast({ title: "Connection failed", description: "Failed to start Meta authorization.", variant: "destructive" });
         setConnectingPlatform(null);
       }
@@ -222,13 +265,11 @@ export function PlatformsSettings() {
         })
         .select()
         .single();
-
       if (error) throw error;
       setConnectedPlatforms((prev) => [...prev, data]);
       toast({ title: "Platform connected", description: `${platform.name} has been connected successfully.` });
     } catch (err) {
-      console.error("Error connecting platform:", err);
-      toast({ title: "Connection failed", description: "Failed to connect the platform. Please try again.", variant: "destructive" });
+      toast({ title: "Connection failed", description: "Failed to connect the platform.", variant: "destructive" });
     } finally {
       setConnectingPlatform(null);
     }
@@ -237,13 +278,8 @@ export function PlatformsSettings() {
   const handleDisconnect = async (platformId: string, platformName: string) => {
     const connection = connectedPlatforms.find((p) => p.platform === platformId);
     if (!connection) return;
-
     try {
-      const { error } = await supabase
-        .from("connected_platforms")
-        .delete()
-        .eq("id", connection.id);
-
+      const { error } = await supabase.from("connected_platforms").delete().eq("id", connection.id);
       if (error) throw error;
       setConnectedPlatforms((prev) => prev.filter((p) => p.id !== connection.id));
       toast({ title: "Platform disconnected", description: `${platformName} has been disconnected.` });
@@ -254,25 +290,19 @@ export function PlatformsSettings() {
 
   const handleTestConnection = async (platformId: string) => {
     if (platformId !== "facebook") return;
-
     setTestingPlatform(platformId);
     setTestResult(null);
-
     try {
       const { data, error } = await supabase.functions.invoke("meta-oauth", {
         body: { action: "test_connection" },
       });
-
       if (error) throw error;
-
       if (data?.results?.length > 0) {
-        const results = data.results.map((r: any) => {
-          if (r.token_valid) {
-            return `✅ ${r.page}: Connection working — found ${r.posts_found} posts and ${r.comments_found} comments`;
-          } else {
-            return `❌ ${r.page}: ${r.error || "Token invalid"}`;
-          }
-        });
+        const results = data.results.map((r: any) =>
+          r.token_valid
+            ? `✅ ${r.page}: Connection working — found ${r.posts_found} posts and ${r.comments_found} comments`
+            : `❌ ${r.page}: ${r.error || "Token invalid"}`
+        );
         setTestResult(results.join("\n"));
       } else {
         setTestResult("No connected pages found.");
@@ -284,20 +314,50 @@ export function PlatformsSettings() {
     }
   };
 
+  const handleRunDiagnostics = async () => {
+    setRunningDiagnostics(true);
+    setDiagnosticChecks(null);
+    setDiagnosticsOpen(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("meta-oauth", {
+        body: { action: "run_diagnostics" },
+      });
+      if (error) throw error;
+      setDiagnosticChecks(data?.checks || []);
+    } catch (err: any) {
+      setDiagnosticChecks([{ name: "Diagnostics", status: "fail", detail: err.message || "Failed to run diagnostics" }]);
+    } finally {
+      setRunningDiagnostics(false);
+    }
+  };
+
+  const handleFetchLogs = async () => {
+    setLoadingLogs(true);
+    setLogsOpen(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("meta-oauth", {
+        body: { action: "get_sync_logs" },
+      });
+      if (error) throw error;
+      setSyncLogs(data?.logs || []);
+    } catch (err) {
+      console.error("Failed to fetch logs:", err);
+    } finally {
+      setLoadingLogs(false);
+    }
+  };
+
   const handleSyncNow = async (platformId: string) => {
     const connection = connectedPlatforms.find((p) => p.platform === platformId);
     if (!connection) return;
-
     setRefreshingPlatform(platformId);
+    setLastSyncDetails(null);
     try {
       if (platformId === "facebook" || platformId === "instagram") {
-        console.log(`[SyncNow] Triggering sync for ${platformId}...`);
         const { data, error } = await supabase.functions.invoke("meta-oauth", {
           body: { action: "sync_interactions" },
         });
-
         if (error) throw error;
-        console.log(`[SyncNow] Sync result:`, data);
 
         setConnectedPlatforms((prev) =>
           prev.map((p) =>
@@ -305,36 +365,39 @@ export function PlatformsSettings() {
           )
         );
 
+        setLastSyncDetails(data);
+        if (data?.error_details?.length > 0) {
+          setSyncDetailsOpen(true);
+        }
+
         toast({
           title: "Sync complete",
-          description: `Synced ${data?.new_comments || 0} new comments and ${data?.new_messages || 0} new messages.${data?.errors > 0 ? ` (${data.errors} errors)` : ""}`,
+          description: `Synced ${data?.new_comments || 0} comments, ${data?.new_messages || 0} messages.${data?.errors > 0 ? ` ${data.errors} error(s).` : ""}`,
+          variant: data?.errors > 0 ? "destructive" : "default",
         });
       } else {
         const { error } = await supabase
           .from("connected_platforms")
           .update({ last_synced_at: new Date().toISOString() })
           .eq("id", connection.id);
-
         if (error) throw error;
-
         setConnectedPlatforms((prev) =>
           prev.map((p) =>
             p.id === connection.id ? { ...p, last_synced_at: new Date().toISOString() } : p
           )
         );
-
-        toast({ title: "Connection refreshed", description: "Platform connection has been refreshed." });
+        toast({ title: "Connection refreshed" });
       }
     } catch (err: any) {
-      console.error("Sync error:", err);
-      toast({
-        title: "Sync failed",
-        description: err.message || "Failed to sync data. Check console for details.",
-        variant: "destructive",
-      });
+      toast({ title: "Sync failed", description: err.message || "Check console for details.", variant: "destructive" });
     } finally {
       setRefreshingPlatform(null);
     }
+  };
+
+  const handleReconnect = () => {
+    const fbPlatform = socialPlatforms.find((p) => p.id === "facebook");
+    if (fbPlatform) handleConnect(fbPlatform);
   };
 
   const isConnected = (platformId: string) =>
@@ -348,6 +411,8 @@ export function PlatformsSettings() {
     const d = new Date(date);
     return d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
+
+  const hasFacebookConnected = connectedPlatforms.some((p) => p.platform === "facebook" && p.is_active);
 
   if (loading) {
     return (
@@ -409,16 +474,16 @@ export function PlatformsSettings() {
                   {connected ? (
                     <>
                       {platform.id === "facebook" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleTestConnection(platform.id)}
-                          disabled={testingPlatform === platform.id}
-                          title="Test connection"
-                        >
-                          <Plug className={`h-4 w-4 mr-1 ${testingPlatform === platform.id ? "animate-pulse" : ""}`} />
-                          {testingPlatform === platform.id ? "Testing..." : "Test"}
-                        </Button>
+                        <>
+                          <Button variant="outline" size="sm" onClick={() => handleTestConnection(platform.id)} disabled={testingPlatform === platform.id} title="Test connection">
+                            <Plug className={`h-4 w-4 mr-1 ${testingPlatform === platform.id ? "animate-pulse" : ""}`} />
+                            {testingPlatform === platform.id ? "Testing..." : "Test"}
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={handleRunDiagnostics} disabled={runningDiagnostics} title="Run diagnostics">
+                            <Stethoscope className={`h-4 w-4 mr-1 ${runningDiagnostics ? "animate-pulse" : ""}`} />
+                            {runningDiagnostics ? "Running..." : "Diagnostics"}
+                          </Button>
+                        </>
                       )}
                       <Button
                         variant="outline"
@@ -432,12 +497,7 @@ export function PlatformsSettings() {
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
-                            title="Disconnect"
-                          >
+                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" title="Disconnect">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
@@ -445,7 +505,7 @@ export function PlatformsSettings() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Disconnect {platform.name}?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              This will remove the connection and stop syncing data from {platform.name}. You can reconnect at any time.
+                              This will remove the connection and stop syncing data from {platform.name}.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -485,18 +545,164 @@ export function PlatformsSettings() {
             <div className="p-4 rounded-lg border bg-muted/50">
               <p className="text-sm font-medium mb-1">Connection Test Result</p>
               <pre className="text-sm text-muted-foreground whitespace-pre-wrap">{testResult}</pre>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-2"
-                onClick={() => setTestResult(null)}
-              >
+              <Button variant="ghost" size="sm" className="mt-2" onClick={() => setTestResult(null)}>
                 Dismiss
               </Button>
             </div>
           )}
+
+          {/* Last Sync Details */}
+          {lastSyncDetails && (
+            <Collapsible open={syncDetailsOpen} onOpenChange={setSyncDetailsOpen}>
+              <div className="p-4 rounded-lg border bg-muted/50">
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full justify-between p-0 h-auto">
+                    <span className="text-sm font-medium">
+                      Last Sync: {lastSyncDetails.new_comments} comments, {lastSyncDetails.new_messages} messages
+                      {lastSyncDetails.errors > 0 && (
+                        <span className="text-destructive ml-1">({lastSyncDetails.errors} errors)</span>
+                      )}
+                    </span>
+                    {syncDetailsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2 space-y-1">
+                  <p className="text-xs text-muted-foreground">
+                    Found: {lastSyncDetails.total_comments_found} comments, {lastSyncDetails.total_messages_found} messages.
+                    Skipped: {lastSyncDetails.skipped} duplicates.
+                  </p>
+                  {lastSyncDetails.error_details?.map((err: any, i: number) => (
+                    <div key={i} className="text-xs p-2 rounded bg-destructive/10 text-destructive">
+                      <strong>{err.endpoint}</strong>: [{err.code || "N/A"}] {err.message}
+                    </div>
+                  ))}
+                  <Button variant="ghost" size="sm" className="mt-1" onClick={() => setLastSyncDetails(null)}>
+                    Dismiss
+                  </Button>
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
+          )}
         </CardContent>
       </Card>
+
+      {/* Diagnostics Panel */}
+      {hasFacebookConnected && (
+        <Collapsible open={diagnosticsOpen} onOpenChange={setDiagnosticsOpen}>
+          <Card>
+            <CardHeader className="pb-3">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Stethoscope className="h-5 w-5 text-primary" />
+                    Facebook Integration Diagnostics
+                  </CardTitle>
+                  {diagnosticsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+              </CollapsibleTrigger>
+            </CardHeader>
+            <CollapsibleContent>
+              <CardContent className="space-y-3">
+                {runningDiagnostics && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Running diagnostics...
+                  </div>
+                )}
+
+                {diagnosticChecks && diagnosticChecks.length > 0 && (
+                  <div className="space-y-2">
+                    {diagnosticChecks.map((check, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg border bg-card">
+                        <DiagnosticStatusIcon status={check.status} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium">{check.name}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{check.detail}</p>
+                          {check.action === "reconnect" && (
+                            <Button size="sm" variant="outline" className="mt-2 h-7 text-xs" onClick={handleReconnect}>
+                              Reconnect Facebook
+                            </Button>
+                          )}
+                          {check.action === "reselect_page" && (
+                            <Button size="sm" variant="outline" className="mt-2 h-7 text-xs" onClick={handleReconnect}>
+                              Re-select Page
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {!runningDiagnostics && !diagnosticChecks && (
+                  <p className="text-sm text-muted-foreground">
+                    Click "Run Diagnostics" above to check your Facebook integration health.
+                  </p>
+                )}
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+      )}
+
+      {/* Sync Run Logs */}
+      {hasFacebookConnected && (
+        <Collapsible open={logsOpen} onOpenChange={setLogsOpen}>
+          <Card>
+            <CardHeader className="pb-3">
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <History className="h-5 w-5 text-primary" />
+                    Sync Run Logs
+                  </CardTitle>
+                  {logsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+              </CollapsibleTrigger>
+            </CardHeader>
+            <CollapsibleContent>
+              <CardContent className="space-y-3">
+                <Button variant="outline" size="sm" onClick={handleFetchLogs} disabled={loadingLogs}>
+                  {loadingLogs ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+                  Load Logs
+                </Button>
+
+                {syncLogs && syncLogs.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No sync logs found yet.</p>
+                )}
+
+                {syncLogs && syncLogs.length > 0 && (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {syncLogs.map((log) => (
+                      <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg border bg-card text-xs">
+                        <Badge
+                          variant={log.status === "success" ? "default" : log.status === "partial" ? "secondary" : "destructive"}
+                          className="text-[10px] shrink-0"
+                        >
+                          {log.status}
+                        </Badge>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium">{log.run_type}</p>
+                          <p className="text-muted-foreground">
+                            {new Date(log.started_at).toLocaleString()} · Fetched: {log.fetched_count} · Inserted: {log.inserted_count} · Skipped: {log.skipped_count} · Errors: {log.error_count}
+                          </p>
+                          {log.errors && (log.errors as any[]).length > 0 && (
+                            <div className="mt-1 space-y-1">
+                              {(log.errors as any[]).slice(0, 3).map((err: any, i: number) => (
+                                <p key={i} className="text-destructive">[{err.endpoint || err.code}] {err.message}</p>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+      )}
 
       <ReviewPlatformConnections />
     </div>
