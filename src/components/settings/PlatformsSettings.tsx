@@ -169,11 +169,6 @@ export function PlatformsSettings() {
   const [lastSyncDetails, setLastSyncDetails] = useState<any>(null);
   const [syncDetailsOpen, setSyncDetailsOpen] = useState(false);
 
-  // Health report state
-  const [healthReport, setHealthReport] = useState<any>(null);
-  const [loadingHealthReport, setLoadingHealthReport] = useState(false);
-  const [healthReportOpen, setHealthReportOpen] = useState(false);
-
   useEffect(() => {
     if (user) fetchConnectedPlatforms();
   }, [user]);
@@ -352,24 +347,6 @@ export function PlatformsSettings() {
     }
   };
 
-  const handleHealthReport = async () => {
-    setLoadingHealthReport(true);
-    setHealthReport(null);
-    setHealthReportOpen(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("meta-oauth", {
-        body: { action: "health_report" },
-      });
-      if (error) throw error;
-      setHealthReport(data);
-      console.log("Facebook Health Report:", JSON.stringify(data, null, 2));
-    } catch (err: any) {
-      setHealthReport({ error: err.message || "Failed to fetch health report" });
-    } finally {
-      setLoadingHealthReport(false);
-    }
-  };
-
   const handleSyncNow = async (platformId: string) => {
     const connection = connectedPlatforms.find((p) => p.platform === platformId);
     if (!connection) return;
@@ -505,10 +482,6 @@ export function PlatformsSettings() {
                           <Button variant="outline" size="sm" onClick={handleRunDiagnostics} disabled={runningDiagnostics} title="Run diagnostics">
                             <Stethoscope className={`h-4 w-4 mr-1 ${runningDiagnostics ? "animate-pulse" : ""}`} />
                             {runningDiagnostics ? "Running..." : "Diagnostics"}
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={handleHealthReport} disabled={loadingHealthReport} title="Print health report JSON">
-                            {loadingHealthReport ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Info className="h-4 w-4 mr-1" />}
-                            {loadingHealthReport ? "Loading..." : "Health Report"}
                           </Button>
                         </>
                       )}
@@ -664,47 +637,6 @@ export function PlatformsSettings() {
                 {!runningDiagnostics && !diagnosticChecks && (
                   <p className="text-sm text-muted-foreground">
                     Click "Run Diagnostics" above to check your Facebook integration health.
-                  </p>
-                )}
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
-      )}
-
-      {/* Health Report JSON */}
-      {hasFacebookConnected && (
-        <Collapsible open={healthReportOpen} onOpenChange={setHealthReportOpen}>
-          <Card>
-            <CardHeader className="pb-3">
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="w-full justify-between p-0 h-auto hover:bg-transparent">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Info className="h-5 w-5 text-primary" />
-                    Facebook Health Report
-                  </CardTitle>
-                  {healthReportOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
-              </CollapsibleTrigger>
-            </CardHeader>
-            <CollapsibleContent>
-              <CardContent className="space-y-3">
-                <Button variant="outline" size="sm" onClick={handleHealthReport} disabled={loadingHealthReport}>
-                  {loadingHealthReport ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1" />}
-                  Generate Report
-                </Button>
-
-                {loadingHealthReport && <p className="text-sm text-muted-foreground">Running health checks…</p>}
-
-                {healthReport && (
-                  <pre className="bg-muted p-4 rounded-md text-xs overflow-auto max-h-[500px] whitespace-pre-wrap font-mono">
-                    {JSON.stringify(healthReport, null, 2)}
-                  </pre>
-                )}
-
-                {!loadingHealthReport && !healthReport && (
-                  <p className="text-sm text-muted-foreground">
-                    Click "Health Report" above or "Generate Report" to print a structured JSON health check.
                   </p>
                 )}
               </CardContent>
