@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import {
   Instagram,
   Linkedin,
   Youtube,
+  Plug,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -40,7 +41,6 @@ interface SocialPlatform {
   description: string;
   icon: React.ReactNode;
   color: string;
-  oauthUrl?: string;
 }
 
 const socialPlatforms: SocialPlatform[] = [
@@ -96,6 +96,8 @@ const socialPlatforms: SocialPlatform[] = [
   },
 ];
 
+const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
 export function PlatformsSettings() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -103,12 +105,68 @@ export function PlatformsSettings() {
   const [loading, setLoading] = useState(true);
   const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null);
   const [refreshingPlatform, setRefreshingPlatform] = useState<string | null>(null);
+  const [testingPlatform, setTestingPlatform] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (user) {
       fetchConnectedPlatforms();
     }
   }, [user]);
+
+  // Auto-sync polling
+  const runAutoSync = useCallback(async () => {
+    if (!user) return;
+
+    const hasFacebook = connectedPlatforms.some(
+      (p) => p.platform === "facebook" && p.is_active
+    );
+    if (!hasFacebook) return;
+
+    console.log(`[AutoSync] Running automatic sync at ${new Date().toISOString()}`);
+    try {
+      const { data, error } = await supabase.functions.invoke("meta-oauth", {
+        body: { action: "sync_interactions" },
+      });
+      if (error) {
+        console.error("[AutoSync] Error:", error);
+      } else {
+        console.log("[AutoSync] Result:", data);
+        if (data?.new_comments > 0 || data?.new_messages > 0) {
+          // Silently update last_synced_at in local state
+          setConnectedPlatforms((prev) =>
+            prev.map((p) =>
+              p.platform === "facebook" ? { ...p, last_synced_at: new Date().toISOString() } : p
+            )
+          );
+        }
+      }
+    } catch (err) {
+      console.error("[AutoSync] Failed:", err);
+    }
+  }, [user, connectedPlatforms]);
+
+  useEffect(() => {
+    // Start auto-sync if we have connected Facebook pages
+    const hasFacebook = connectedPlatforms.some(
+      (p) => p.platform === "facebook" && p.is_active
+    );
+
+    if (hasFacebook) {
+      // Clear existing interval
+      if (syncIntervalRef.current) clearInterval(syncIntervalRef.current);
+      syncIntervalRef.current = setInterval(runAutoSync, SYNC_INTERVAL_MS);
+      console.log(`[AutoSync] Started polling every ${SYNC_INTERVAL_MS / 1000}s`);
+    }
+
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+        syncIntervalRef.current = null;
+      }
+    };
+  }, [connectedPlatforms, runAutoSync]);
 
   const fetchConnectedPlatforms = async () => {
     if (!user) return;
@@ -130,11 +188,9 @@ export function PlatformsSettings() {
   const handleConnect = async (platform: SocialPlatform) => {
     if (!user) return;
 
-    // For Facebook and Instagram, use Meta OAuth
     if (platform.id === "facebook" || platform.id === "instagram") {
       setConnectingPlatform(platform.id);
       try {
-        // Fetch app ID from backend
         const { data: appData, error: appErr } = await supabase.functions.invoke("meta-oauth", {
           body: { action: "get_app_id" },
         });
@@ -154,9 +210,7 @@ export function PlatformsSettings() {
     }
 
     setConnectingPlatform(platform.id);
-
     try {
-      // For other platforms, create a simulated connection
       const { data, error } = await supabase
         .from("connected_platforms")
         .insert({
@@ -170,19 +224,11 @@ export function PlatformsSettings() {
         .single();
 
       if (error) throw error;
-
       setConnectedPlatforms((prev) => [...prev, data]);
-      toast({
-        title: "Platform connected",
-        description: `${platform.name} has been connected successfully.`,
-      });
+      toast({ title: "Platform connected", description: `${platform.name} has been connected successfully.` });
     } catch (err) {
       console.error("Error connecting platform:", err);
-      toast({
-        title: "Connection failed",
-        description: "Failed to connect the platform. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Connection failed", description: "Failed to connect the platform. Please try again.", variant: "destructive" });
     } finally {
       setConnectingPlatform(null);
     }
@@ -199,18 +245,42 @@ export function PlatformsSettings() {
         .eq("id", connection.id);
 
       if (error) throw error;
-
       setConnectedPlatforms((prev) => prev.filter((p) => p.id !== connection.id));
-      toast({
-        title: "Platform disconnected",
-        description: `${platformName} has been disconnected.`,
-      });
+      toast({ title: "Platform disconnected", description: `${platformName} has been disconnected.` });
     } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to disconnect the platform.",
-        variant: "destructive",
+      toast({ title: "Error", description: "Failed to disconnect the platform.", variant: "destructive" });
+    }
+  };
+
+  const handleTestConnection = async (platformId: string) => {
+    if (platformId !== "facebook") return;
+
+    setTestingPlatform(platformId);
+    setTestResult(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("meta-oauth", {
+        body: { action: "test_connection" },
       });
+
+      if (error) throw error;
+
+      if (data?.results?.length > 0) {
+        const results = data.results.map((r: any) => {
+          if (r.token_valid) {
+            return `✅ ${r.page}: Connection working — found ${r.posts_found} posts and ${r.comments_found} comments`;
+          } else {
+            return `❌ ${r.page}: ${r.error || "Token invalid"}`;
+          }
+        });
+        setTestResult(results.join("\n"));
+      } else {
+        setTestResult("No connected pages found.");
+      }
+    } catch (err: any) {
+      setTestResult(`❌ Error: ${err.message || "Failed to test connection"}`);
+    } finally {
+      setTestingPlatform(null);
     }
   };
 
@@ -220,7 +290,6 @@ export function PlatformsSettings() {
 
     setRefreshingPlatform(platformId);
     try {
-      // For Facebook/Instagram, trigger actual sync via meta-oauth edge function
       if (platformId === "facebook" || platformId === "instagram") {
         console.log(`[SyncNow] Triggering sync for ${platformId}...`);
         const { data, error } = await supabase.functions.invoke("meta-oauth", {
@@ -228,7 +297,6 @@ export function PlatformsSettings() {
         });
 
         if (error) throw error;
-
         console.log(`[SyncNow] Sync result:`, data);
 
         setConnectedPlatforms((prev) =>
@@ -239,10 +307,9 @@ export function PlatformsSettings() {
 
         toast({
           title: "Sync complete",
-          description: `Synced ${data?.synced || 0} interactions from Facebook. ${data?.errors || 0} errors.`,
+          description: `Synced ${data?.new_comments || 0} new comments and ${data?.new_messages || 0} new messages.${data?.errors > 0 ? ` (${data.errors} errors)` : ""}`,
         });
       } else {
-        // For other platforms, just update the timestamp
         const { error } = await supabase
           .from("connected_platforms")
           .update({ last_synced_at: new Date().toISOString() })
@@ -256,16 +323,13 @@ export function PlatformsSettings() {
           )
         );
 
-        toast({
-          title: "Connection refreshed",
-          description: "Platform connection has been refreshed.",
-        });
+        toast({ title: "Connection refreshed", description: "Platform connection has been refreshed." });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Sync error:", err);
       toast({
         title: "Sync failed",
-        description: "Failed to sync data. Check console for details.",
+        description: err.message || "Failed to sync data. Check console for details.",
         variant: "destructive",
       });
     } finally {
@@ -273,13 +337,11 @@ export function PlatformsSettings() {
     }
   };
 
-  const isConnected = (platformId: string) => {
-    return connectedPlatforms.some((p) => p.platform === platformId && p.is_active);
-  };
+  const isConnected = (platformId: string) =>
+    connectedPlatforms.some((p) => p.platform === platformId && p.is_active);
 
-  const getConnection = (platformId: string) => {
-    return connectedPlatforms.find((p) => p.platform === platformId);
-  };
+  const getConnection = (platformId: string) =>
+    connectedPlatforms.find((p) => p.platform === platformId);
 
   const formatLastSynced = (date: string | null) => {
     if (!date) return "Never";
@@ -298,7 +360,6 @@ export function PlatformsSettings() {
 
   return (
     <div className="space-y-6">
-      {/* Social Media Platforms */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -347,6 +408,18 @@ export function PlatformsSettings() {
                 <div className="flex items-center gap-2">
                   {connected ? (
                     <>
+                      {platform.id === "facebook" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleTestConnection(platform.id)}
+                          disabled={testingPlatform === platform.id}
+                          title="Test connection"
+                        >
+                          <Plug className={`h-4 w-4 mr-1 ${testingPlatform === platform.id ? "animate-pulse" : ""}`} />
+                          {testingPlatform === platform.id ? "Testing..." : "Test"}
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -406,10 +479,25 @@ export function PlatformsSettings() {
               </div>
             );
           })}
+
+          {/* Test Connection Result */}
+          {testResult && (
+            <div className="p-4 rounded-lg border bg-muted/50">
+              <p className="text-sm font-medium mb-1">Connection Test Result</p>
+              <pre className="text-sm text-muted-foreground whitespace-pre-wrap">{testResult}</pre>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2"
+                onClick={() => setTestResult(null)}
+              >
+                Dismiss
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Review Platforms */}
       <ReviewPlatformConnections />
     </div>
   );
