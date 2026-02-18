@@ -19,6 +19,7 @@ import ResetPassword from "./pages/ResetPassword";
 import MetaCallback from "./pages/MetaCallback";
 import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 
 const queryClient = new QueryClient();
 
@@ -126,6 +127,7 @@ function AppRoutes() {
         }
       />
       <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
       {/* Short-path redirects for production URLs */}
       <Route path="/login" element={<Index />} />
       <Route path="/overview" element={<Navigate to="/dashboard" replace />} />
