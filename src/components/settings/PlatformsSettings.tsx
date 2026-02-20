@@ -242,8 +242,23 @@ export function PlatformsSettings() {
         });
         if (appErr || !appData?.app_id) throw new Error("Failed to get Meta App ID");
         const redirectUri = `${window.location.origin}/auth/meta/callback`;
-        const scope = "pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_engagement,pages_read_user_content,email,public_profile,business_management";
-        const oauthUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${encodeURIComponent(appData.app_id)}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code&state=${encodeURIComponent(platform.id)}`;
+        const scope = [
+          "pages_show_list",
+          "pages_read_engagement",
+          "pages_read_user_content",
+          "pages_manage_metadata",
+          "pages_manage_posts",
+          "pages_manage_engagement",
+          "pages_messaging",
+          "instagram_basic",
+          "instagram_manage_comments",
+          "instagram_manage_messages",
+          "instagram_content_publish",
+          "email",
+          "public_profile",
+          "business_management",
+        ].join(",");
+        const oauthUrl = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${encodeURIComponent(appData.app_id)}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code&state=${encodeURIComponent(platform.id)}`;
         window.location.href = oauthUrl;
       } catch (err) {
         toast({ title: "Connection failed", description: "Failed to start Meta authorization.", variant: "destructive" });

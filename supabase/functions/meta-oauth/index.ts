@@ -7,7 +7,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const META_GRAPH_URL = "https://graph.facebook.com/v19.0";
+// FIX: Updated to v21.0 (latest stable) from v19.0
+const META_GRAPH_URL = "https://graph.facebook.com/v21.0";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -70,6 +71,7 @@ serve(async (req) => {
           );
         }
 
+        // Step 1: Exchange code for short-lived user token
         const tokenUrl = `${META_GRAPH_URL}/oauth/access_token?client_id=${encodeURIComponent(META_APP_ID)}&redirect_uri=${encodeURIComponent(redirect_uri)}&client_secret=${encodeURIComponent(META_APP_SECRET)}&code=${encodeURIComponent(code)}`;
         const tokenRes = await fetch(tokenUrl);
         const tokenData = await tokenRes.json();
@@ -84,6 +86,7 @@ serve(async (req) => {
 
         const shortLivedToken = tokenData.access_token;
 
+        // Step 2: Exchange for long-lived user token (60 days)
         const longLivedUrl = `${META_GRAPH_URL}/oauth/access_token?grant_type=fb_exchange_token&client_id=${encodeURIComponent(META_APP_ID)}&client_secret=${encodeURIComponent(META_APP_SECRET)}&fb_exchange_token=${encodeURIComponent(shortLivedToken)}`;
         const longLivedRes = await fetch(longLivedUrl);
         const longLivedData = await longLivedRes.json();
@@ -98,8 +101,10 @@ serve(async (req) => {
 
         const longLivedToken = longLivedData.access_token;
 
+        // Step 3: Fetch Facebook Pages + linked Instagram Business Accounts
+        // FIX: Added instagram_business_account field to detect linked Instagram
         const pagesRes = await fetch(
-          `${META_GRAPH_URL}/me/accounts?fields=id,name,access_token,picture{url}&access_token=${encodeURIComponent(longLivedToken)}`
+          `${META_GRAPH_URL}/me/accounts?fields=id,name,access_token,picture{url},instagram_business_account{id,name,username,profile_picture_url}&access_token=${encodeURIComponent(longLivedToken)}`
         );
         const pagesData = await pagesRes.json();
 
@@ -116,6 +121,8 @@ serve(async (req) => {
           name: page.name,
           access_token: page.access_token,
           picture_url: page.picture?.data?.url || null,
+          // FIX: Now correctly passes Instagram business account info
+          instagram_business_account: page.instagram_business_account || null,
         }));
 
         console.log(`Found ${pages.length} Facebook Pages for user ${user.id}`);
@@ -138,6 +145,7 @@ serve(async (req) => {
         const connected = [];
 
         for (const page of pages) {
+          // Connect Facebook Page
           const { data: fbConn, error: fbErr } = await supabase
             .from("connected_platforms")
             .upsert(
@@ -161,8 +169,42 @@ serve(async (req) => {
             connected.push({ platform: "facebook", ...fbConn });
             console.log(`Connected Facebook Page: ${page.name} (${page.id})`);
           }
+
+          // FIX: Connect linked Instagram Business Account if present
+          if (page.instagram_business_account?.id) {
+            const igAccount = page.instagram_business_account;
+            const { data: igConn, error: igErr } = await supabase
+              .from("connected_platforms")
+              .upsert(
+                {
+                  user_id: user.id,
+                  platform: "instagram",
+                  platform_account_id: igAccount.id,
+                  platform_account_name: igAccount.username
+                    ? `@${igAccount.username}`
+                    : igAccount.name || "Instagram Account",
+                  // Instagram uses the Facebook Page token for API calls
+                  access_token: page.access_token,
+                  is_active: true,
+                  last_synced_at: new Date().toISOString(),
+                  metadata: { facebook_page_id: page.id },
+                },
+                { onConflict: "user_id,platform,platform_account_id" }
+              )
+              .select()
+              .single();
+
+            if (igErr) {
+              console.error("Error storing Instagram account:", igErr);
+            } else {
+              connected.push({ platform: "instagram", ...igConn });
+              console.log(`Connected Instagram Account: ${igAccount.username || igAccount.id}`);
+            }
+          }
         }
 
+        // Subscribe pages to webhooks
+        // FIX: Added 'comments' and 'mention' to subscribed_fields for better coverage
         for (const page of pages) {
           try {
             const subscribeRes = await fetch(
@@ -171,7 +213,7 @@ serve(async (req) => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                  subscribed_fields: "feed,messages,message_deliveries",
+                  subscribed_fields: "feed,messages,message_deliveries,message_reads,messaging_postbacks,mention,comments",
                   access_token: page.access_token,
                 }),
               }
@@ -193,7 +235,6 @@ serve(async (req) => {
       case "run_diagnostics": {
         const checks: any[] = [];
 
-        // Get connected pages
         const { data: platforms } = await supabase
           .from("connected_platforms")
           .select("*")
@@ -250,22 +291,19 @@ serve(async (req) => {
                 detail: `Valid. Type: ${tokenInfo.type || "PAGE"}. Expires: ${expiresAt}. App ID: ${tokenInfo.app_id}`,
               });
 
-              // Check scopes
               const grantedScopes: string[] = tokenInfo.scopes || [];
+              // FIX: Updated required scopes to include messaging permissions
               const requiredScopes = [
                 "pages_show_list",
                 "pages_read_engagement",
                 "pages_read_user_content",
-              ];
-              const optionalScopes = [
-                { scope: "pages_manage_metadata", purpose: "webhook subscriptions" },
-                { scope: "pages_manage_posts", purpose: "posting replies to comments" },
-                { scope: "pages_manage_engagement", purpose: "managing comments" },
-                { scope: "pages_messaging", purpose: "reading/sending Messenger messages" },
+                "pages_manage_metadata",
+                "pages_manage_posts",
+                "pages_manage_engagement",
+                "pages_messaging",
               ];
 
               const missingRequired = requiredScopes.filter((s) => !grantedScopes.includes(s));
-              const missingOptional = optionalScopes.filter((s) => !grantedScopes.includes(s.scope));
 
               if (missingRequired.length > 0) {
                 checks.push({
@@ -278,26 +316,10 @@ serve(async (req) => {
                 checks.push({
                   name: `Required Scopes (${pageName})`,
                   status: "pass",
-                  detail: `All required scopes granted: ${requiredScopes.join(", ")}`,
+                  detail: `All required scopes granted.`,
                 });
               }
 
-              if (missingOptional.length > 0) {
-                checks.push({
-                  name: `Optional Scopes (${pageName})`,
-                  status: "warn",
-                  detail: `Missing: ${missingOptional.map((s) => `${s.scope} (${s.purpose})`).join("; ")}`,
-                  action: "reconnect",
-                });
-              } else {
-                checks.push({
-                  name: `Optional Scopes (${pageName})`,
-                  status: "pass",
-                  detail: `All optional scopes granted.`,
-                });
-              }
-
-              // Check app mode
               if (tokenInfo.app_id) {
                 checks.push({
                   name: `App Mode (${pageName})`,
@@ -314,10 +336,10 @@ serve(async (req) => {
             });
           }
 
-          // B) Page access check via /me/accounts
+          // B) Page access check
           try {
             const meRes = await fetch(
-              `${META_GRAPH_URL}/${encodeURIComponent(pageId!)}?fields=id,name,access_token&access_token=${encodeURIComponent(pageToken!)}`
+              `${META_GRAPH_URL}/${encodeURIComponent(pageId!)}&fields=id,name&access_token=${encodeURIComponent(pageToken!)}`
             );
             const meData = await meRes.json();
 
@@ -399,6 +421,50 @@ serve(async (req) => {
               detail: `Error: ${String(err)}`,
             });
           }
+
+          // E) FIX: Check Instagram connection
+          const { data: igPlatform } = await supabase
+            .from("connected_platforms")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("platform", "instagram")
+            .eq("is_active", true)
+            .maybeSingle();
+
+          if (igPlatform) {
+            try {
+              const igRes = await fetch(
+                `${META_GRAPH_URL}/${encodeURIComponent(igPlatform.platform_account_id!)}/media?fields=id&limit=1&access_token=${encodeURIComponent(igPlatform.access_token!)}`
+              );
+              const igData = await igRes.json();
+              if (igData.error) {
+                checks.push({
+                  name: `Instagram Access (${igPlatform.platform_account_name})`,
+                  status: "fail",
+                  detail: `Cannot access Instagram: [${igData.error.code}] ${igData.error.message}`,
+                  action: "reconnect",
+                });
+              } else {
+                checks.push({
+                  name: `Instagram Access (${igPlatform.platform_account_name})`,
+                  status: "pass",
+                  detail: `Instagram Business Account accessible.`,
+                });
+              }
+            } catch (err) {
+              checks.push({
+                name: `Instagram Access`,
+                status: "fail",
+                detail: `Error: ${String(err)}`,
+              });
+            }
+          } else {
+            checks.push({
+              name: `Instagram Connection`,
+              status: "warn",
+              detail: `No Instagram Business Account connected. Make sure your Facebook Page has a linked Instagram Business Account, then reconnect.`,
+            });
+          }
         }
 
         return new Response(
@@ -469,39 +535,53 @@ serve(async (req) => {
         );
       }
 
-      // =========== SYNC INTERACTIONS (with pagination + observability) ===========
+      // =========== SYNC INTERACTIONS ===========
       case "sync_interactions": {
-        const { data: platforms } = await supabase
+        const { data: fbPlatforms } = await supabase
           .from("connected_platforms")
           .select("*")
           .eq("user_id", user.id)
           .eq("platform", "facebook")
           .eq("is_active", true);
 
-        if (!platforms || platforms.length === 0) {
+        // FIX: Also fetch Instagram platforms
+        const { data: igPlatforms } = await supabase
+          .from("connected_platforms")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("platform", "instagram")
+          .eq("is_active", true);
+
+        const allPlatforms = [...(fbPlatforms || []), ...(igPlatforms || [])];
+
+        if (allPlatforms.length === 0) {
           return new Response(
-            JSON.stringify({ error: "No connected Facebook pages found" }),
+            JSON.stringify({ error: "No connected Facebook or Instagram pages found" }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
 
         const runStarted = new Date().toISOString();
-        console.log(`[sync] Starting sync for ${platforms.length} connected Facebook page(s)`);
+        console.log(`[sync] Starting sync for ${allPlatforms.length} connected platform(s)`);
 
         let totalComments = 0, totalMessages = 0;
         let newComments = 0, newMessages = 0;
         let skippedCount = 0, syncErrors = 0;
         const errorDetails: any[] = [];
 
-        for (const platform of platforms) {
+        // ---- Facebook Pages ----
+        for (const platform of (fbPlatforms || [])) {
           if (!platform.access_token || !platform.platform_account_id) continue;
 
           const pageId = platform.platform_account_id;
           const pageToken = platform.access_token;
 
+          // FIX: Added since parameter to only fetch recent content (last 30 days)
+          const since = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
+
           // 1. Fetch posts + comments with pagination
-          console.log(`[sync] Fetching feed for page ${pageId}...`);
-          let feedUrl: string | null = `${META_GRAPH_URL}/${encodeURIComponent(pageId)}/feed?fields=id,message,from,created_time,comments.limit(100){id,message,from,created_time,parent}&limit=25&access_token=${encodeURIComponent(pageToken)}`;
+          console.log(`[sync] Fetching feed for Facebook page ${pageId}...`);
+          let feedUrl: string | null = `${META_GRAPH_URL}/${encodeURIComponent(pageId)}/feed?fields=id,message,from,created_time,comments.limit(100){id,message,from,created_time,parent}&limit=25&since=${since}&access_token=${encodeURIComponent(pageToken)}`;
           let feedPages = 0;
 
           while (feedUrl && feedPages < 10) {
@@ -512,7 +592,7 @@ serve(async (req) => {
 
               if (feedData.error) {
                 console.error(`[sync] Feed error for page ${pageId}:`, JSON.stringify(feedData.error));
-                errorDetails.push({ endpoint: "feed", code: feedData.error.code, message: feedData.error.message });
+                errorDetails.push({ endpoint: "feed", platform: "facebook", code: feedData.error.code, message: feedData.error.message });
                 syncErrors++;
                 break;
               }
@@ -559,7 +639,6 @@ serve(async (req) => {
                 }
               }
 
-              // Pagination
               feedUrl = feedData.paging?.next || null;
             } catch (err) {
               console.error(`[sync] Feed fetch error:`, err);
@@ -569,8 +648,8 @@ serve(async (req) => {
             }
           }
 
-          // 2. Fetch conversations (DMs) with pagination
-          console.log(`[sync] Fetching conversations for page ${pageId}...`);
+          // 2. Fetch Facebook Messenger conversations (DMs)
+          console.log(`[sync] Fetching conversations for Facebook page ${pageId}...`);
           let convoUrl: string | null = `${META_GRAPH_URL}/${encodeURIComponent(pageId)}/conversations?fields=id,participants,updated_time&limit=25&access_token=${encodeURIComponent(pageToken)}`;
           let convoPages = 0;
 
@@ -582,12 +661,11 @@ serve(async (req) => {
 
               if (convoData.error) {
                 console.error(`[sync] Conversations error for page ${pageId}:`, JSON.stringify(convoData.error));
-                errorDetails.push({ endpoint: "conversations", code: convoData.error.code, message: convoData.error.message });
-                break; // DM permission may not be granted
+                errorDetails.push({ endpoint: "conversations", platform: "facebook", code: convoData.error.code, message: convoData.error.message });
+                break;
               }
 
               for (const convo of convoData.data || []) {
-                // Fetch messages for this conversation
                 let msgsUrl: string | null = `${META_GRAPH_URL}/${encodeURIComponent(convo.id)}/messages?fields=id,message,from,created_time&limit=25&access_token=${encodeURIComponent(pageToken)}`;
 
                 while (msgsUrl) {
@@ -612,7 +690,6 @@ serve(async (req) => {
 
                     if (existing) { skippedCount++; continue; }
 
-                    // Find participant who is not the page
                     const senderPsid = msg.from?.id || null;
 
                     const { error: insertErr } = await supabase
@@ -655,7 +732,154 @@ serve(async (req) => {
             }
           }
 
-          // Update last_synced_at
+          await supabase
+            .from("connected_platforms")
+            .update({ last_synced_at: new Date().toISOString() })
+            .eq("id", platform.id);
+        }
+
+        // ---- FIX: Instagram Business Account sync ----
+        for (const platform of (igPlatforms || [])) {
+          if (!platform.access_token || !platform.platform_account_id) continue;
+
+          const igAccountId = platform.platform_account_id;
+          const pageToken = platform.access_token; // Instagram uses FB Page token
+
+          // FIX: Fetch Instagram media and comments
+          console.log(`[sync] Fetching Instagram media for account ${igAccountId}...`);
+          try {
+            const mediaRes = await fetch(
+              `${META_GRAPH_URL}/${encodeURIComponent(igAccountId)}/media?fields=id,caption,timestamp,comments_count&limit=25&access_token=${encodeURIComponent(pageToken)}`
+            );
+            const mediaData = await mediaRes.json();
+
+            if (mediaData.error) {
+              console.error(`[sync] Instagram media error:`, JSON.stringify(mediaData.error));
+              errorDetails.push({ endpoint: "ig_media", platform: "instagram", code: mediaData.error.code, message: mediaData.error.message });
+            } else {
+              for (const media of mediaData.data || []) {
+                if (!media.comments_count || media.comments_count === 0) continue;
+
+                // Fetch comments for this media
+                const commentsRes = await fetch(
+                  `${META_GRAPH_URL}/${encodeURIComponent(media.id)}/comments?fields=id,text,username,timestamp&limit=100&access_token=${encodeURIComponent(pageToken)}`
+                );
+                const commentsData = await commentsRes.json();
+
+                if (commentsData.error) {
+                  errorDetails.push({ endpoint: "ig_comments", media_id: media.id, code: commentsData.error.code, message: commentsData.error.message });
+                  continue;
+                }
+
+                for (const comment of commentsData.data || []) {
+                  totalComments++;
+                  const { data: existing } = await supabase
+                    .from("interactions")
+                    .select("id")
+                    .eq("external_id", comment.id)
+                    .eq("user_id", user.id)
+                    .maybeSingle();
+
+                  if (existing) { skippedCount++; continue; }
+
+                  const { error: insertErr } = await supabase
+                    .from("interactions")
+                    .insert({
+                      user_id: user.id,
+                      external_id: comment.id,
+                      platform: "instagram",
+                      interaction_type: "comment",
+                      content: comment.text || "",
+                      author_name: comment.username || "Unknown",
+                      author_handle: comment.username || null,
+                      post_url: `https://instagram.com/p/${media.id}`,
+                      created_at: comment.timestamp,
+                      status: "pending",
+                    });
+
+                  if (insertErr) {
+                    if (!insertErr.message?.includes("duplicate")) {
+                      errorDetails.push({ endpoint: "insert_ig_comment", message: insertErr.message });
+                      syncErrors++;
+                    } else {
+                      skippedCount++;
+                    }
+                  } else {
+                    newComments++;
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            console.error(`[sync] Instagram media fetch error:`, err);
+            errorDetails.push({ endpoint: "ig_media_fetch", message: String(err) });
+          }
+
+          // FIX: Fetch Instagram Direct Messages (requires instagram_manage_messages permission)
+          try {
+            const igDmsRes = await fetch(
+              `${META_GRAPH_URL}/${encodeURIComponent(igAccountId)}/conversations?fields=id,participants,updated_time&limit=25&access_token=${encodeURIComponent(pageToken)}`
+            );
+            const igDmsData = await igDmsRes.json();
+
+            if (igDmsData.error) {
+              errorDetails.push({ endpoint: "ig_conversations", platform: "instagram", code: igDmsData.error.code, message: igDmsData.error.message });
+            } else {
+              for (const convo of igDmsData.data || []) {
+                const msgsRes = await fetch(
+                  `${META_GRAPH_URL}/${encodeURIComponent(convo.id)}/messages?fields=id,message,from,created_time&limit=25&access_token=${encodeURIComponent(pageToken)}`
+                );
+                const msgsData = await msgsRes.json();
+
+                if (msgsData.error) {
+                  errorDetails.push({ endpoint: "ig_conversation_messages", conversation_id: convo.id, code: msgsData.error.code, message: msgsData.error.message });
+                  continue;
+                }
+
+                for (const msg of msgsData.data || []) {
+                  totalMessages++;
+                  const { data: existing } = await supabase
+                    .from("interactions")
+                    .select("id")
+                    .eq("external_id", msg.id)
+                    .eq("user_id", user.id)
+                    .maybeSingle();
+
+                  if (existing) { skippedCount++; continue; }
+
+                  const { error: insertErr } = await supabase
+                    .from("interactions")
+                    .insert({
+                      user_id: user.id,
+                      external_id: msg.id,
+                      platform: "instagram",
+                      interaction_type: "dm",
+                      content: msg.message || "",
+                      author_name: msg.from?.name || msg.from?.username || "Unknown",
+                      author_handle: msg.from?.username || msg.from?.id || null,
+                      created_at: msg.created_time,
+                      status: "pending",
+                      metadata: { conversation_id: convo.id },
+                    });
+
+                  if (insertErr) {
+                    if (!insertErr.message?.includes("duplicate")) {
+                      errorDetails.push({ endpoint: "insert_ig_dm", message: insertErr.message });
+                      syncErrors++;
+                    } else {
+                      skippedCount++;
+                    }
+                  } else {
+                    newMessages++;
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            console.error(`[sync] Instagram DM fetch error:`, err);
+            errorDetails.push({ endpoint: "ig_dm_fetch", message: String(err) });
+          }
+
           await supabase
             .from("connected_platforms")
             .update({ last_synced_at: new Date().toISOString() })
@@ -674,7 +898,6 @@ serve(async (req) => {
           synced_at: new Date().toISOString(),
         };
 
-        // Log run to integration_run_logs
         try {
           await supabase.from("integration_run_logs").insert({
             user_id: user.id,
@@ -688,7 +911,7 @@ serve(async (req) => {
             skipped_count: skippedCount,
             error_count: syncErrors,
             errors: errorDetails,
-            metadata: { pages_synced: platforms.length },
+            metadata: { platforms_synced: allPlatforms.length },
           });
         } catch (logErr) {
           console.error("[sync] Failed to write run log:", logErr);
@@ -745,7 +968,7 @@ serve(async (req) => {
         let replyResult: any;
 
         if (interaction.interaction_type === "comment") {
-          console.log(`[reply] Posting comment reply to ${interaction.external_id}`);
+          console.log(`[reply] Posting comment reply to ${interaction.external_id} on ${interaction.platform}`);
           const replyRes = await fetch(
             `${META_GRAPH_URL}/${encodeURIComponent(interaction.external_id!)}/comments`,
             {
@@ -759,48 +982,51 @@ serve(async (req) => {
           );
           replyResult = await replyRes.json();
         } else if (interaction.interaction_type === "dm") {
-          // Use POST /me/messages with recipient PSID
-          const recipientPsid = (interaction.metadata as any)?.sender_psid || interaction.author_handle;
-          console.log(`[reply] Sending Messenger reply to PSID ${recipientPsid}`);
-          const replyRes = await fetch(
-            `${META_GRAPH_URL}/me/messages`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                recipient: { id: recipientPsid },
-                message: { text: message },
-                access_token: platformConn.access_token,
-              }),
-            }
-          );
-          replyResult = await replyRes.json();
+          if (interaction.platform === "instagram") {
+            // FIX: Instagram DM reply uses different endpoint
+            const recipientId = (interaction.metadata as any)?.sender_id || interaction.author_handle;
+            console.log(`[reply] Sending Instagram DM reply to ${recipientId}`);
+            const replyRes = await fetch(
+              `${META_GRAPH_URL}/${encodeURIComponent(platformConn.platform_account_id!)}/messages`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  recipient: { id: recipientId },
+                  message: { text: message },
+                  access_token: platformConn.access_token,
+                }),
+              }
+            );
+            replyResult = await replyRes.json();
+          } else {
+            // Facebook Messenger reply
+            const recipientPsid = (interaction.metadata as any)?.sender_psid || interaction.author_handle;
+            console.log(`[reply] Sending Messenger reply to PSID ${recipientPsid}`);
+            const replyRes = await fetch(
+              `${META_GRAPH_URL}/me/messages`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  recipient: { id: recipientPsid },
+                  message: { text: message },
+                  access_token: platformConn.access_token,
+                }),
+              }
+            );
+            replyResult = await replyRes.json();
+          }
         }
 
         if (replyResult?.error) {
           console.error("[reply] Error:", JSON.stringify(replyResult.error));
-
-          // Log failed reply
-          try {
-            await supabase.from("integration_run_logs").insert({
-              user_id: user.id,
-              platform: "facebook",
-              run_type: "reply",
-              started_at: new Date().toISOString(),
-              finished_at: new Date().toISOString(),
-              status: "failed",
-              error_count: 1,
-              errors: [{ interaction_id, code: replyResult.error.code, message: replyResult.error.message }],
-            });
-          } catch (_) {}
-
           return new Response(
             JSON.stringify({ error: "Failed to post reply", details: replyResult.error }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
 
-        // Update interaction status to responded
         await supabase
           .from("interactions")
           .update({
@@ -814,21 +1040,7 @@ serve(async (req) => {
           .eq("id", interaction_id);
 
         const replyExternalId = replyResult?.id || replyResult?.message_id;
-        console.log(`[reply] Success, FB reply ID: ${replyExternalId}`);
-
-        // Log successful reply
-        try {
-          await supabase.from("integration_run_logs").insert({
-            user_id: user.id,
-            platform: "facebook",
-            run_type: "reply",
-            started_at: new Date().toISOString(),
-            finished_at: new Date().toISOString(),
-            status: "success",
-            inserted_count: 1,
-            metadata: { interaction_id, reply_external_id: replyExternalId },
-          });
-        } catch (_) {}
+        console.log(`[reply] Success, reply ID: ${replyExternalId}`);
 
         return new Response(
           JSON.stringify({ success: true, reply_id: replyExternalId }),
@@ -861,13 +1073,12 @@ serve(async (req) => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                  subscribed_fields: "feed,messages,message_deliveries",
+                  subscribed_fields: "feed,messages,message_deliveries,message_reads,messaging_postbacks,mention,comments",
                   access_token: platform.access_token,
                 }),
               }
             );
             const subscribeData = await subscribeRes.json();
-            console.log(`Webhook subscription for ${platform.platform_account_name}:`, JSON.stringify(subscribeData));
             results.push({
               page: platform.platform_account_name,
               success: subscribeData.success === true,
@@ -884,7 +1095,6 @@ serve(async (req) => {
         );
       }
 
-      // =========== HEALTH REPORT (structured JSON) ===========
       case "health_report": {
         const { data: fbPlatforms } = await supabase
           .from("connected_platforms")
@@ -916,7 +1126,6 @@ serve(async (req) => {
             last_sync_result: null,
           };
 
-          // Token introspection
           try {
             const dbgRes = await fetch(
               `${META_GRAPH_URL}/debug_token?input_token=${encodeURIComponent(pageToken)}&access_token=${encodeURIComponent(META_APP_ID!)}|${encodeURIComponent(META_APP_SECRET!)}`
@@ -931,6 +1140,7 @@ serve(async (req) => {
             const allDesired = [
               "pages_show_list", "pages_read_engagement", "pages_read_user_content",
               "pages_manage_metadata", "pages_manage_posts", "pages_manage_engagement", "pages_messaging",
+              "instagram_basic", "instagram_manage_comments", "instagram_manage_messages",
             ];
             report.missing_scopes = allDesired.filter((s: string) => !report.granted_scopes.includes(s));
           } catch (e) {
@@ -938,7 +1148,6 @@ serve(async (req) => {
             report.token_expires_at = `error: ${String(e)}`;
           }
 
-          // Webhook status
           try {
             const subRes = await fetch(
               `${META_GRAPH_URL}/${encodeURIComponent(pageId)}/subscribed_apps?access_token=${encodeURIComponent(pageToken)}`
@@ -956,7 +1165,6 @@ serve(async (req) => {
             report.webhook_status = `error: ${String(e)}`;
           }
 
-          // Last sync result
           const { data: lastLog } = await supabase
             .from("integration_run_logs")
             .select("*")
@@ -974,7 +1182,6 @@ serve(async (req) => {
               fetched: l.fetched_count,
               inserted: l.inserted_count,
               errors: l.error_count,
-              token_status: l.token_status,
             };
           }
 
@@ -987,7 +1194,6 @@ serve(async (req) => {
         );
       }
 
-      // =========== GET SYNC LOGS ===========
       case "get_sync_logs": {
         const { data: logs } = await supabase
           .from("integration_run_logs")
