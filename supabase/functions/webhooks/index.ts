@@ -392,3 +392,5 @@ async function checkAndCreateLead(
     console.error("Lead detection error:", err);
   }
 }
+
+// Trigger re-deploy
