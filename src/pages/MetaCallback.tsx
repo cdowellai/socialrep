@@ -77,7 +77,8 @@ export default function MetaCallback() {
           id: p.id,
           name: p.name,
           access_token: p.access_token,
-          instagram_business_account_id: p.instagram_business_account || null,
+          // FIX: Pass full instagram_business_account object (not just ID)
+          instagram_business_account: p.instagram_business_account || null,
         }));
 
       const { data, error } = await supabase.functions.invoke("meta-oauth", {

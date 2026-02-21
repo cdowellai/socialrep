@@ -71,7 +71,7 @@ serve(async (req) => {
     const token = url.searchParams.get("hub.verify_token");
     const challenge = url.searchParams.get("hub.challenge");
 
-    const WEBHOOK_VERIFY_TOKEN = Deno.env.get("META_WEBHOOK_VERIFY_TOKEN") || "socialrep_webhook_verify_token";
+    const WEBHOOK_VERIFY_TOKEN = Deno.env.get("META_WEBHOOK_VERIFY_TOKEN") || "socialrep_webhook_verify_2026";
 
     if (!mode || !token || !challenge) return new Response("Bad Request", { status: 400 });
     if (mode.length > 50 || token.length > 200 || challenge.length > 200) return new Response("Bad Request", { status: 400 });
