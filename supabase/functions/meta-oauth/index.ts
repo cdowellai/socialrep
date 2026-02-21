@@ -8,6 +8,7 @@ const corsHeaders = {
 };
 
 // FIX: Updated to v21.0 (latest stable) from v19.0
+// v2 - force redeploy with date filter and author name fixes
 const META_GRAPH_URL = "https://graph.facebook.com/v21.0";
 
 serve(async (req) => {
