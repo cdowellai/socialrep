@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { useTheme } from "@/hooks/useTheme";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useInteractions } from "@/hooks/useInteractions";
@@ -59,6 +60,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { profile } = useProfile();
   const { theme, toggleTheme } = useTheme();
   const { interactions } = useInteractions();
   const { plan, subscription } = useSubscription();
@@ -152,8 +154,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user?.email}</p>
-              <p className="text-xs text-muted-foreground">{planLabel}</p>
+              <p className="text-sm font-medium truncate">{profile?.full_name || user?.email}</p>
+              <p className="text-xs text-muted-foreground">{profile?.company_name || planLabel}</p>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
