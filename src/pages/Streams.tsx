@@ -1,11 +1,11 @@
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useInteractions } from "@/hooks/useInteractions";
-import { useConnectedPlatforms } from "@/hooks/useConnectedPlatforms";
-import { MessageSquare, Heart, Share2, RefreshCw, Facebook, Instagram } from "lucide-react";
+import { MessageSquare, RefreshCw, Facebook, Instagram } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 const platformIcon: Record<string, React.ReactNode> = {
   facebook: <Facebook className="w-4 h-4 text-blue-600" />,
@@ -21,11 +21,7 @@ const typeLabel: Record<string, string> = {
 
 export default function Streams() {
   const { interactions, loading, refetch } = useInteractions();
-  const { platforms } = useConnectedPlatforms();
-
-  const connectedPlatformNames = platforms
-    .filter((p) => p.is_active)
-    .map((p) => p.platform_type);
+  const navigate = useNavigate();
 
   return (
     <DashboardLayout>
@@ -43,20 +39,7 @@ export default function Streams() {
           </Button>
         </div>
 
-        {connectedPlatformNames.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <MessageSquare className="w-12 h-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No platforms connected</h3>
-              <p className="text-muted-foreground mb-4">
-                Connect Facebook or Instagram in Settings to start seeing your stream.
-              </p>
-              <Button asChild>
-                <a href="/dashboard/settings?tab=platforms">Connect Platforms</a>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : loading ? (
+        {loading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
               <Card key={i} className="animate-pulse">
@@ -69,18 +52,22 @@ export default function Streams() {
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <MessageSquare className="w-12 h-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">No interactions yet</h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-4">
                 New comments, messages, and mentions will appear here in real time.
               </p>
+              <Button onClick={() => navigate("/dashboard/settings?tab=platforms")}>
+                Connect Platforms
+              </Button>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-3">
             {interactions.map((interaction) => (
-              <Card key={interaction.id} className="hover:shadow-md transition-shadow">
+              <Card key={interaction.id} className="hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => navigate("/dashboard/inbox")}>
                 <CardContent className="py-4">
                   <div className="flex items-start gap-3">
-                    <div className="mt-1">
+                    <div className="mt-1 shrink-0">
                       {platformIcon[interaction.platform] ?? (
                         <MessageSquare className="w-4 h-4 text-muted-foreground" />
                       )}
@@ -88,7 +75,7 @@ export default function Streams() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="font-medium text-sm">
-                          {interaction.author_name || "Unknown"}
+                          {interaction.author_name || "Facebook User"}
                         </span>
                         <Badge variant="outline" className="text-xs capitalize">
                           {typeLabel[interaction.interaction_type] || interaction.interaction_type}
@@ -99,7 +86,7 @@ export default function Streams() {
                           </Badge>
                         )}
                         {interaction.status === "responded" && (
-                          <Badge variant="default" className="text-xs bg-green-600">
+                          <Badge className="text-xs bg-green-600 text-white">
                             Replied
                           </Badge>
                         )}
@@ -114,10 +101,10 @@ export default function Streams() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      asChild
                       className="shrink-0"
+                      onClick={(e) => { e.stopPropagation(); navigate("/dashboard/inbox"); }}
                     >
-                      <a href={`/dashboard/inbox?id=${interaction.id}`}>Reply</a>
+                      Reply
                     </Button>
                   </div>
                 </CardContent>
