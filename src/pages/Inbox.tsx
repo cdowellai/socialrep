@@ -54,6 +54,7 @@ import { ResponseTimeIndicator } from "@/components/inbox/ResponseTimeIndicator"
 import { ConvertToLeadButton } from "@/components/leads";
 import { CommentActionButtons } from "@/components/streams/CommentActionButtons";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 
 type Interaction = Tables<"interactions">;
@@ -286,18 +287,52 @@ export default function InboxPage() {
     if (!selectedInteraction || !response) return;
 
     try {
-      await updateInteraction(selectedInteraction.id, {
-        response: response,
-        status: "responded",
-        responded_at: new Date().toISOString(),
-      });
+      const platform = selectedInteraction.platform;
+      const shouldSendToPlatform =
+        !isInternalNote && (platform === "facebook" || platform === "instagram");
 
-      toast({
-        title: isInternalNote ? "Internal note saved" : "Response saved",
-        description: isInternalNote 
-          ? "Your internal note has been saved." 
-          : "Your response has been saved successfully.",
-      });
+      if (shouldSendToPlatform) {
+        const { data, error } = await supabase.functions.invoke("send-platform-reply", {
+          body: {
+            interactionId: selectedInteraction.id,
+            content: response,
+            platform,
+          },
+        });
+
+        if (error || (data && !data.success && !data.notConnected)) {
+          // Platform send failed — save locally anyway
+          await updateInteraction(selectedInteraction.id, {
+            response,
+            status: "responded",
+            responded_at: new Date().toISOString(),
+          });
+          toast({
+            title: "Reply saved locally",
+            description: data?.error || error?.message || "Could not send to platform, but reply was saved.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Reply sent!",
+            description: data?.notConnected
+              ? "Reply saved locally. Platform not connected."
+              : "Your reply was posted to the platform.",
+          });
+        }
+      } else {
+        await updateInteraction(selectedInteraction.id, {
+          response,
+          status: "responded",
+          responded_at: new Date().toISOString(),
+        });
+        toast({
+          title: isInternalNote ? "Internal note saved" : "Response saved",
+          description: isInternalNote
+            ? "Your internal note has been saved."
+            : "Your response has been saved successfully.",
+        });
+      }
 
       setResponse("");
       setSuggestedResponse("");
