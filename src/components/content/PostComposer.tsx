@@ -242,6 +242,48 @@ export function PostComposer() {
 
       const result = await createPost(input);
       if (result) {
+        // If "Post Now" (no scheduled date, not a draft), publish immediately
+        if (!asDraft && !scheduledDate && !approvalRequired) {
+          try {
+            const { data: publishData, error: publishError } = await supabase.functions.invoke("publish-post", {
+              body: { postId: result.id },
+            });
+            if (publishError || !publishData?.success) {
+              const errMsg = publishData?.results
+                ? Object.entries(publishData.results)
+                    .filter(([, r]: any) => !r.success)
+                    .map(([p, r]: any) => `${p}: ${r.error}`)
+                    .join("; ")
+                : publishError?.message || "Unknown error";
+              toast({
+                title: "Post saved but publishing failed",
+                description: errMsg,
+                variant: "destructive",
+              });
+            } else {
+              toast({
+                title: "Post published!",
+                description: "Your post has been published successfully.",
+              });
+            }
+          } catch (publishErr: any) {
+            toast({
+              title: "Post saved but publishing failed",
+              description: publishErr.message || "Could not connect to publishing service",
+              variant: "destructive",
+            });
+          }
+        } else if (!asDraft && scheduledDate) {
+          toast({
+            title: "Post scheduled!",
+            description: `Your post will be published at the scheduled time.`,
+          });
+        } else {
+          toast({
+            title: "Draft saved",
+            description: "Your draft has been saved.",
+          });
+        }
         // Reset form
         setContent("");
         setSelectedPlatforms([]);
