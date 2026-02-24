@@ -153,6 +153,7 @@ export function PlatformsSettings() {
   const [refreshingPlatform, setRefreshingPlatform] = useState<string | null>(null);
   const [testingPlatform, setTestingPlatform] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<string | null>(null);
+  const [disconnectingPlatform, setDisconnectingPlatform] = useState<string | null>(null);
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Diagnostics state
@@ -290,16 +291,44 @@ export function PlatformsSettings() {
     }
   };
 
-  const handleDisconnect = async (platformId: string, platformName: string) => {
+  // FIX: Disconnect now also deletes all synced interactions from that platform
+  const handleDisconnect = async (platformId: string, platformName: string, deleteData: boolean) => {
+    if (!user) return;
     const connection = connectedPlatforms.find((p) => p.platform === platformId);
     if (!connection) return;
+    
+    setDisconnectingPlatform(platformId);
     try {
-      const { error } = await supabase.from("connected_platforms").delete().eq("id", connection.id);
-      if (error) throw error;
+      // Delete the platform connection
+      const { error: connError } = await supabase
+        .from("connected_platforms")
+        .delete()
+        .eq("id", connection.id);
+      if (connError) throw connError;
+
+      // If user chose to delete data, remove all interactions from this platform
+      if (deleteData) {
+        const { error: interactionError } = await supabase
+          .from("interactions")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("platform", platformId as any);
+        if (interactionError) {
+          console.error("Failed to delete interactions:", interactionError);
+        }
+      }
+
       setConnectedPlatforms((prev) => prev.filter((p) => p.id !== connection.id));
-      toast({ title: "Platform disconnected", description: `${platformName} has been disconnected.` });
+      toast({
+        title: "Platform disconnected",
+        description: deleteData
+          ? `${platformName} disconnected and all synced messages removed.`
+          : `${platformName} has been disconnected. Existing messages kept.`,
+      });
     } catch (err) {
       toast({ title: "Error", description: "Failed to disconnect the platform.", variant: "destructive" });
+    } finally {
+      setDisconnectingPlatform(null);
     }
   };
 
@@ -510,30 +539,13 @@ export function PlatformsSettings() {
                         <RefreshCw className={`h-4 w-4 mr-1 ${refreshingPlatform === platform.id ? "animate-spin" : ""}`} />
                         {refreshingPlatform === platform.id ? "Syncing..." : "Sync Now"}
                       </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" title="Disconnect">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Disconnect {platform.name}?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will remove the connection and stop syncing data from {platform.name}.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              onClick={() => handleDisconnect(platform.id, platform.name)}
-                            >
-                              Disconnect
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      {/* FIX: Disconnect dialog now offers option to delete synced data */}
+                      <DisconnectDialog
+                        platformName={platform.name}
+                        platformId={platform.id}
+                        isDisconnecting={disconnectingPlatform === platform.id}
+                        onDisconnect={(deleteData) => handleDisconnect(platform.id, platform.name, deleteData)}
+                      />
                     </>
                   ) : (
                     <Button
@@ -721,5 +733,76 @@ export function PlatformsSettings() {
 
       <ReviewPlatformConnections />
     </div>
+  );
+}
+
+// FIX: New disconnect dialog component with option to delete data
+interface DisconnectDialogProps {
+  platformName: string;
+  platformId: string;
+  isDisconnecting: boolean;
+  onDisconnect: (deleteData: boolean) => void;
+}
+
+function DisconnectDialog({ platformName, platformId, isDisconnecting, onDisconnect }: DisconnectDialogProps) {
+  const [deleteData, setDeleteData] = useState(true);
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-destructive hover:text-destructive"
+          title="Disconnect"
+          disabled={isDisconnecting}
+        >
+          {isDisconnecting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Trash2 className="h-4 w-4" />
+          )}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Disconnect {platformName}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will remove the connection and stop syncing data from {platformName}.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="px-1 py-2 space-y-3">
+          <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/50">
+            <input
+              type="checkbox"
+              id="delete-data"
+              checked={deleteData}
+              onChange={(e) => setDeleteData(e.target.checked)}
+              className="mt-0.5 h-4 w-4 cursor-pointer"
+            />
+            <label htmlFor="delete-data" className="text-sm cursor-pointer">
+              <span className="font-medium">Delete all synced messages</span>
+              <p className="text-muted-foreground text-xs mt-0.5">
+                Remove all comments and messages that were synced from {platformName}. This will clear your inbox and reset notification counts.
+              </p>
+            </label>
+          </div>
+          {!deleteData && (
+            <p className="text-xs text-muted-foreground px-1">
+              Existing messages will be kept in your inbox but no new messages will be synced.
+            </p>
+          )}
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={() => onDisconnect(deleteData)}
+          >
+            Disconnect{deleteData ? " & Delete Data" : ""}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
