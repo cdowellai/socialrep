@@ -75,8 +75,9 @@ serve(async (req) => {
     const postPlatforms: string[] = post.platforms || [];
 
     for (const platformName of postPlatforms) {
+      // FIX: The column is `platform`, not `platform_type`
       const platform = platforms.find(
-        (p: any) => p.platform_type === platformName && p.is_active
+        (p: any) => p.platform === platformName && p.is_active
       );
 
       if (!platform) {
@@ -88,7 +89,7 @@ serve(async (req) => {
         if (platformName === "facebook") {
           // Get page access token from platform metadata
           const pageToken = platform.access_token;
-          const pageId = platform.platform_page_id || platform.platform_user_id;
+          const pageId = platform.platform_account_id;
 
           if (!pageToken || !pageId) {
             results[platformName] = { success: false, error: "Missing page token or page ID" };
@@ -126,7 +127,7 @@ serve(async (req) => {
         } else if (platformName === "instagram") {
           // Instagram publishing via Graph API
           const pageToken = platform.access_token;
-          const igAccountId = platform.instagram_account_id || platform.platform_page_id;
+          const igAccountId = platform.platform_account_id;
 
           if (!pageToken || !igAccountId) {
             results[platformName] = { success: false, error: "Missing Instagram account token or ID" };
