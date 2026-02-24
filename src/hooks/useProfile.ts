@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 export interface Profile {
   id: string;
+  user_id: string;
   full_name: string | null;
   company_name: string | null;
   avatar_url: string | null;
@@ -27,8 +28,8 @@ export function useProfile() {
       setLoading(true);
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, company_name, avatar_url, plan, subscription_status")
-        .eq("id", user.id)
+        .select("id, user_id, full_name, company_name, avatar_url, plan, subscription_status")
+        .eq("user_id", user.id)
         .single();
 
       if (!error && data) {
@@ -44,7 +45,7 @@ export function useProfile() {
       .channel(`profile:${user.id}`)
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${user.id}` },
         (payload) => {
           setProfile(payload.new as Profile);
         }
@@ -61,7 +62,7 @@ export function useProfile() {
     const { error } = await supabase
       .from("profiles")
       .update(updates)
-      .eq("id", user.id);
+      .eq("user_id", user.id);
     if (!error) {
       setProfile((prev) => prev ? { ...prev, ...updates } : null);
     }
