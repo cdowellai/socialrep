@@ -1,10 +1,10 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useTheme } from "@/hooks/useTheme";
 import { useSubscription } from "@/hooks/useSubscription";
-import { useInteractions } from "@/hooks/useInteractions";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -62,11 +62,55 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
   const { theme, toggleTheme } = useTheme();
-  const { interactions } = useInteractions();
   const { plan, subscription } = useSubscription();
-  
-  const pendingCount = interactions.filter(i => i.status === "pending").length;
+
+  // FIX: Use a dedicated real-time pending count instead of loading all interactions
+  const [pendingCount, setPendingCount] = useState(0);
   const planLabel = plan ? `${plan.display_name} Plan` : "Free Plan";
+
+  // FIX: Fetch pending count directly from DB (efficient count query)
+  const fetchPendingCount = useCallback(async () => {
+    if (!user) {
+      setPendingCount(0);
+      return;
+    }
+    const { count } = await supabase
+      .from("interactions")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("status", "pending");
+    setPendingCount(count || 0);
+  }, [user]);
+
+  useEffect(() => {
+    fetchPendingCount();
+  }, [fetchPendingCount]);
+
+  // FIX: Subscribe to real-time changes so count updates immediately on insert/update/delete
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel("sidebar-pending-count")
+      .on(
+        "postgres_changes",
+        {
+          event: "*", // INSERT, UPDATE, DELETE
+          schema: "public",
+          table: "interactions",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          // Re-fetch count on any change
+          fetchPendingCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchPendingCount]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -108,7 +152,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                     {link.label}
                     {link.label === "Smart Inbox" && pendingCount > 0 && (
                       <span className="ml-auto px-2 py-0.5 rounded-full bg-destructive text-destructive-foreground text-xs">
-                        {pendingCount}
+                        {pendingCount > 99 ? "99+" : pendingCount}
                       </span>
                     )}
                   </Link>
@@ -148,14 +192,14 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="p-4 border-t border-sidebar-border">
           <div className="flex items-center gap-3 p-2 rounded-lg bg-sidebar-accent/50">
             <Avatar className="h-8 w-8">
-              <AvatarImage src="" />
+              <AvatarImage src={profile?.avatar_url || ""} />
               <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                {user?.email?.[0].toUpperCase() || "U"}
+                {(profile?.full_name || user?.email || "U")[0].toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{profile?.full_name || user?.email}</p>
-              <p className="text-xs text-muted-foreground">{profile?.company_name || planLabel}</p>
+              <p className="text-xs text-muted-foreground truncate">{profile?.company_name || planLabel}</p>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </div>
@@ -180,10 +224,17 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
-            </Button>
+            {/* FIX: Bell icon shows real pending count badge */}
+            <Link to="/dashboard/inbox">
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                {pendingCount > 0 && (
+                  <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-medium">
+                    {pendingCount > 9 ? "9+" : pendingCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
               {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
             </Button>
@@ -191,9 +242,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="" />
+                    <AvatarImage src={profile?.avatar_url || ""} />
                     <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                      {user?.email?.[0].toUpperCase() || "U"}
+                      {(profile?.full_name || user?.email || "U")[0].toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
