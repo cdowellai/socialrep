@@ -17,6 +17,7 @@ import {
   NotificationsSettings,
   BillingSettings,
 } from "@/components/settings";
+import { ReviewPlatformConnections } from "@/components/settings/ReviewPlatformConnections";
 import { FeaturePaywall } from "@/components/subscription";
 import {
   User,
@@ -205,6 +206,7 @@ export default function SettingsPage() {
           {/* Platforms Tab */}
           <TabsContent value="platforms" className="space-y-6">
             <PlatformsSettings />
+            <ReviewPlatformConnections />
           </TabsContent>
 
           {/* Notifications Tab */}
