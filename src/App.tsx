@@ -17,6 +17,7 @@ import ContentPage from "./pages/Content";
 import SettingsPage from "./pages/Settings";
 import ResetPassword from "./pages/ResetPassword";
 import MetaCallback from "./pages/MetaCallback";
+import GoogleCallback from "./pages/GoogleCallback";
 import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
@@ -124,6 +125,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <MetaCallback />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/auth/google/callback"
+        element={
+          <ProtectedRoute>
+            <GoogleCallback />
           </ProtectedRoute>
         }
       />
