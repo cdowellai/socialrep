@@ -36,3 +36,8 @@ verify_jwt = false
 [functions.content-ai]
 verify_jwt = false
 
+[functions.google-oauth]
+verify_jwt = false
+
+[functions.trustpilot-sync]
+verify_jwt = false
