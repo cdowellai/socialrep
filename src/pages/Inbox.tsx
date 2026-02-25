@@ -288,20 +288,22 @@ export default function InboxPage() {
 
     try {
       const platform = selectedInteraction.platform;
-      const shouldSendToPlatform =
-        !isInternalNote && (platform === "facebook" || platform === "instagram");
 
-      if (shouldSendToPlatform) {
+      if (isInternalNote) {
+        // Internal notes are always saved locally
+        await updateInteraction(selectedInteraction.id, {
+          response,
+          status: "responded",
+          responded_at: new Date().toISOString(),
+        });
+        toast({ title: "Internal note saved", description: "Your internal note has been saved." });
+      } else if (platform === "facebook" || platform === "instagram") {
+        // Facebook / Instagram — send via Meta API
         const { data, error } = await supabase.functions.invoke("send-platform-reply", {
-          body: {
-            interactionId: selectedInteraction.id,
-            content: response,
-            platform,
-          },
+          body: { interactionId: selectedInteraction.id, content: response, platform },
         });
 
         if (error || (data && !data.success && !data.notConnected)) {
-          // Platform send failed — save locally anyway
           await updateInteraction(selectedInteraction.id, {
             response,
             status: "responded",
@@ -320,17 +322,61 @@ export default function InboxPage() {
               : "Your reply was posted to the platform.",
           });
         }
+      } else if (platform === "google") {
+        // Google Business — reply via Google My Business API
+        const { data, error } = await supabase.functions.invoke("google-oauth", {
+          body: { action: "reply_to_review", interaction_id: selectedInteraction.id, message: response },
+        });
+
+        if (error || (data && !data.success)) {
+          await updateInteraction(selectedInteraction.id, {
+            response,
+            status: "responded",
+            responded_at: new Date().toISOString(),
+          });
+          toast({
+            title: "Reply saved locally",
+            description: data?.error || error?.message || "Could not post to Google, but reply was saved.",
+            variant: "destructive",
+          });
+        } else {
+          toast({ title: "Reply posted to Google!", description: "Your reply was published on Google Business." });
+        }
+      } else if (platform === "trustpilot") {
+        // Trustpilot — reply via Trustpilot API
+        const { data, error } = await supabase.functions.invoke("trustpilot-sync", {
+          body: { action: "reply_to_review", interaction_id: selectedInteraction.id, message: response },
+        });
+
+        if (error) {
+          await updateInteraction(selectedInteraction.id, {
+            response,
+            status: "responded",
+            responded_at: new Date().toISOString(),
+          });
+          toast({
+            title: "Reply saved locally",
+            description: error?.message || "Could not post to Trustpilot, but reply was saved.",
+            variant: "destructive",
+          });
+        } else if (data?.notConnected) {
+          toast({
+            title: "Reply saved locally",
+            description: data.message || "Trustpilot API credentials not configured.",
+          });
+        } else {
+          toast({ title: "Reply posted!", description: "Your reply was published on Trustpilot." });
+        }
       } else {
+        // All other platforms — save locally
         await updateInteraction(selectedInteraction.id, {
           response,
           status: "responded",
           responded_at: new Date().toISOString(),
         });
         toast({
-          title: isInternalNote ? "Internal note saved" : "Response saved",
-          description: isInternalNote
-            ? "Your internal note has been saved."
-            : "Your response has been saved successfully.",
+          title: "Response saved",
+          description: "Your response has been saved successfully.",
         });
       }
 
