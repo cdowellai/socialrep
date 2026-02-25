@@ -14,10 +14,10 @@ import {
   BrandAISettings,
   AutomationSettings,
   PlatformsSettings,
+  ReviewPlatformConnections,
   NotificationsSettings,
   BillingSettings,
 } from "@/components/settings";
-import { ReviewPlatformConnections } from "@/components/settings/ReviewPlatformConnections";
 import { FeaturePaywall } from "@/components/subscription";
 import {
   User,
