@@ -36,24 +36,36 @@ serve(async (req) => {
     const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID");
     const GOOGLE_CLIENT_SECRET = Deno.env.get("GOOGLE_CLIENT_SECRET");
 
-    if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-      return new Response(
-        JSON.stringify({ error: "Google API credentials not configured. Please add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to Supabase secrets." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const body = await req.json();
     const { action } = body;
 
     switch (action) {
       case "get_client_id": {
+        if (!GOOGLE_CLIENT_ID) {
+          return new Response(
+            JSON.stringify({ error: "GOOGLE_CLIENT_ID not configured" }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
         return new Response(
           JSON.stringify({ client_id: GOOGLE_CLIENT_ID }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
+      default:
+        // All other actions require both credentials
+        if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+          return new Response(
+            JSON.stringify({ error: "Google API credentials not configured. Please add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to Supabase secrets." }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        break;
+    }
+
+    // Re-switch for credential-required actions
+    switch (action) {
       case "exchange_code": {
         const { code, redirect_uri } = body;
         if (!code || !redirect_uri) {

@@ -112,10 +112,10 @@ export function useInfiniteInteractions() {
 
       // Only show interactions for currently connected platforms
       if (platforms.length > 0) {
-        query = query.in("platform", platforms);
+        query = query.in("platform", platforms as Enums<"interaction_platform">[]);
       } else {
         // No platforms connected — return nothing by using an impossible filter
-        query = query.eq("platform", "__none__" as Enums<"interaction_platform">);
+        query = query.in("platform", ["__none__"] as unknown as Enums<"interaction_platform">[]);
       }
 
       if (filters.platform && filters.platform !== "all") {
@@ -155,23 +155,24 @@ export function useInfiniteInteractions() {
       }
 
       // Use count queries which are more efficient than fetching all data
+      const platformsTyped = activePlatforms as Enums<"interaction_platform">[];
       const [totalRes, pendingRes, urgentRes] = await Promise.all([
         supabase
           .from("interactions")
           .select("*", { count: "exact", head: true })
           .eq("user_id", user.id)
-          .in("platform", activePlatforms),
+          .in("platform", platformsTyped),
         supabase
           .from("interactions")
           .select("*", { count: "exact", head: true })
           .eq("user_id", user.id)
-          .in("platform", activePlatforms)
+          .in("platform", platformsTyped)
           .eq("status", "pending"),
         supabase
           .from("interactions")
           .select("*", { count: "exact", head: true })
           .eq("user_id", user.id)
-          .in("platform", activePlatforms)
+          .in("platform", platformsTyped)
           .gte("urgency_score", 7),
       ]);
 
