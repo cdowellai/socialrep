@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo } from "react";
+import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useThrottledRealtime, type BatchChange } from "@/hooks/useThrottledRealtime";
@@ -34,6 +34,7 @@ export function useInfiniteInteractions() {
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<InteractionFilters>({});
+  const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
   const [counts, setCounts] = useState<InteractionCounts>({
     total: 0,
     pending: 0,
@@ -50,14 +51,72 @@ export function useInfiniteInteractions() {
     ...counts,
   }), [interactions.length, counts]);
 
+  // Fetch connected platforms so we only show messages for active connections
+  const fetchConnectedPlatforms = useCallback(async () => {
+    if (!user) {
+      setConnectedPlatforms([]);
+      return [];
+    }
+    try {
+      const { data, error } = await supabase
+        .from("connected_platforms")
+        .select("platform")
+        .eq("user_id", user.id);
+      if (error) throw error;
+      const platforms = (data || []).map((p) => p.platform);
+      setConnectedPlatforms(platforms);
+      return platforms;
+    } catch (err) {
+      console.error("Error fetching connected platforms:", err);
+      return [];
+    }
+  }, [user]);
+
+  // Subscribe to connected_platforms changes so inbox updates immediately on connect/disconnect
+  useEffect(() => {
+    if (!user) return;
+    fetchConnectedPlatforms();
+
+    const channel = supabase
+      .channel(`connected_platforms_${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "connected_platforms",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          fetchConnectedPlatforms().then(() => {
+            // Re-fetch interactions after platform change
+            lastFetchRef.current = 0; // Reset debounce
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchConnectedPlatforms]);
+
   const buildQuery = useCallback(
-    (page: number) => {
+    (page: number, platforms: string[]) => {
       let query = supabase
         .from("interactions")
         .select("*")
         .eq("user_id", user?.id || "")
         .order("created_at", { ascending: false })
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+      // Only show interactions for currently connected platforms
+      if (platforms.length > 0) {
+        query = query.in("platform", platforms);
+      } else {
+        // No platforms connected — return nothing by using an impossible filter
+        query = query.eq("platform", "__none__" as Enums<"interaction_platform">);
+      }
 
       if (filters.platform && filters.platform !== "all") {
         query = query.eq("platform", filters.platform);
@@ -84,25 +143,35 @@ export function useInfiniteInteractions() {
   );
 
   // Fetch counts separately for efficiency (doesn't load all data)
-  const fetchCounts = useCallback(async () => {
+  const fetchCounts = useCallback(async (platforms?: string[]) => {
     if (!user) return;
 
+    const activePlatforms = platforms ?? connectedPlatforms;
+
     try {
+      if (activePlatforms.length === 0) {
+        setCounts((prev) => ({ ...prev, total: 0, pending: 0, urgent: 0 }));
+        return;
+      }
+
       // Use count queries which are more efficient than fetching all data
       const [totalRes, pendingRes, urgentRes] = await Promise.all([
         supabase
           .from("interactions")
           .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id),
+          .eq("user_id", user.id)
+          .in("platform", activePlatforms),
         supabase
           .from("interactions")
           .select("*", { count: "exact", head: true })
           .eq("user_id", user.id)
+          .in("platform", activePlatforms)
           .eq("status", "pending"),
         supabase
           .from("interactions")
           .select("*", { count: "exact", head: true })
           .eq("user_id", user.id)
+          .in("platform", activePlatforms)
           .gte("urgency_score", 7),
       ]);
 
@@ -115,7 +184,7 @@ export function useInfiniteInteractions() {
     } catch (err) {
       console.error("Error fetching counts:", err);
     }
-  }, [user]);
+  }, [user, connectedPlatforms]);
 
   const fetchInteractions = useCallback(async () => {
     if (!user) {
@@ -136,9 +205,12 @@ export function useInfiniteInteractions() {
       setError(null);
       pageRef.current = 0;
 
+      // Always get fresh connected platforms before fetching
+      const platforms = await fetchConnectedPlatforms();
+
       const [{ data, error: fetchError }] = await Promise.all([
-        buildQuery(0),
-        fetchCounts(),
+        buildQuery(0, platforms),
+        fetchCounts(platforms),
       ]);
 
       if (fetchError) throw fetchError;
@@ -150,7 +222,7 @@ export function useInfiniteInteractions() {
     } finally {
       setLoading(false);
     }
-  }, [user, buildQuery, fetchCounts]);
+  }, [user, buildQuery, fetchCounts, fetchConnectedPlatforms]);
 
   const loadMore = useCallback(async () => {
     if (!user || loadingMore || !hasMore) return;
@@ -159,7 +231,7 @@ export function useInfiniteInteractions() {
       setLoadingMore(true);
       pageRef.current += 1;
 
-      const { data, error: fetchError } = await buildQuery(pageRef.current);
+      const { data, error: fetchError } = await buildQuery(pageRef.current, connectedPlatforms);
 
       if (fetchError) throw fetchError;
 
@@ -178,9 +250,9 @@ export function useInfiniteInteractions() {
     } finally {
       setLoadingMore(false);
     }
-  }, [user, buildQuery, loadingMore, hasMore]);
+  }, [user, buildQuery, loadingMore, hasMore, connectedPlatforms]);
 
-  // Handle batched realtime updates
+  // Handle batched realtime updates — only process if platform is still connected
   const handleBatchUpdate = useCallback((changes: BatchChange<Interaction>[]) => {
     setInteractions((prev) => {
       let updated = [...prev];
@@ -188,8 +260,10 @@ export function useInfiniteInteractions() {
       for (const change of changes) {
         switch (change.type) {
           case "INSERT":
-            // Add to beginning (newest first)
-            updated = [change.record, ...updated];
+            // Only add if the platform is currently connected
+            if (connectedPlatforms.includes(change.record.platform)) {
+              updated = [change.record, ...updated];
+            }
             break;
           case "UPDATE":
             updated = updated.map((i) =>
@@ -212,7 +286,7 @@ export function useInfiniteInteractions() {
 
     // Refresh counts on batch updates
     fetchCounts();
-  }, [fetchCounts]);
+  }, [fetchCounts, connectedPlatforms]);
 
   // Use throttled realtime for high-volume scenarios
   const { pendingCount, forceFlush } = useThrottledRealtime<Interaction>({
@@ -281,6 +355,7 @@ export function useInfiniteInteractions() {
     error,
     filters,
     counts: displayStats,
+    connectedPlatforms,
     pendingRealtimeCount: pendingCount,
     refetch: fetchInteractions,
     loadMore,

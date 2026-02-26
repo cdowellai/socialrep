@@ -69,8 +69,19 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const planLabel = plan ? `${plan.display_name} Plan` : "Free Plan";
 
   // FIX: Fetch pending count directly from DB (efficient count query)
+  // Only count interactions from currently connected platforms
   const fetchPendingCount = useCallback(async () => {
     if (!user) {
+      setPendingCount(0);
+      return;
+    }
+    // First get connected platforms to avoid counting orphaned messages
+    const { data: platformData } = await supabase
+      .from("connected_platforms")
+      .select("platform")
+      .eq("user_id", user.id);
+    const platforms = (platformData || []).map((p) => p.platform);
+    if (platforms.length === 0) {
       setPendingCount(0);
       return;
     }
@@ -78,7 +89,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       .from("interactions")
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
-      .eq("status", "pending");
+      .eq("status", "pending")
+      .in("platform", platforms);
     setPendingCount(count || 0);
   }, [user]);
 

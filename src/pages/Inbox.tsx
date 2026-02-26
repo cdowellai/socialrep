@@ -31,6 +31,7 @@ import {
   Loader2,
   Zap,
   StickyNote,
+  MessageSquare,
 } from "lucide-react";
 import { useInfiniteInteractions, InteractionFilters } from "@/hooks/useInfiniteInteractions";
 import { useAIResponse } from "@/hooks/useAIResponse";
@@ -107,6 +108,7 @@ export default function InboxPage() {
     hasMore,
     filters,
     counts,
+    connectedPlatforms,
     pendingRealtimeCount,
     refetch,
     loadMore,
@@ -665,12 +667,27 @@ export default function InboxPage() {
             >
               {displayedInteractions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                  <Beaker className="h-10 w-10 mb-3 opacity-50" />
-                  <p className="mb-4">No interactions yet</p>
-                  <Button variant="outline" onClick={handleLoadSampleData} disabled={seeding}>
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Load Sample Data
-                  </Button>
+                  {connectedPlatforms.length === 0 ? (
+                    <>
+                      <MessageSquare className="h-10 w-10 mb-3 opacity-50" />
+                      <p className="text-sm font-medium mb-1">No platforms connected</p>
+                      <p className="text-xs text-center mb-4 px-6 opacity-70">
+                        Connect Facebook, Google, Trustpilot, or other platforms in Settings to see your messages and reviews here.
+                      </p>
+                      <Button variant="outline" asChild>
+                        <a href="/dashboard/settings?tab=platforms">Go to Settings</a>
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Beaker className="h-10 w-10 mb-3 opacity-50" />
+                      <p className="mb-4">No interactions yet</p>
+                      <Button variant="outline" onClick={handleLoadSampleData} disabled={seeding}>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Load Sample Data
+                      </Button>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-2">
