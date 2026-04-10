@@ -1,3 +1,5 @@
+import { motion } from "framer-motion";
+
 const socialPlatforms = [
   { name: "Facebook", color: "#1877F2" },
   { name: "Instagram", color: "#E4405F" },
@@ -16,7 +18,7 @@ const reviewPlatforms = [
 
 function PlatformPill({ name, color }: { name: string; color: string }) {
   return (
-    <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-card border border-border hover:border-primary/50 hover:shadow-sm transition-all cursor-default">
+    <div className="inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-card border border-border/60 hover:border-primary/30 hover:shadow-md transition-all duration-300 cursor-default">
       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
       <span className="text-sm font-medium">{name}</span>
     </div>
@@ -25,21 +27,35 @@ function PlatformPill({ name, color }: { name: string; color: string }) {
 
 export function IntegrationsSection() {
   return (
-    <section id="integrations" className="py-24">
+    <section id="integrations" className="py-28 bg-muted/20">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-4">Integrations</p>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-            Connects to the platforms you already use
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center max-w-3xl mx-auto mb-16"
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-5">Integrations</p>
+          <h2 className="font-display text-display-sm md:text-display-md mb-5">
+            Connects to the platforms
+            <br />
+            you already use.
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
             Monitor and respond to comments, DMs, and reviews across every major platform — from one dashboard.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="max-w-3xl mx-auto space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-3xl mx-auto space-y-10"
+        >
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 text-center">Social Platforms</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-4 text-center">Social Platforms</p>
             <div className="flex flex-wrap justify-center gap-3">
               {socialPlatforms.map((p) => (
                 <PlatformPill key={p.name} {...p} />
@@ -47,18 +63,18 @@ export function IntegrationsSection() {
             </div>
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 text-center">Review Platforms</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-4 text-center">Review Platforms</p>
             <div className="flex flex-wrap justify-center gap-3">
               {reviewPlatforms.map((p) => (
                 <PlatformPill key={p.name} {...p} />
               ))}
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="text-center mt-10">
+        <div className="text-center mt-12">
           <p className="text-sm text-muted-foreground">
-            And many more integrations available.
+            More integrations available. New platforms added regularly.
           </p>
         </div>
       </div>

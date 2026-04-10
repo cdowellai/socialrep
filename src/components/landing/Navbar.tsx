@@ -16,9 +16,7 @@ export function Navbar() {
   const { user, signOut } = useAuth();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -31,10 +29,7 @@ export function Navbar() {
 
   const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
+    document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
     setIsMenuOpen(false);
   };
 
@@ -42,18 +37,19 @@ export function Navbar() {
     <>
       <nav
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-          "bg-background/70 backdrop-blur-xl",
-          isScrolled && "border-b border-border shadow-sm"
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
+          isScrolled
+            ? "bg-background/80 backdrop-blur-2xl border-b border-border/50 shadow-sm"
+            : "bg-transparent"
         )}
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-primary flex items-center justify-center">
+            <Link to="/" className="flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center">
                 <MessageSquare className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-bold text-xl">SocialRep</span>
+              <span className="font-display font-bold text-lg">SocialRep</span>
             </Link>
 
             <div className="hidden md:flex items-center gap-8">
@@ -62,7 +58,7 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={(e) => handleSmoothScroll(e, link.href)}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
                 >
                   {link.label}
                 </a>
@@ -72,10 +68,10 @@ export function Navbar() {
             <div className="hidden md:flex items-center gap-3">
               {user ? (
                 <>
-                  <Button variant="ghost" asChild>
+                  <Button variant="ghost" size="sm" asChild>
                     <Link to="/dashboard">Dashboard</Link>
                   </Button>
-                  <Button variant="outline" onClick={() => signOut()}>
+                  <Button variant="outline" size="sm" onClick={() => signOut()}>
                     Sign Out
                   </Button>
                 </>
@@ -83,15 +79,16 @@ export function Navbar() {
                 <>
                   <Button
                     variant="ghost"
+                    size="sm"
                     onClick={() => setAuthModal({ isOpen: true, tab: "login" })}
                   >
                     Log in
                   </Button>
                   <Button
                     variant="hero"
+                    size="sm"
                     onClick={() => {
-                      const el = document.querySelector("#pricing");
-                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                      document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" });
                     }}
                   >
                     Start Free Trial
@@ -100,28 +97,26 @@ export function Navbar() {
               )}
             </div>
 
-            <div className="flex md:hidden items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
-            </div>
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
           </div>
         </div>
 
         {isMenuOpen && (
-          <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-xl">
-            <div className="container mx-auto px-4 py-4 space-y-4">
+          <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-2xl">
+            <div className="container mx-auto px-4 py-6 space-y-4">
               {navLinks.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
-                  className="block text-sm font-medium text-muted-foreground hover:text-foreground"
+                  className="block text-sm text-muted-foreground hover:text-foreground"
                   onClick={(e) => handleSmoothScroll(e, link.href)}
                 >
                   {link.label}
                 </a>
               ))}
-              <div className="pt-4 border-t border-border space-y-2">
+              <div className="pt-4 border-t border-border/50 space-y-2">
                 {user ? (
                   <>
                     <Button variant="outline" className="w-full" asChild>
@@ -136,21 +131,14 @@ export function Navbar() {
                     <Button
                       variant="outline"
                       className="w-full"
-                      onClick={() => {
-                        setAuthModal({ isOpen: true, tab: "login" });
-                        setIsMenuOpen(false);
-                      }}
+                      onClick={() => { setAuthModal({ isOpen: true, tab: "login" }); setIsMenuOpen(false); }}
                     >
                       Log in
                     </Button>
                     <Button
                       variant="hero"
                       className="w-full"
-                      onClick={() => {
-                        const el = document.querySelector("#pricing");
-                        if (el) el.scrollIntoView({ behavior: "smooth" });
-                        setIsMenuOpen(false);
-                      }}
+                      onClick={() => { document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" }); setIsMenuOpen(false); }}
                     >
                       Start Free Trial
                     </Button>
