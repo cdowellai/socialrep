@@ -37,41 +37,41 @@ export function Navbar() {
     <>
       <nav
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-700",
           isScrolled
-            ? "bg-background/80 backdrop-blur-2xl border-b border-border/50 shadow-sm"
+            ? "bg-[#0a0a0f]/80 backdrop-blur-2xl border-b border-white/[0.06]"
             : "bg-transparent"
         )}
       >
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2.5">
-              <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center">
-                <MessageSquare className="h-4 w-4 text-primary-foreground" />
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex items-center justify-between h-14">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="h-7 w-7 rounded-lg bg-white/10 border border-white/[0.08] flex items-center justify-center">
+                <MessageSquare className="h-3.5 w-3.5 text-white" />
               </div>
-              <span className="font-display font-bold text-lg">SocialRep</span>
+              <span className="font-bold text-[15px] text-white">SocialRep</span>
             </Link>
 
-            <div className="hidden md:flex items-center gap-8">
+            <div className="hidden md:flex items-center gap-7">
               {navLinks.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
                   onClick={(e) => handleSmoothScroll(e, link.href)}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  className="text-[13px] text-white/50 hover:text-white/90 transition-colors duration-300"
                 >
                   {link.label}
                 </a>
               ))}
             </div>
 
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2">
               {user ? (
                 <>
-                  <Button variant="ghost" size="sm" asChild>
+                  <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5 text-[13px] h-8" asChild>
                     <Link to="/dashboard">Dashboard</Link>
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => signOut()}>
+                  <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5 text-[13px] h-8" onClick={() => signOut()}>
                     Sign Out
                   </Button>
                 </>
@@ -80,68 +80,67 @@ export function Navbar() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    className="text-white/60 hover:text-white hover:bg-white/5 text-[13px] h-8"
                     onClick={() => setAuthModal({ isOpen: true, tab: "login" })}
                   >
                     Log in
                   </Button>
-                  <Button
-                    variant="hero"
-                    size="sm"
+                  <button
+                    className="h-8 px-4 rounded-full bg-white text-[#0a0a0f] text-[13px] font-semibold hover:bg-white/90 transition-all duration-200"
                     onClick={() => {
                       document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" });
                     }}
                   >
-                    Start Free Trial
-                  </Button>
+                    Get Started
+                  </button>
                 </>
               )}
             </div>
 
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <Button variant="ghost" size="icon" className="md:hidden text-white h-8 w-8" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </Button>
           </div>
         </div>
 
         {isMenuOpen && (
-          <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-2xl">
-            <div className="container mx-auto px-4 py-6 space-y-4">
+          <div className="md:hidden border-t border-white/[0.06] bg-[#0a0a0f]/95 backdrop-blur-2xl">
+            <div className="max-w-6xl mx-auto px-6 py-6 space-y-4">
               {navLinks.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
-                  className="block text-sm text-muted-foreground hover:text-foreground"
+                  className="block text-sm text-white/60 hover:text-white"
                   onClick={(e) => handleSmoothScroll(e, link.href)}
                 >
                   {link.label}
                 </a>
               ))}
-              <div className="pt-4 border-t border-border/50 space-y-2">
+              <div className="pt-4 border-t border-white/[0.06] space-y-2">
                 {user ? (
                   <>
-                    <Button variant="outline" className="w-full" asChild>
+                    <Button variant="outline" className="w-full border-white/10 text-white" asChild>
                       <Link to="/dashboard">Dashboard</Link>
                     </Button>
-                    <Button variant="ghost" className="w-full" onClick={() => signOut()}>
+                    <Button variant="ghost" className="w-full text-white/60" onClick={() => signOut()}>
                       Sign Out
                     </Button>
                   </>
                 ) : (
                   <>
                     <Button
-                      variant="outline"
-                      className="w-full"
+                      variant="ghost"
+                      className="w-full text-white/60"
                       onClick={() => { setAuthModal({ isOpen: true, tab: "login" }); setIsMenuOpen(false); }}
                     >
                       Log in
                     </Button>
-                    <Button
-                      variant="hero"
-                      className="w-full"
+                    <button
+                      className="w-full h-10 rounded-full bg-white text-[#0a0a0f] text-sm font-semibold"
                       onClick={() => { document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" }); setIsMenuOpen(false); }}
                     >
-                      Start Free Trial
-                    </Button>
+                      Get Started
+                    </button>
                   </>
                 )}
               </div>
