@@ -81,14 +81,8 @@ export default {
         "2xl": "calc(var(--radius) + 8px)",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
-        display: ["Plus Jakarta Sans", "Inter", "system-ui", "sans-serif"],
-      },
-      fontSize: {
-        "display-xl": ["4.5rem", { lineHeight: "1.05", letterSpacing: "-0.03em" }],
-        "display-lg": ["3.75rem", { lineHeight: "1.08", letterSpacing: "-0.025em" }],
-        "display-md": ["3rem", { lineHeight: "1.1", letterSpacing: "-0.02em" }],
-        "display-sm": ["2.25rem", { lineHeight: "1.15", letterSpacing: "-0.015em" }],
+        sans: ["Plus Jakarta Sans", "Inter", "system-ui", "-apple-system", "sans-serif"],
+        display: ["Plus Jakarta Sans", "Inter", "system-ui", "-apple-system", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {
