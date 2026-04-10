@@ -16,11 +16,6 @@ interface ChatbotWidgetProps {
   collectEmail?: boolean;
 }
 
-const quickActions = [
-  { text: "What do you offer?", emoji: "✨" },
-  { text: "How does pricing work?", emoji: "💰" },
-  { text: "I need help with my account", emoji: "🔑" },
-];
 
 const teamMembers = [
   { name: "Sarah", gradient: "from-violet-400 to-indigo-500" },
@@ -132,10 +127,6 @@ export function ChatbotWidget({
     }
   };
 
-  const handleQuickAction = (text: string) => {
-    setView("chat");
-    sendMessage(text);
-  };
 
   const handlePreChatSubmit = (data: { name?: string; email?: string }) => {
     setVisitorInfo(data);
@@ -302,30 +293,6 @@ export function ChatbotWidget({
                   </div>
                 </motion.div>
 
-                {/* Quick actions */}
-                <div className="px-5 pb-5">
-                  <p className="text-[10px] font-semibold text-muted-foreground/60 mb-2.5 uppercase tracking-[0.08em]">
-                    Popular topics
-                  </p>
-                  <div className="space-y-1.5">
-                    {quickActions.map((action, i) => (
-                      <motion.button
-                        key={action.text}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.35 + i * 0.06, duration: 0.4, ease: easeApple }}
-                        onClick={() => handleQuickAction(action.text)}
-                        className="w-full text-left px-4 py-3 rounded-xl border border-border/30 bg-card hover:bg-muted/40 hover:border-border/50 transition-all duration-200 text-[13px] flex items-center gap-3 group"
-                      >
-                        <span className="text-base">{action.emoji}</span>
-                        <span className="flex-1 text-foreground">{action.text}</span>
-                        <svg className="w-4 h-4 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
               </div>
             ) : (
               /* ─── Chat View ─── */
