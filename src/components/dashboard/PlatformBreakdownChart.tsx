@@ -1,27 +1,17 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { Tables } from "@/integrations/supabase/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Interaction = Tables<"interactions">;
-
-interface PlatformBreakdownChartProps {
-  interactions: Interaction[];
-  loading?: boolean;
-}
 
 const PLATFORM_COLORS: Record<string, string> = {
   facebook: "#1877F2",
   instagram: "#E4405F",
-  tiktok: "#000000",
+  tiktok: "#25F4EE",
   youtube: "#FF0000",
   twitter: "#1DA1F2",
   linkedin: "#0A66C2",
@@ -32,18 +22,21 @@ const PLATFORM_COLORS: Record<string, string> = {
   other: "#6B7280",
 };
 
+interface PlatformBreakdownChartProps {
+  interactions: Interaction[];
+  loading?: boolean;
+}
+
 export function PlatformBreakdownChart({ interactions, loading }: PlatformBreakdownChartProps) {
   const navigate = useNavigate();
 
   const chartData = useMemo(() => {
-    const platformCounts: Record<string, number> = {};
-
+    const counts: Record<string, number> = {};
     interactions.forEach((int) => {
-      const platform = int.platform || "other";
-      platformCounts[platform] = (platformCounts[platform] || 0) + 1;
+      const p = int.platform || "other";
+      counts[p] = (counts[p] || 0) + 1;
     });
-
-    return Object.entries(platformCounts)
+    return Object.entries(counts)
       .map(([platform, count]) => ({
         name: platform.charAt(0).toUpperCase() + platform.slice(1),
         value: count,
@@ -53,99 +46,86 @@ export function PlatformBreakdownChart({ interactions, loading }: PlatformBreakd
       .sort((a, b) => b.value - a.value);
   }, [interactions]);
 
-  const handleClick = (data: { platform: string }) => {
-    // Navigate to inbox filtered by platform
-    navigate(`/dashboard/inbox?platform=${data.platform}`);
-  };
+  const total = chartData.reduce((sum, d) => sum + d.value, 0);
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-32" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[200px] w-full" />
-        </CardContent>
-      </Card>
+      <div className="rounded-2xl border border-border/50 bg-card p-6">
+        <Skeleton className="h-5 w-40 mb-6" />
+        <Skeleton className="h-[220px] w-full rounded-xl" />
+      </div>
     );
   }
 
   if (chartData.length === 0) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Platform Breakdown</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
-            No data available
-          </div>
-        </CardContent>
-      </Card>
+      <div className="rounded-2xl border border-border/50 bg-card p-6">
+        <h3 className="text-base font-semibold tracking-tight mb-6">Platform Breakdown</h3>
+        <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
+          No data available
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">Platform Breakdown</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[200px] w-full">
+    <div className="rounded-2xl border border-border/50 bg-card p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-base font-semibold tracking-tight">Platform Breakdown</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">{total} total interactions</p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-6">
+        <div className="h-[180px] w-[180px] flex-shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={chartData}
                 cx="50%"
                 cy="50%"
-                innerRadius={50}
-                outerRadius={80}
-                paddingAngle={2}
+                innerRadius={55}
+                outerRadius={85}
+                paddingAngle={3}
                 dataKey="value"
-                onClick={handleClick}
+                onClick={(d) => navigate(`/dashboard/inbox?platform=${d.platform}`)}
                 className="cursor-pointer"
+                strokeWidth={0}
               >
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.color}
-                    className="hover:opacity-80 transition-opacity"
-                  />
+                {chartData.map((entry, i) => (
+                  <Cell key={i} fill={entry.color} className="hover:opacity-80 transition-opacity" />
                 ))}
               </Pie>
               <Tooltip
                 contentStyle={{
                   backgroundColor: "hsl(var(--card))",
                   border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
+                  borderRadius: "12px",
                   fontSize: "12px",
+                  boxShadow: "0 8px 32px -4px rgba(0,0,0,0.15)",
                 }}
-                formatter={(value: number, name: string) => [
-                  `${value} interactions`,
-                  name,
-                ]}
+                formatter={(value: number, name: string) => [`${value} interactions`, name]}
               />
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-3 mt-2 text-xs">
+
+        <div className="flex-1 space-y-2.5">
           {chartData.slice(0, 5).map((item) => (
             <button
               key={item.platform}
-              onClick={() => handleClick(item)}
-              className="flex items-center gap-1.5 hover:opacity-70 transition-opacity"
+              onClick={() => navigate(`/dashboard/inbox?platform=${item.platform}`)}
+              className="w-full flex items-center gap-3 text-left hover:bg-muted/50 rounded-lg px-2 py-1.5 transition-colors group"
             >
-              <div
-                className="w-2.5 h-2.5 rounded-full"
-                style={{ backgroundColor: item.color }}
-              />
-              <span className="text-muted-foreground">{item.name}</span>
-              <span className="font-medium">({item.value})</span>
+              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+              <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors flex-1">{item.name}</span>
+              <span className="text-sm font-semibold">{item.value}</span>
+              <span className="text-xs text-muted-foreground">{total > 0 ? `${Math.round((item.value / total) * 100)}%` : "0%"}</span>
             </button>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
