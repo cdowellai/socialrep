@@ -1,82 +1,64 @@
 import { motion } from "framer-motion";
 
-const socialPlatforms = [
+const platforms = [
   { name: "Facebook", color: "#1877F2" },
   { name: "Instagram", color: "#E4405F" },
-  { name: "TikTok", color: "#000000" },
-  { name: "YouTube", color: "#FF0000" },
-  { name: "LinkedIn", color: "#0A66C2" },
-];
-
-const reviewPlatforms = [
   { name: "Google Business", color: "#4285F4" },
   { name: "Trustpilot", color: "#00B67A" },
   { name: "Yelp", color: "#D32323" },
+  { name: "TikTok", color: "#000000" },
+  { name: "YouTube", color: "#FF0000" },
+  { name: "LinkedIn", color: "#0A66C2" },
   { name: "BBB", color: "#003DA5" },
-  { name: "Facebook Reviews", color: "#1877F2" },
 ];
-
-function PlatformPill({ name, color }: { name: string; color: string }) {
-  return (
-    <div className="inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-card border border-border/60 hover:border-primary/30 hover:shadow-md transition-all duration-300 cursor-default">
-      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
-      <span className="text-sm font-medium">{name}</span>
-    </div>
-  );
-}
 
 export function IntegrationsSection() {
   return (
-    <section id="integrations" className="py-28 bg-muted/20">
-      <div className="container mx-auto px-4">
+    <section id="integrations" className="py-32 bg-background">
+      <div className="max-w-6xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center max-w-3xl mx-auto mb-16"
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center max-w-2xl mx-auto mb-16"
         >
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-5">Integrations</p>
-          <h2 className="font-display text-display-sm md:text-display-md mb-5">
-            Connects to the platforms
+          <p className="text-[13px] font-semibold uppercase tracking-[0.15em] text-primary/80 mb-4">Integrations</p>
+          <h2 className="text-[clamp(1.75rem,4vw,2.75rem)] leading-[1.1] tracking-[-0.02em] font-extrabold mb-5">
+            Every platform.
             <br />
-            you already use.
+            One dashboard.
           </h2>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Monitor and respond to comments, DMs, and reviews across every major platform — from one dashboard.
+          <p className="text-[16px] text-muted-foreground leading-relaxed">
+            Monitor and respond across social media and review sites without switching tabs.
           </p>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="max-w-3xl mx-auto space-y-10"
+          className="flex flex-wrap justify-center gap-3 max-w-3xl mx-auto"
         >
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-4 text-center">Social Platforms</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              {socialPlatforms.map((p) => (
-                <PlatformPill key={p.name} {...p} />
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground mb-4 text-center">Review Platforms</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              {reviewPlatforms.map((p) => (
-                <PlatformPill key={p.name} {...p} />
-              ))}
-            </div>
-          </div>
+          {platforms.map((p, i) => (
+            <motion.div
+              key={p.name}
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: i * 0.04, ease: [0.16, 1, 0.3, 1] }}
+              className="inline-flex items-center gap-2.5 px-5 py-3 rounded-full bg-card border border-border/60 hover:border-primary/20 hover:shadow-[0_4px_20px_-6px_hsl(234_85%_56%/0.08)] transition-all duration-400 cursor-default"
+            >
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+              <span className="text-[13px] font-medium">{p.name}</span>
+            </motion.div>
+          ))}
         </motion.div>
 
-        <div className="text-center mt-12">
-          <p className="text-sm text-muted-foreground">
-            More integrations available. New platforms added regularly.
-          </p>
-        </div>
+        <p className="text-center text-[13px] text-muted-foreground/60 mt-10">
+          New platforms added regularly.
+        </p>
       </div>
     </section>
   );
