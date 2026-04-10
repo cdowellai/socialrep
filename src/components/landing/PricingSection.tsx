@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Switch } from "@/components/ui/switch";
 import { Check, X, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+
+const ease = [0.16, 1, 0.3, 1] as const;
 
 const planFeatures = {
   starter: [
@@ -83,86 +84,90 @@ export function PricingSection() {
 
   return (
     <>
-      <section id="pricing" className="py-32 bg-background">
-        <div className="max-w-5xl mx-auto px-6">
+      <section id="pricing" className="relative py-36 bg-[#06060a] overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+        {/* Ambient behind popular card */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[600px] bg-[#4338ca]/[0.03] blur-[150px] rounded-full pointer-events-none" />
+
+        <div className="max-w-5xl mx-auto px-6 relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center mb-10"
+            transition={{ duration: 1, ease }}
+            className="text-center mb-12"
           >
-            <h2 className="text-[clamp(1.75rem,4vw,2.75rem)] leading-[1.1] tracking-[-0.02em] font-extrabold mb-4">
+            <h2 className="text-[clamp(1.75rem,4.5vw,3rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white mb-4">
               Simple, transparent pricing.
             </h2>
-            <p className="text-[16px] text-muted-foreground">
+            <p className="text-[16px] text-white/30">
               Start with a 14-day free trial on any plan.
             </p>
           </motion.div>
 
-          <div className="flex items-center justify-center gap-3 mb-14">
-            <span className={`text-[13px] font-medium transition-colors ${!isAnnual ? "text-foreground" : "text-muted-foreground"}`}>Monthly</span>
+          <div className="flex items-center justify-center gap-3 mb-16">
+            <span className={`text-[13px] font-medium transition-colors duration-300 ${!isAnnual ? "text-white" : "text-white/30"}`}>Monthly</span>
             <Switch checked={isAnnual} onCheckedChange={setIsAnnual} />
-            <span className={`text-[13px] font-medium transition-colors ${isAnnual ? "text-foreground" : "text-muted-foreground"}`}>Annual</span>
+            <span className={`text-[13px] font-medium transition-colors duration-300 ${isAnnual ? "text-white" : "text-white/30"}`}>Annual</span>
             {isAnnual && (
-              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600">Save 20%</span>
+              <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Save 20%</span>
             )}
           </div>
 
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 32 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-5"
+            transition={{ duration: 1, ease }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-4"
           >
             {displayPlans.map((plan, index) => (
               <div
                 key={index}
-                className={`relative p-6 rounded-2xl bg-card border flex flex-col transition-all duration-500 ${
+                className={`relative p-7 rounded-2xl flex flex-col transition-all duration-700 ${
                   plan.popular
-                    ? "border-primary/30 shadow-[0_8px_40px_-12px_hsl(234_85%_56%/0.15)] ring-1 ring-primary/10"
-                    : "border-border/60 hover:border-border"
+                    ? "bg-white/[0.04] border border-[#818cf8]/20 shadow-[0_16px_80px_-20px_rgba(99,102,241,0.15)] ring-1 ring-[#818cf8]/10"
+                    : "bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1]"
                 }`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-gradient-to-r from-[#4338ca] to-[#6366f1] text-white text-[11px] font-semibold shadow-[0_0_20px_-4px_rgba(99,102,241,0.4)]">
                     Most popular
                   </div>
                 )}
 
-                <div className="mb-6">
-                  <h3 className="font-bold text-[16px] mb-1">{plan.name}</h3>
-                  <p className="text-[13px] text-muted-foreground mb-4">{plan.description}</p>
+                <div className="mb-7">
+                  <h3 className="font-bold text-[16px] mb-1 text-white/90">{plan.name}</h3>
+                  <p className="text-[13px] text-white/30 mb-5">{plan.description}</p>
                   <div className="flex items-baseline gap-0.5">
-                    <span className="text-[40px] font-extrabold tracking-[-0.02em]">${isAnnual ? plan.annualPrice : plan.monthlyPrice}</span>
-                    <span className="text-muted-foreground text-[14px]">/mo</span>
+                    <span className="text-[44px] font-extrabold tracking-[-0.03em] text-white">${isAnnual ? plan.annualPrice : plan.monthlyPrice}</span>
+                    <span className="text-white/25 text-[14px] font-medium">/mo</span>
                   </div>
-                  {isAnnual && <p className="text-[11px] text-muted-foreground mt-0.5">billed annually</p>}
+                  {isAnnual && <p className="text-[11px] text-white/20 mt-1">billed annually</p>}
                 </div>
 
-                <ul className="space-y-2.5 mb-8 flex-1">
+                <ul className="space-y-3 mb-8 flex-1">
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-2.5 text-[13px]">
                       {feature.included ? (
-                        <div className="w-4 h-4 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <Check className="h-2.5 w-2.5 text-emerald-500" />
+                        <div className="w-4 h-4 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check className="h-2.5 w-2.5 text-emerald-400" />
                         </div>
                       ) : (
-                        <div className="w-4 h-4 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <X className="h-2.5 w-2.5 text-muted-foreground/30" />
+                        <div className="w-4 h-4 rounded-full bg-white/[0.03] border border-white/[0.04] flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <X className="h-2.5 w-2.5 text-white/15" />
                         </div>
                       )}
-                      <span className={feature.included ? "text-foreground/80" : "text-muted-foreground/40"}>{feature.text}</span>
+                      <span className={feature.included ? "text-white/50" : "text-white/15"}>{feature.text}</span>
                     </li>
                   ))}
                 </ul>
 
                 <button
-                  className={`w-full h-10 rounded-xl text-[13px] font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${
+                  className={`w-full h-11 rounded-xl text-[13px] font-semibold transition-all duration-500 flex items-center justify-center gap-2 ${
                     plan.popular
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
-                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                      ? "bg-white text-[#06060a] hover:bg-white/90 shadow-[0_0_30px_-6px_rgba(255,255,255,0.15)]"
+                      : "bg-white/[0.06] text-white/60 hover:bg-white/[0.1] hover:text-white/80 border border-white/[0.06]"
                   }`}
                   onClick={() => handlePlanSelect(plan.planKey)}
                   disabled={loadingPlan === plan.plan?.id}
@@ -178,7 +183,7 @@ export function PricingSection() {
             ))}
           </motion.div>
 
-          <p className="text-center text-[13px] text-muted-foreground/60 mt-12">
+          <p className="text-center text-[12px] text-white/15 mt-14">
             Need something custom? Contact us for Enterprise pricing.
           </p>
         </div>

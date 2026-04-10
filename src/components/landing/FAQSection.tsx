@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
+const ease = [0.16, 1, 0.3, 1] as const;
+
 const faqs = [
   { q: "Does the AI actually sound like me?", a: "Yes — because you train it. You describe your brand voice, paste real responses you've written, and the AI uses those as its baseline. Every draft matches your tone. Nothing sends without your approval." },
   { q: "What if the AI writes something I don't like?", a: "Every AI response is a draft. You can edit, approve, or discard it. For automated responses like 5-star review replies, you write the templates and set the rules." },
@@ -13,33 +15,35 @@ const faqs = [
 
 export function FAQSection() {
   return (
-    <section className="py-32 bg-muted/20">
+    <section className="relative py-36 bg-[#06060a] overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+
       <div className="max-w-2xl mx-auto px-6">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-14"
+          transition={{ duration: 1, ease }}
+          className="text-center mb-16"
         >
-          <h2 className="text-[clamp(1.75rem,4vw,2.5rem)] leading-[1.1] tracking-[-0.02em] font-extrabold">
+          <h2 className="text-[clamp(1.75rem,4.5vw,2.75rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white">
             Questions & Answers
           </h2>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.8, delay: 0.1, ease }}
         >
           <Accordion type="single" collapsible>
             {faqs.map((faq, i) => (
-              <AccordionItem key={i} value={`faq-${i}`} className="border-border/40">
-                <AccordionTrigger className="text-left font-semibold text-[14px] hover:no-underline py-5 text-foreground/90">
+              <AccordionItem key={i} value={`faq-${i}`} className="border-white/[0.05]">
+                <AccordionTrigger className="text-left font-semibold text-[14px] hover:no-underline py-6 text-white/70 hover:text-white/90 transition-colors">
                   {faq.q}
                 </AccordionTrigger>
-                <AccordionContent className="text-[14px] text-muted-foreground leading-relaxed pb-5">
+                <AccordionContent className="text-[14px] text-white/30 leading-[1.7] pb-6">
                   {faq.a}
                 </AccordionContent>
               </AccordionItem>
