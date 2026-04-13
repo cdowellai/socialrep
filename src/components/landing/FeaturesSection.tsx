@@ -144,15 +144,15 @@ export function FeaturesSection() {
                   name="David K."
                   platform="Google"
                   stars={5}
-                  review="Best coffee shop in the neighborhood. The oat milk latte is incredible and the staff always remembers my name."
-                  response="David, that just made our morning! The oat milk latte is a team favorite too. We'll keep your usual ready 😊 — Team Brew & Co."
+                  review="Genuinely great spot. Good coffee, fast Wi-Fi, and they didn't rush me out after two hours."
+                  response="David — really glad you felt at home. The Wi-Fi password changes weekly, by the way. See you in there."
                   avatar="DK"
                 />
                 <ReviewCard
                   name="Lisa M."
                   platform="Yelp"
                   stars={2}
-                  review="Waited 25 minutes for a simple order. Staff seemed overwhelmed and my drink was wrong."
+                  review="Waited 25 minutes for a simple order. Drink was wrong when it finally came out."
                   avatar="LM"
                 />
               </div>
@@ -207,9 +207,9 @@ export function FeaturesSection() {
                         <div
                           className="w-full rounded-t-md transition-all duration-700 hover:opacity-100"
                           style={{
-                            height: `${h}%`,
-                            background: `linear-gradient(to top, rgba(67,56,202,0.4), rgba(129,140,248,0.6))`,
-                            opacity: 0.5 + (h / 100) * 0.5,
+                           height: `${h}%`,
+                            background: `linear-gradient(to top, rgba(67,56,202,0.6), rgba(129,140,248,0.85))`,
+                            opacity: 0.65 + (h / 100) * 0.35,
                           }}
                         />
                         <span className="text-[7px] text-white/25">{months[i]}</span>
@@ -254,18 +254,18 @@ export function FeaturesSection() {
                   <div className="flex gap-2.5">
                     <div className="w-6 h-6 rounded-full bg-[#4338ca]/30 flex-shrink-0 flex items-center justify-center text-[8px] text-white/60 font-bold">B</div>
                     <div className="bg-white/[0.04] rounded-2xl rounded-tl-md px-4 py-2.5 text-[12px] max-w-[80%] text-white/55 leading-relaxed border border-white/[0.03]">
-                      Hi there! 👋 How can we help you today?
+                      Hey! 👋 Ask us anything — hours, menu, catering, whatever.
                     </div>
                   </div>
                   <div className="flex justify-end">
                     <div className="bg-gradient-to-r from-[#4338ca] to-[#6366f1] text-white rounded-2xl rounded-tr-md px-4 py-2.5 text-[12px] max-w-[80%] shadow-[0_4px_16px_-4px_rgba(99,102,241,0.3)]">
-                      Do you have gluten-free options?
+                      Do you guys do catering for small events?
                     </div>
                   </div>
                   <div className="flex gap-2.5">
                     <div className="w-6 h-6 rounded-full bg-[#4338ca]/30 flex-shrink-0 flex items-center justify-center text-[8px] text-white/60 font-bold">B</div>
                     <div className="bg-white/[0.04] rounded-2xl rounded-tl-md px-4 py-2.5 text-[12px] max-w-[80%] text-white/55 leading-relaxed border border-white/[0.03]">
-                      Yes! We have 8 gluten-free pastries and all our drinks are naturally GF. Want me to send the full menu? 🍰
+                      We do! Groups up to about 30 — coffee, pastries, the works. Want me to connect you with our events person to sort out details?
                     </div>
                   </div>
                 </div>
