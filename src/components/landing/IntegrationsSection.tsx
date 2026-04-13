@@ -27,13 +27,13 @@ export function IntegrationsSection() {
           transition={{ duration: 1, ease }}
           className="text-center max-w-2xl mx-auto mb-20"
         >
-          <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#818cf8]/60 mb-5">Integrations</p>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#818cf8] mb-5">Integrations</p>
           <h2 className="text-[clamp(1.75rem,4.5vw,3rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white mb-5">
             Every platform.
             <br />
-            <span className="text-white/40">One dashboard.</span>
+            <span className="text-white/50">One dashboard.</span>
           </h2>
-          <p className="text-[16px] text-white/30 leading-relaxed">
+          <p className="text-[16px] text-white/50 leading-relaxed">
             Monitor and respond across social media and review sites without switching tabs.
           </p>
         </motion.div>
@@ -58,12 +58,12 @@ export function IntegrationsSection() {
                 className="w-2.5 h-2.5 rounded-full shadow-[0_0_8px_-1px_currentColor] transition-shadow duration-500 group-hover:shadow-[0_0_14px_-1px_currentColor]"
                 style={{ backgroundColor: p.color, color: p.color }}
               />
-              <span className="text-[13px] font-medium text-white/60 group-hover:text-white/80 transition-colors duration-500">{p.name}</span>
+              <span className="text-[13px] font-medium text-white/70 group-hover:text-white/90 transition-colors duration-500">{p.name}</span>
             </motion.div>
           ))}
         </motion.div>
 
-        <p className="text-center text-[12px] text-white/15 mt-12">
+        <p className="text-center text-[12px] text-white/35 mt-12">
           New platforms added regularly
         </p>
       </div>

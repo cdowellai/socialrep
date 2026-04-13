@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { motion } from "framer-motion";
-import { ArrowRight, Search, Star, MoreHorizontal, RefreshCw, LayoutDashboard, Inbox, Layers, Star as StarIcon, Users, BarChart3, Bot, Settings, MessageSquare, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowRight, Search, Star, MoreHorizontal, RefreshCw, Zap, LayoutDashboard, Inbox, Layers, Star as StarIcon, Users, BarChart3, Bot, Settings, MessageSquare, TrendingUp, TrendingDown } from "lucide-react";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -17,8 +17,8 @@ export function HeroSection() {
     { name: "Mike Thompson", platform: "Google", message: "Still waiting on my order from last week...", time: "14m", tag: "Urgent", tagColor: "bg-red-500/20 text-red-400", selected: false, initials: "MT", color: "#ef4444" },
     { name: "Alex Chen", platform: "Google", message: "Outstanding service and quick delivery!", time: "1h", tag: "★★★★★", tagColor: "bg-amber-500/20 text-amber-400", selected: false, initials: "AC", color: "#10b981" },
     { name: "Jen Rivera", platform: "Facebook", message: "Can I get a refund? Not what I expected.", time: "2h", tag: "AI Ready", tagColor: "bg-blue-500/20 text-blue-400", selected: false, initials: "JR", color: "#3b82f6" },
-    { name: "Marcus W.", platform: "Yelp", message: "The food was great but parking is terrible", time: "3h", tag: "New", tagColor: "bg-white/10 text-white/50", selected: false, initials: "MW", color: "#f59e0b" },
-    { name: "@coffeelover99", platform: "Instagram", message: "Is this available in a larger size?", time: "5h", tag: "Pending", tagColor: "bg-white/5 text-white/40", selected: false, initials: "CL", color: "#ec4899" },
+    { name: "Marcus W.", platform: "Yelp", message: "The food was great but parking is terrible", time: "3h", tag: "New", tagColor: "bg-white/10 text-white/60", selected: false, initials: "MW", color: "#f59e0b" },
+    { name: "@coffeelover99", platform: "Instagram", message: "Is this available in a larger size?", time: "5h", tag: "Pending", tagColor: "bg-white/8 text-white/50", selected: false, initials: "CL", color: "#ec4899" },
   ];
 
   const sidebarItems = [
@@ -67,7 +67,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.3, ease }}
-            className="text-center text-white/35 text-lg md:text-[20px] max-w-[600px] mx-auto mb-12 leading-[1.65] font-light"
+            className="text-center text-white/55 text-lg md:text-[20px] max-w-[600px] mx-auto mb-12 leading-[1.65] font-light"
           >
             Comments, DMs, and reviews from every platform — one inbox.
             AI drafts on-brand replies. You approve in one click.
@@ -90,12 +90,12 @@ export function HeroSection() {
               </button>
               <button
                 onClick={() => document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" })}
-                className="h-[52px] px-7 rounded-full border border-white/[0.1] text-white/60 font-medium text-[15px] hover:border-white/20 hover:text-white/80 transition-all duration-500"
+                className="h-[52px] px-7 rounded-full border border-white/[0.12] text-white/70 font-medium text-[15px] hover:border-white/25 hover:text-white/90 transition-all duration-500"
               >
                 See how it works
               </button>
             </div>
-            <p className="text-[12px] text-white/20 tracking-wide">14-day free trial · No credit card required</p>
+            <p className="text-[13px] text-white/40 tracking-wide">14-day free trial · No credit card required</p>
           </motion.div>
 
           {/* Product mockup with perspective */}
@@ -120,7 +120,7 @@ export function HeroSection() {
                   <div className="w-3 h-3 rounded-full bg-[#28c840] shadow-[inset_0_-1px_1px_rgba(0,0,0,0.2)]" />
                 </div>
                 <div className="flex-1 flex justify-center">
-                  <div className="bg-white/[0.04] rounded-lg px-4 py-1.5 text-[11px] text-white/20 border border-white/[0.04] min-w-[220px] text-center flex items-center justify-center gap-1.5">
+                  <div className="bg-white/[0.04] rounded-lg px-4 py-1.5 text-[11px] text-white/30 border border-white/[0.04] min-w-[220px] text-center flex items-center justify-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500/30 flex items-center justify-center">
                       <div className="w-1.5 h-1.5 rounded-[2px] bg-emerald-400" />
                     </div>
@@ -140,7 +140,7 @@ export function HeroSection() {
                   {sidebarItems.map((item, i) => (
                     <div
                       key={i}
-                      className={`relative flex flex-col items-center justify-center w-10 h-10 rounded-xl cursor-default transition-all duration-300 ${item.active ? "bg-white/[0.07] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]" : "text-white/20 hover:text-white/35"}`}
+                      className={`relative flex flex-col items-center justify-center w-10 h-10 rounded-xl cursor-default transition-all duration-300 ${item.active ? "bg-white/[0.07] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]" : "text-white/30 hover:text-white/45"}`}
                     >
                       <item.icon className="h-[14px] w-[14px]" />
                       <span className="text-[7px] mt-0.5 leading-none font-medium">{item.label}</span>
@@ -152,7 +152,7 @@ export function HeroSection() {
                     </div>
                   ))}
                   <div className="mt-auto">
-                    <div className="flex flex-col items-center justify-center w-10 h-10 rounded-xl text-white/12">
+                    <div className="flex flex-col items-center justify-center w-10 h-10 rounded-xl text-white/20">
                       <Settings className="h-[14px] w-[14px]" />
                     </div>
                   </div>
@@ -161,15 +161,15 @@ export function HeroSection() {
                 {/* Conversation list */}
                 <div className="w-full md:w-[32%] border-r border-white/[0.05] flex flex-col bg-gradient-to-b from-white/[0.01] to-transparent">
                   <div className="p-3 border-b border-white/[0.05]">
-                    <div className="flex items-center gap-2 bg-white/[0.03] rounded-xl px-3 py-2.5 text-[11px] text-white/20 border border-white/[0.04]">
+                    <div className="flex items-center gap-2 bg-white/[0.03] rounded-xl px-3 py-2.5 text-[11px] text-white/30 border border-white/[0.04]">
                       <Search className="h-3.5 w-3.5" />
                       <span>Search conversations...</span>
                     </div>
                   </div>
                   <div className="flex gap-4 px-4 pt-3 pb-2 text-[11px]">
                     <span className="font-semibold text-white border-b-2 border-[#818cf8] pb-1.5">All (47)</span>
-                    <span className="text-white/25 pb-1.5">Pending (12)</span>
-                    <span className="text-white/25 pb-1.5">Urgent (3)</span>
+                    <span className="text-white/35 pb-1.5">Pending (12)</span>
+                    <span className="text-white/35 pb-1.5">Urgent (3)</span>
                   </div>
                   <div className="flex-1 overflow-hidden">
                     {conversations.map((conv, i) => (
@@ -185,13 +185,13 @@ export function HeroSection() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[11px] font-semibold text-white/80 truncate">{conv.name}</span>
-                            <span className="text-[9px] text-white/15">· {conv.platform}</span>
+                            <span className="text-[11px] font-semibold text-white/85 truncate">{conv.name}</span>
+                            <span className="text-[9px] text-white/25">· {conv.platform}</span>
                           </div>
-                          <p className="text-[10px] text-white/25 truncate mt-0.5">{conv.message}</p>
+                          <p className="text-[10px] text-white/35 truncate mt-0.5">{conv.message}</p>
                         </div>
                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                          <span className="text-[9px] text-white/12">{conv.time}</span>
+                          <span className="text-[9px] text-white/20">{conv.time}</span>
                           <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-medium ${conv.tagColor}`}>
                             {conv.tag}
                           </span>
@@ -207,28 +207,28 @@ export function HeroSection() {
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[10px] font-bold ring-2 ring-[#8b5cf6]/30" style={{ backgroundColor: "#8b5cf6" }}>SD</div>
                       <div>
-                        <span className="font-semibold text-[13px] text-white/85">@sarah_designs</span>
+                        <span className="font-semibold text-[13px] text-white/90">@sarah_designs</span>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-gradient-to-r from-[#E4405F]/15 to-[#E4405F]/5 text-[#E4405F]/70 border border-[#E4405F]/10">Instagram</span>
+                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-gradient-to-r from-[#E4405F]/15 to-[#E4405F]/5 text-[#E4405F]/80 border border-[#E4405F]/10">Instagram</span>
                           <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">Positive</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2.5 text-white/15">
-                      <span className="text-[9px] px-2.5 py-1 rounded-lg border border-white/[0.06] hover:border-white/10 transition-colors cursor-default">Assign</span>
+                    <div className="flex items-center gap-2.5 text-white/25">
+                      <span className="text-[9px] px-2.5 py-1 rounded-lg border border-white/[0.08] hover:border-white/12 transition-colors cursor-default">Assign</span>
                       <Star className="h-3.5 w-3.5" />
                       <MoreHorizontal className="h-3.5 w-3.5" />
                     </div>
                   </div>
 
                   {/* Customer context bar */}
-                  <div className="flex items-center gap-3 px-5 py-2 bg-white/[0.01] border-b border-white/[0.04] text-[9px] text-white/15">
+                  <div className="flex items-center gap-3 px-5 py-2 bg-white/[0.01] border-b border-white/[0.04] text-[9px] text-white/25">
                     <span>First interaction</span>
-                    <span className="w-0.5 h-0.5 rounded-full bg-white/10" />
+                    <span className="w-0.5 h-0.5 rounded-full bg-white/15" />
                     <span>Instagram follower</span>
-                    <span className="w-0.5 h-0.5 rounded-full bg-white/10" />
+                    <span className="w-0.5 h-0.5 rounded-full bg-white/15" />
                     <span>Miami, FL</span>
-                    <span className="ml-auto text-emerald-400/50">● Online</span>
+                    <span className="ml-auto text-emerald-400/60">● Online</span>
                   </div>
 
                   <div className="flex-1 px-5 py-5 space-y-4 overflow-hidden">
@@ -236,10 +236,10 @@ export function HeroSection() {
                     <div className="flex gap-3">
                       <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold ring-1 ring-white/10" style={{ backgroundColor: "#8b5cf6" }}>SD</div>
                       <div>
-                        <div className="bg-white/[0.04] rounded-2xl rounded-tl-md px-4 py-3 text-[12px] text-white/55 max-w-sm leading-relaxed border border-white/[0.03]">
+                        <div className="bg-white/[0.04] rounded-2xl rounded-tl-md px-4 py-3 text-[12px] text-white/65 max-w-sm leading-relaxed border border-white/[0.03]">
                           Love this product! Do you ship to Miami? ✨
                         </div>
-                        <span className="text-[8px] text-white/12 mt-1.5 block">Today at 2:14 PM</span>
+                        <span className="text-[8px] text-white/20 mt-1.5 block">Today at 2:14 PM</span>
                       </div>
                     </div>
 
@@ -254,19 +254,32 @@ export function HeroSection() {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-[8px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">98% confidence</span>
-                          <span className="text-[8px] px-2.5 py-0.5 rounded-full bg-white/[0.03] text-white/20 border border-white/[0.04]">Friendly tone</span>
+                          <span className="text-[8px] px-2.5 py-0.5 rounded-full bg-white/[0.04] text-white/30 border border-white/[0.05]">Friendly tone</span>
                         </div>
                       </div>
-                      <p className="text-[12px] leading-[1.75] mb-4 text-white/45">
+                      <p className="text-[12px] leading-[1.75] mb-4 text-white/55">
                         Hi Sarah! Thank you so much 💛 Yes, we ship to Miami — usually arrives in 3-5 business days. Want me to send you a direct link to order?
                       </p>
                       <div className="flex items-center gap-2">
-                        <button className="text-[11px] px-5 py-2 rounded-xl bg-gradient-to-r from-[#4338ca] to-[#6366f1] text-white font-semibold shadow-[0_0_20px_-4px_rgba(99,102,241,0.5)] hover:shadow-[0_0_30px_-4px_rgba(99,102,241,0.6)] transition-shadow">Send Response</button>
-                        <button className="text-[11px] px-4 py-2 rounded-xl border border-white/[0.08] text-white/40 font-medium hover:border-white/15 transition-colors">Edit</button>
-                        <button className="text-[11px] px-3 py-2 text-white/20 font-medium flex items-center gap-1.5 hover:text-white/35 transition-colors">
-                          <RefreshCw className="h-3 w-3" />
-                          Regenerate
+                        <button className="text-[11px] px-4 py-2 rounded-xl bg-gradient-to-r from-[#4338ca] to-[#6366f1] text-white font-semibold shadow-[0_0_16px_-4px_rgba(99,102,241,0.4)] flex items-center gap-1.5">
+                          <Check className="h-3 w-3" /> Approve & Send
                         </button>
+                        <button className="text-[11px] px-3 py-2 rounded-xl border border-white/[0.06] text-white/40 font-medium hover:text-white/60 transition-colors">Edit</button>
+                        <button className="text-[11px] px-3 py-2 rounded-xl text-white/30 font-medium flex items-center gap-1">
+                          <RefreshCw className="h-3 w-3" /> Regenerate
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reply bar */}
+                  <div className="px-5 py-3 border-t border-white/[0.05] bg-gradient-to-r from-white/[0.01] to-transparent">
+                    <div className="flex items-center gap-3 bg-white/[0.03] rounded-xl px-4 py-3 border border-white/[0.05]">
+                      <span className="text-[12px] text-white/25 flex-1">Write a reply...</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-white/[0.04] flex items-center justify-center text-white/25 border border-white/[0.04]">
+                          <Zap className="h-3.5 w-3.5" />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -274,35 +287,10 @@ export function HeroSection() {
               </div>
             </div>
 
-            {/* Bottom reflection line */}
-            <div className="absolute -bottom-px left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-[#818cf8]/40 to-transparent" />
-          </motion.div>
-
-          {/* Floating stats below mockup */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 1.2, ease }}
-            className="flex justify-center gap-8 mt-12"
-          >
-            {[
-              { label: "Avg. Response Time", value: "< 2min", icon: TrendingDown, trend: "74% faster" },
-              { label: "Response Rate", value: "96%", icon: TrendingUp, trend: "↑ from 34%" },
-              { label: "Customer Satisfaction", value: "4.9/5", icon: Star, trend: "+1.2 points" },
-            ].map((stat, i) => (
-              <div key={i} className="flex items-center gap-3 text-white/30">
-                <stat.icon className="h-3.5 w-3.5 text-[#818cf8]/50" />
-                <div>
-                  <div className="text-[13px] font-semibold text-white/60">{stat.value}</div>
-                  <div className="text-[10px] text-white/20">{stat.label}</div>
-                </div>
-              </div>
-            ))}
+            {/* Bottom fade */}
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#06060a] to-transparent pointer-events-none" />
           </motion.div>
         </div>
-
-        {/* Bottom gradient */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-b from-transparent to-[#06060a] pointer-events-none" />
       </section>
 
       <AuthModal isOpen={authModal} onClose={() => setAuthModal(false)} defaultTab="signup" />

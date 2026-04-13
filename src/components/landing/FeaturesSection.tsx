@@ -29,19 +29,19 @@ function FeatureBlock({
       className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center"
     >
       <div className={reverse ? "lg:order-2" : ""}>
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#818cf8]/[0.08] border border-[#818cf8]/[0.1] mb-6">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#818cf8]/[0.08] border border-[#818cf8]/[0.12] mb-6">
           <Icon className="h-3.5 w-3.5 text-[#818cf8]" />
           <span className="text-[11px] font-semibold text-[#818cf8] uppercase tracking-[0.12em]">{label}</span>
         </div>
         <h3 className="text-[clamp(1.5rem,3.5vw,2.5rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white mb-5">{title}</h3>
-        <p className="text-[15px] text-white/35 mb-8 leading-[1.7]">{description}</p>
+        <p className="text-[15px] text-white/55 mb-8 leading-[1.7]">{description}</p>
         <ul className="space-y-4">
           {bullets.map((b, i) => (
             <li key={i} className="flex items-start gap-3 text-[14px]">
               <div className="w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <Check className="h-3 w-3 text-emerald-400" />
               </div>
-              <span className="text-white/50">{b}</span>
+              <span className="text-white/65">{b}</span>
             </li>
           ))}
         </ul>
@@ -61,21 +61,21 @@ function ReviewCard({ name, platform, stars, review, response, avatar }: {
     <div className="bg-white/[0.02] rounded-2xl border border-white/[0.06] p-5 space-y-3.5 hover:border-white/[0.09] transition-colors duration-500">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-[12px] font-bold text-white/60 ring-1 ring-white/10">{avatar}</div>
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-[12px] font-bold text-white/70 ring-1 ring-white/10">{avatar}</div>
           <div>
-            <span className="text-[13px] font-semibold text-white/80">{name}</span>
+            <span className="text-[13px] font-semibold text-white/85">{name}</span>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/[0.04] text-white/30 border border-white/[0.04]">{platform}</span>
+              <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/[0.04] text-white/40 border border-white/[0.05]">{platform}</span>
             </div>
           </div>
         </div>
         <div className="flex gap-0.5">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Star key={i} className={`h-3.5 w-3.5 ${i < stars ? "fill-amber-400 text-amber-400" : "text-white/10"}`} />
+            <Star key={i} className={`h-3.5 w-3.5 ${i < stars ? "fill-amber-400 text-amber-400" : "text-white/15"}`} />
           ))}
         </div>
       </div>
-      <p className="text-[13px] text-white/35 leading-relaxed italic">"{review}"</p>
+      <p className="text-[13px] text-white/50 leading-relaxed italic">"{review}"</p>
       {response ? (
         <div className="border-l-2 border-[#818cf8]/30 pl-4 bg-gradient-to-r from-[#818cf8]/[0.04] to-transparent rounded-r-xl p-4">
           <div className="flex items-center gap-2 mb-1.5">
@@ -85,14 +85,14 @@ function ReviewCard({ name, platform, stars, review, response, avatar }: {
             <span className="text-[10px] font-semibold text-[#a78bfa]">AI Response</span>
             <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 ml-auto">Sent</span>
           </div>
-          <p className="text-[12px] leading-[1.7] text-white/45">{response}</p>
+          <p className="text-[12px] leading-[1.7] text-white/55">{response}</p>
         </div>
       ) : (
         <div className="flex gap-2 pt-1">
           <button className="text-[11px] px-4 py-2 rounded-xl bg-gradient-to-r from-[#4338ca] to-[#6366f1] text-white font-semibold shadow-[0_0_16px_-4px_rgba(99,102,241,0.4)] flex items-center gap-1.5">
             <span className="text-[9px]">✦</span> Generate Response
           </button>
-          <button className="text-[11px] px-3.5 py-2 rounded-xl border border-white/[0.06] text-white/30 font-medium">View Thread</button>
+          <button className="text-[11px] px-3.5 py-2 rounded-xl border border-white/[0.06] text-white/40 font-medium">View Thread</button>
         </div>
       )}
     </div>
@@ -119,9 +119,9 @@ export function FeaturesSection() {
           <h2 className="text-[clamp(1.75rem,4.5vw,3rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white mb-5">
             Everything you need.
             <br />
-            <span className="text-white/40">Nothing you don't.</span>
+            <span className="text-white/50">Nothing you don't.</span>
           </h2>
-          <p className="text-[16px] text-white/30 max-w-lg mx-auto leading-relaxed">
+          <p className="text-[16px] text-white/50 max-w-lg mx-auto leading-relaxed">
             Replace the five tools you're duct-taping together with one platform that actually does the work.
           </p>
         </motion.div>
@@ -188,11 +188,11 @@ export function FeaturesSection() {
                   ].map((m, i) => (
                     <div key={i} className="bg-white/[0.02] rounded-xl p-4 border border-white/[0.04] group hover:border-white/[0.08] transition-colors duration-500">
                       <div className="flex items-center justify-between mb-2">
-                        <div className="text-[10px] text-white/25 font-medium">{m.label}</div>
-                        <m.icon className="h-3 w-3 text-white/10" />
+                        <div className="text-[10px] text-white/40 font-medium">{m.label}</div>
+                        <m.icon className="h-3 w-3 text-white/15" />
                       </div>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-xl font-bold text-white/80">{m.value}</span>
+                        <span className="text-xl font-bold text-white/85">{m.value}</span>
                         <span className="text-[10px] font-semibold text-emerald-400">{m.change}</span>
                       </div>
                     </div>
@@ -201,9 +201,9 @@ export function FeaturesSection() {
                 {/* Chart */}
                 <div className="bg-white/[0.015] rounded-xl p-5 border border-white/[0.04]">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="text-[12px] font-semibold text-white/30">Interaction Volume</div>
+                    <div className="text-[12px] font-semibold text-white/50">Interaction Volume</div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/[0.03] text-white/20">Last 12 months</span>
+                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/[0.04] text-white/35">Last 12 months</span>
                     </div>
                   </div>
                   <div className="flex items-end gap-2 h-28">
@@ -217,7 +217,7 @@ export function FeaturesSection() {
                             opacity: 0.5 + (h / 100) * 0.5,
                           }}
                         />
-                        <span className="text-[7px] text-white/15">{months[i]}</span>
+                        <span className="text-[7px] text-white/25">{months[i]}</span>
                       </div>
                     ))}
                   </div>
@@ -249,7 +249,7 @@ export function FeaturesSection() {
                     <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white text-[12px] font-bold backdrop-blur-sm">B</div>
                     <div>
                       <div className="text-[14px] font-semibold text-white">Brew & Co.</div>
-                      <div className="text-[11px] text-white/50 flex items-center gap-1.5">
+                      <div className="text-[11px] text-white/60 flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                         Usually replies instantly
                       </div>
@@ -259,8 +259,8 @@ export function FeaturesSection() {
                 {/* Chat */}
                 <div className="p-4 space-y-3 bg-[#0c0c14] min-h-[220px]">
                   <div className="flex gap-2.5">
-                    <div className="w-6 h-6 rounded-full bg-[#4338ca]/30 flex-shrink-0 flex items-center justify-center text-[8px] text-white/50 font-bold">B</div>
-                    <div className="bg-white/[0.04] rounded-2xl rounded-tl-md px-4 py-2.5 text-[12px] max-w-[80%] text-white/45 leading-relaxed border border-white/[0.03]">
+                    <div className="w-6 h-6 rounded-full bg-[#4338ca]/30 flex-shrink-0 flex items-center justify-center text-[8px] text-white/60 font-bold">B</div>
+                    <div className="bg-white/[0.04] rounded-2xl rounded-tl-md px-4 py-2.5 text-[12px] max-w-[80%] text-white/55 leading-relaxed border border-white/[0.03]">
                       Hi there! 👋 How can we help you today?
                     </div>
                   </div>
@@ -270,17 +270,17 @@ export function FeaturesSection() {
                     </div>
                   </div>
                   <div className="flex gap-2.5">
-                    <div className="w-6 h-6 rounded-full bg-[#4338ca]/30 flex-shrink-0 flex items-center justify-center text-[8px] text-white/50 font-bold">B</div>
-                    <div className="bg-white/[0.04] rounded-2xl rounded-tl-md px-4 py-2.5 text-[12px] max-w-[80%] text-white/45 leading-relaxed border border-white/[0.03]">
+                    <div className="w-6 h-6 rounded-full bg-[#4338ca]/30 flex-shrink-0 flex items-center justify-center text-[8px] text-white/60 font-bold">B</div>
+                    <div className="bg-white/[0.04] rounded-2xl rounded-tl-md px-4 py-2.5 text-[12px] max-w-[80%] text-white/55 leading-relaxed border border-white/[0.03]">
                       Yes! We have 8 gluten-free pastries and all our drinks are naturally GF. Want me to send the full menu? 🍰
                     </div>
                   </div>
                 </div>
                 {/* Input */}
                 <div className="px-4 pb-4 bg-[#0c0c14]">
-                  <div className="border border-white/[0.06] rounded-xl px-4 py-3 text-[12px] text-white/15 flex items-center justify-between">
+                  <div className="border border-white/[0.06] rounded-xl px-4 py-3 text-[12px] text-white/25 flex items-center justify-between">
                     <span>Type a message...</span>
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#4338ca] to-[#6366f1] flex items-center justify-center opacity-30">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#4338ca] to-[#6366f1] flex items-center justify-center opacity-40">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
                     </div>
                   </div>

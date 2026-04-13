@@ -100,15 +100,15 @@ export function PricingSection() {
             <h2 className="text-[clamp(1.75rem,4.5vw,3rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white mb-4">
               Simple, transparent pricing.
             </h2>
-            <p className="text-[16px] text-white/30">
+            <p className="text-[16px] text-white/50">
               Start with a 14-day free trial on any plan.
             </p>
           </motion.div>
 
           <div className="flex items-center justify-center gap-3 mb-16">
-            <span className={`text-[13px] font-medium transition-colors duration-300 ${!isAnnual ? "text-white" : "text-white/30"}`}>Monthly</span>
+            <span className={`text-[13px] font-medium transition-colors duration-300 ${!isAnnual ? "text-white" : "text-white/40"}`}>Monthly</span>
             <Switch checked={isAnnual} onCheckedChange={setIsAnnual} />
-            <span className={`text-[13px] font-medium transition-colors duration-300 ${isAnnual ? "text-white" : "text-white/30"}`}>Annual</span>
+            <span className={`text-[13px] font-medium transition-colors duration-300 ${isAnnual ? "text-white" : "text-white/40"}`}>Annual</span>
             {isAnnual && (
               <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Save 20%</span>
             )}
@@ -137,13 +137,13 @@ export function PricingSection() {
                 )}
 
                 <div className="mb-7">
-                  <h3 className="font-bold text-[16px] mb-1 text-white/90">{plan.name}</h3>
-                  <p className="text-[13px] text-white/30 mb-5">{plan.description}</p>
+                  <h3 className="font-bold text-[16px] mb-1 text-white">{plan.name}</h3>
+                  <p className="text-[13px] text-white/45 mb-5">{plan.description}</p>
                   <div className="flex items-baseline gap-0.5">
                     <span className="text-[44px] font-extrabold tracking-[-0.03em] text-white">${isAnnual ? plan.annualPrice : plan.monthlyPrice}</span>
-                    <span className="text-white/25 text-[14px] font-medium">/mo</span>
+                    <span className="text-white/40 text-[14px] font-medium">/mo</span>
                   </div>
-                  {isAnnual && <p className="text-[11px] text-white/20 mt-1">billed annually</p>}
+                  {isAnnual && <p className="text-[11px] text-white/35 mt-1">billed annually</p>}
                 </div>
 
                 <ul className="space-y-3 mb-8 flex-1">
@@ -154,11 +154,11 @@ export function PricingSection() {
                           <Check className="h-2.5 w-2.5 text-emerald-400" />
                         </div>
                       ) : (
-                        <div className="w-4 h-4 rounded-full bg-white/[0.03] border border-white/[0.04] flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <X className="h-2.5 w-2.5 text-white/15" />
+                        <div className="w-4 h-4 rounded-full bg-white/[0.03] border border-white/[0.05] flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <X className="h-2.5 w-2.5 text-white/25" />
                         </div>
                       )}
-                      <span className={feature.included ? "text-white/50" : "text-white/15"}>{feature.text}</span>
+                      <span className={feature.included ? "text-white/65" : "text-white/30"}>{feature.text}</span>
                     </li>
                   ))}
                 </ul>
@@ -167,7 +167,7 @@ export function PricingSection() {
                   className={`w-full h-11 rounded-xl text-[13px] font-semibold transition-all duration-500 flex items-center justify-center gap-2 ${
                     plan.popular
                       ? "bg-white text-[#06060a] hover:bg-white/90 shadow-[0_0_30px_-6px_rgba(255,255,255,0.15)]"
-                      : "bg-white/[0.06] text-white/60 hover:bg-white/[0.1] hover:text-white/80 border border-white/[0.06]"
+                      : "bg-white/[0.06] text-white/70 hover:bg-white/[0.1] hover:text-white/90 border border-white/[0.06]"
                   }`}
                   onClick={() => handlePlanSelect(plan.planKey)}
                   disabled={loadingPlan === plan.plan?.id}
@@ -183,7 +183,7 @@ export function PricingSection() {
             ))}
           </motion.div>
 
-          <p className="text-center text-[12px] text-white/15 mt-14">
+          <p className="text-center text-[12px] text-white/35 mt-14">
             Need something custom? Contact us for Enterprise pricing.
           </p>
         </div>
