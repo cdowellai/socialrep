@@ -39,11 +39,11 @@ export function FAQSection() {
         >
           <Accordion type="single" collapsible>
             {faqs.map((faq, i) => (
-              <AccordionItem key={i} value={`faq-${i}`} className="border-white/[0.05]">
-                <AccordionTrigger className="text-left font-semibold text-[14px] hover:no-underline py-6 text-white/70 hover:text-white/90 transition-colors">
+              <AccordionItem key={i} value={`faq-${i}`} className="border-white/[0.06]">
+                <AccordionTrigger className="text-left font-semibold text-[14px] hover:no-underline py-6 text-white/80 hover:text-white transition-colors">
                   {faq.q}
                 </AccordionTrigger>
-                <AccordionContent className="text-[14px] text-white/30 leading-[1.7] pb-6">
+                <AccordionContent className="text-[14px] text-white/50 leading-[1.7] pb-6">
                   {faq.a}
                 </AccordionContent>
               </AccordionItem>

@@ -58,7 +58,7 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={(e) => handleSmoothScroll(e, link.href)}
-                  className="text-[13px] text-white/40 hover:text-white transition-colors duration-400 font-medium"
+                  className="text-[13px] text-white/55 hover:text-white transition-colors duration-400 font-medium"
                 >
                   {link.label}
                 </a>
@@ -68,10 +68,10 @@ export function Navbar() {
             <div className="hidden md:flex items-center gap-3">
               {user ? (
                 <>
-                  <Button variant="ghost" size="sm" className="text-white/50 hover:text-white hover:bg-white/5 text-[13px] h-9 font-medium" asChild>
+                  <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5 text-[13px] h-9 font-medium" asChild>
                     <Link to="/dashboard">Dashboard</Link>
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-white/50 hover:text-white hover:bg-white/5 text-[13px] h-9 font-medium" onClick={() => signOut()}>
+                  <Button variant="ghost" size="sm" className="text-white/60 hover:text-white hover:bg-white/5 text-[13px] h-9 font-medium" onClick={() => signOut()}>
                     Sign Out
                   </Button>
                 </>
@@ -80,7 +80,7 @@ export function Navbar() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-white/50 hover:text-white hover:bg-white/5 text-[13px] h-9 font-medium"
+                    className="text-white/60 hover:text-white hover:bg-white/5 text-[13px] h-9 font-medium"
                     onClick={() => setAuthModal({ isOpen: true, tab: "login" })}
                   >
                     Sign in
@@ -108,7 +108,7 @@ export function Navbar() {
                 <a
                   key={link.href}
                   href={link.href}
-                  className="block text-[15px] text-white/50 hover:text-white font-medium"
+                  className="block text-[15px] text-white/60 hover:text-white font-medium"
                   onClick={(e) => handleSmoothScroll(e, link.href)}
                 >
                   {link.label}

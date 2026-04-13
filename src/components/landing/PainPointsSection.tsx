@@ -41,13 +41,13 @@ export function PainPointsSection() {
           transition={{ duration: 1, ease }}
           className="text-center max-w-2xl mx-auto mb-20"
         >
-          <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#818cf8]/60 mb-5">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#818cf8] mb-5">
             Sound familiar?
           </p>
           <h2 className="text-[clamp(1.75rem,4.5vw,3rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white">
             You're growing your business.
             <br />
-            <span className="text-white/40">Your inbox is growing faster.</span>
+            <span className="text-white/50">Your inbox is growing faster.</span>
           </h2>
         </motion.div>
 
@@ -62,13 +62,13 @@ export function PainPointsSection() {
               className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-7 flex flex-col hover:border-white/[0.1] hover:bg-white/[0.03] transition-all duration-700"
             >
               <div className="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mb-6 group-hover:border-[#818cf8]/20 transition-colors duration-500">
-                <card.icon className="h-[18px] w-[18px] text-white/40 group-hover:text-[#818cf8]/70 transition-colors duration-500" />
+                <card.icon className="h-[18px] w-[18px] text-white/50 group-hover:text-[#818cf8]/80 transition-colors duration-500" />
               </div>
-              <h3 className="font-bold text-[17px] mb-3 tracking-[-0.01em] text-white/90">{card.title}</h3>
-              <p className="text-[14px] leading-[1.7] text-white/30 flex-1">{card.body}</p>
-              <div className="border-t border-white/[0.05] mt-7 pt-5">
+              <h3 className="font-bold text-[17px] mb-3 tracking-[-0.01em] text-white">{card.title}</h3>
+              <p className="text-[14px] leading-[1.7] text-white/50 flex-1">{card.body}</p>
+              <div className="border-t border-white/[0.06] mt-7 pt-5">
                 <span className="text-[28px] font-extrabold tracking-[-0.02em] bg-gradient-to-r from-[#818cf8] to-[#c084fc] bg-clip-text text-transparent">{card.stat}</span>
-                <p className="text-[12px] text-white/25 mt-1">{card.statLabel}</p>
+                <p className="text-[12px] text-white/40 mt-1">{card.statLabel}</p>
               </div>
             </motion.div>
           ))}

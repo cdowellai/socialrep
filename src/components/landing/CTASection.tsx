@@ -29,9 +29,9 @@ export function CTASection() {
               <br />
               is a customer choosing
               <br />
-              <span className="text-white/40">someone else.</span>
+              <span className="text-white/50">someone else.</span>
             </h2>
-            <p className="text-[16px] text-white/25 mb-12 max-w-lg mx-auto leading-relaxed">
+            <p className="text-[16px] text-white/45 mb-12 max-w-lg mx-auto leading-relaxed">
               Connect your accounts, train your AI, and start responding faster — all in the next 15 minutes.
             </p>
             <button
