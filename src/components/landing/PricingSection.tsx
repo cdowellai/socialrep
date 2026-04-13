@@ -81,7 +81,7 @@ export function PricingSection() {
 
   return (
     <>
-      <section id="pricing" className="relative py-40 bg-[#06060a] overflow-hidden">
+      <section id="pricing" className="relative py-28 bg-[#06060a] overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[600px] bg-[#4338ca]/[0.03] blur-[150px] rounded-full pointer-events-none" />
 
