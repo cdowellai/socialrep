@@ -15,7 +15,7 @@ const faqs = [
 
 export function FAQSection() {
   return (
-    <section className="relative py-36 bg-[#06060a] overflow-hidden">
+    <section className="relative py-40 bg-[#06060a] overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
 
       <div className="max-w-2xl mx-auto px-6">
@@ -27,7 +27,7 @@ export function FAQSection() {
           className="text-center mb-16"
         >
           <h2 className="text-[clamp(1.75rem,4.5vw,2.75rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white">
-            Questions & Answers
+            Common questions
           </h2>
         </motion.div>
 
@@ -40,10 +40,10 @@ export function FAQSection() {
           <Accordion type="single" collapsible>
             {faqs.map((faq, i) => (
               <AccordionItem key={i} value={`faq-${i}`} className="border-white/[0.06]">
-                <AccordionTrigger className="text-left font-semibold text-[14px] hover:no-underline py-6 text-white/80 hover:text-white transition-colors">
+                <AccordionTrigger className="text-left font-semibold text-[15px] hover:no-underline py-6 text-white/80 hover:text-white transition-colors duration-300">
                   {faq.q}
                 </AccordionTrigger>
-                <AccordionContent className="text-[14px] text-white/50 leading-[1.7] pb-6">
+                <AccordionContent className="text-[14px] text-white/55 leading-[1.7] pb-6">
                   {faq.a}
                 </AccordionContent>
               </AccordionItem>
