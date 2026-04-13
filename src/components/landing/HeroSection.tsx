@@ -43,27 +43,6 @@ export function HeroSection() {
         <div className="absolute top-1/4 right-1/6 w-[400px] h-[400px] rounded-full bg-[#2563eb]/[0.03] blur-[120px] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-6 pt-36 md:pt-44 pb-24 relative z-10">
-          {/* Trust bar */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.2, ease }}
-            className="flex justify-center mb-10"
-          >
-            <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-white/[0.06] bg-white/[0.02]">
-              <div className="flex -space-x-1.5">
-                {["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b"].map((c, i) => (
-                  <div key={i} className="w-5 h-5 rounded-full border-2 border-[#06060a]" style={{ backgroundColor: c }} />
-                ))}
-              </div>
-              <span className="text-[12px] text-white/40 font-medium">Trusted by 2,400+ businesses</span>
-              <div className="flex gap-0.5 ml-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-                ))}
-              </div>
-            </div>
-          </motion.div>
 
           {/* Headline */}
           <motion.div
