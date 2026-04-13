@@ -29,7 +29,7 @@ const painCards: { icon: LucideIcon; title: string; body: string; stat: string; 
 
 export function PainPointsSection() {
   return (
-    <section className="relative py-40 bg-[#06060a] overflow-hidden">
+    <section className="relative py-28 bg-[#06060a] overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
 
       <div className="max-w-6xl mx-auto px-6">

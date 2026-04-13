@@ -39,7 +39,7 @@ export function HeroSection() {
         <div className="absolute top-1/3 left-1/6 w-[500px] h-[500px] rounded-full bg-[#7c3aed]/[0.03] blur-[150px] pointer-events-none" />
         <div className="absolute top-1/4 right-1/6 w-[400px] h-[400px] rounded-full bg-[#2563eb]/[0.03] blur-[120px] pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-6 pt-36 md:pt-44 pb-24 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 pt-32 md:pt-40 pb-16 relative z-10">
 
           {/* Headline — emotion-first */}
           <motion.div
@@ -96,7 +96,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 100, rotateX: 8 }}
             animate={{ opacity: 1, y: 0, rotateX: 0 }}
             transition={{ duration: 1.8, delay: 0.6, ease }}
-            className="mt-20 relative max-w-5xl mx-auto"
+            className="mt-16 relative max-w-5xl mx-auto"
             style={{ perspective: "2000px" }}
           >
             {/* Multiple glow layers */}

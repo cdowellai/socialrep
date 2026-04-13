@@ -5,7 +5,7 @@ const ease = [0.16, 1, 0.3, 1] as const;
 
 export function CTASection() {
   return (
-    <section className="relative py-44 bg-[#06060a] overflow-hidden">
+    <section className="relative py-28 bg-[#06060a] overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
       
       {/* Cinematic glow */}
