@@ -13,12 +13,10 @@ export function HeroSection() {
   };
 
   const conversations = [
-    { name: "@sarah_designs", platform: "Instagram", message: "Love this product! Do you ship to Miami? ✨", time: "2m", tag: "Positive", tagColor: "bg-emerald-500/20 text-emerald-400", selected: true, initials: "SD", color: "#8b5cf6" },
-    { name: "Mike Thompson", platform: "Google", message: "Still waiting on my order from last week...", time: "14m", tag: "Urgent", tagColor: "bg-red-500/20 text-red-400", selected: false, initials: "MT", color: "#ef4444" },
-    { name: "Alex Chen", platform: "Google", message: "Outstanding service and quick delivery!", time: "1h", tag: "★★★★★", tagColor: "bg-amber-500/20 text-amber-400", selected: false, initials: "AC", color: "#10b981" },
-    { name: "Jen Rivera", platform: "Facebook", message: "Can I get a refund? Not what I expected.", time: "2h", tag: "AI Ready", tagColor: "bg-blue-500/20 text-blue-400", selected: false, initials: "JR", color: "#3b82f6" },
-    { name: "Marcus W.", platform: "Yelp", message: "The food was great but parking is terrible", time: "3h", tag: "New", tagColor: "bg-white/10 text-white/60", selected: false, initials: "MW", color: "#f59e0b" },
-    { name: "@coffeelover99", platform: "Instagram", message: "Is this available in a larger size?", time: "5h", tag: "Pending", tagColor: "bg-white/8 text-white/50", selected: false, initials: "CL", color: "#ec4899" },
+    { name: "Rachel Kim", platform: "Instagram", message: "Hey — do you guys ship to Vancouver?", time: "2m", selected: true, initials: "RK", color: "#8b5cf6" },
+    { name: "Tom Nguyen", platform: "Google", message: "Order #4821 still hasn't arrived. It's been 9 days.", time: "14m", selected: false, initials: "TN", color: "#ef4444" },
+    { name: "Priya Sharma", platform: "Google", message: "Honestly impressed. Packaging was beautiful too.", time: "1h", selected: false, initials: "PS", color: "#10b981" },
+    { name: "Jordan Ellis", platform: "Facebook", message: "This isn't what I ordered — can someone help?", time: "2h", selected: false, initials: "JE", color: "#3b82f6" },
   ];
 
   const sidebarItems = [
@@ -179,15 +177,12 @@ export function HeroSection() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[11px] font-semibold text-white/85 truncate">{conv.name}</span>
-                            <span className="text-[9px] text-white/25">· {conv.platform}</span>
+                         <span className="text-[9px] text-white/25">· {conv.platform}</span>
                           </div>
                           <p className="text-[10px] text-white/35 truncate mt-0.5">{conv.message}</p>
                         </div>
                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
                           <span className="text-[9px] text-white/20">{conv.time}</span>
-                          <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-medium ${conv.tagColor}`}>
-                            {conv.tag}
-                          </span>
                         </div>
                       </div>
                     ))}
@@ -198,12 +193,11 @@ export function HeroSection() {
                 <div className="hidden md:flex flex-col flex-1">
                   <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.05] bg-gradient-to-r from-white/[0.01] to-transparent">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[10px] font-bold ring-2 ring-[#8b5cf6]/30" style={{ backgroundColor: "#8b5cf6" }}>SD</div>
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[10px] font-bold ring-2 ring-[#8b5cf6]/30" style={{ backgroundColor: "#8b5cf6" }}>RK</div>
                       <div>
-                        <span className="font-semibold text-[13px] text-white/90">@sarah_designs</span>
+                        <span className="font-semibold text-[13px] text-white/90">Rachel Kim</span>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className="text-[9px] px-2 py-0.5 rounded-full bg-gradient-to-r from-[#E4405F]/15 to-[#E4405F]/5 text-[#E4405F]/80 border border-[#E4405F]/10">Instagram</span>
-                          <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">Positive</span>
                         </div>
                       </div>
                     </div>
@@ -214,23 +208,21 @@ export function HeroSection() {
                     </div>
                   </div>
 
-                  {/* Customer context bar */}
+                   {/* Customer context bar */}
                   <div className="flex items-center gap-3 px-5 py-2 bg-white/[0.01] border-b border-white/[0.04] text-[9px] text-white/25">
-                    <span>First interaction</span>
+                    <span>New customer</span>
                     <span className="w-0.5 h-0.5 rounded-full bg-white/15" />
-                    <span>Instagram follower</span>
-                    <span className="w-0.5 h-0.5 rounded-full bg-white/15" />
-                    <span>Miami, FL</span>
+                    <span>Vancouver, BC</span>
                     <span className="ml-auto text-emerald-400/60">● Online</span>
                   </div>
 
                   <div className="flex-1 px-5 py-5 space-y-4 overflow-hidden">
                     {/* Customer message */}
                     <div className="flex gap-3">
-                      <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold ring-1 ring-white/10" style={{ backgroundColor: "#8b5cf6" }}>SD</div>
+                      <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold ring-1 ring-white/10" style={{ backgroundColor: "#8b5cf6" }}>RK</div>
                       <div>
                         <div className="bg-white/[0.04] rounded-2xl rounded-tl-md px-4 py-3 text-[12px] text-white/65 max-w-sm leading-relaxed border border-white/[0.03]">
-                          Love this product! Do you ship to Miami? ✨
+                          Hey — do you guys ship to Vancouver?
                         </div>
                         <span className="text-[8px] text-white/20 mt-1.5 block">Today at 2:14 PM</span>
                       </div>
@@ -245,13 +237,10 @@ export function HeroSection() {
                           </div>
                           <span className="text-[11px] font-semibold text-[#a78bfa]">AI-Generated Draft</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[8px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">98% confidence</span>
-                          <span className="text-[8px] px-2.5 py-0.5 rounded-full bg-white/[0.04] text-white/30 border border-white/[0.05]">Friendly tone</span>
-                        </div>
+                        <span className="text-[8px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">Ready to send</span>
                       </div>
                       <p className="text-[12px] leading-[1.75] mb-4 text-white/55">
-                        Hi Sarah! Thank you so much 💛 Yes, we ship to Miami — usually arrives in 3-5 business days. Want me to send you a direct link to order?
+                        Hi Rachel — yes, we ship across Canada! Vancouver orders usually arrive within 3–5 business days. Want me to send you a tracking link once it's out?
                       </p>
                       <div className="flex items-center gap-2">
                         <button className="text-[11px] px-4 py-2 rounded-xl bg-gradient-to-r from-[#4338ca] to-[#6366f1] text-white font-semibold shadow-[0_0_16px_-4px_rgba(99,102,241,0.4)] flex items-center gap-1.5">
