@@ -34,17 +34,14 @@ export function HeroSection() {
   return (
     <>
       <section className="relative min-h-screen bg-[#06060a] overflow-hidden">
-        {/* Subtle grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[size:72px_72px] pointer-events-none" />
-        
-        {/* Ambient orbs */}
+        {/* Ambient orbs — no grid */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[800px] rounded-full bg-[#4338ca]/[0.05] blur-[200px] pointer-events-none" />
         <div className="absolute top-1/3 left-1/6 w-[500px] h-[500px] rounded-full bg-[#7c3aed]/[0.03] blur-[150px] pointer-events-none" />
         <div className="absolute top-1/4 right-1/6 w-[400px] h-[400px] rounded-full bg-[#2563eb]/[0.03] blur-[120px] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-6 pt-36 md:pt-44 pb-24 relative z-10">
 
-          {/* Headline */}
+          {/* Headline — emotion-first */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -52,50 +49,46 @@ export function HeroSection() {
             className="text-center mb-7"
           >
             <h1 className="text-[clamp(2.75rem,7vw,5.5rem)] leading-[0.98] font-extrabold tracking-[-0.04em] text-white">
-              Every message.
+              Your reputation.
               <br />
               <span className="bg-gradient-to-r from-[#818cf8] via-[#a78bfa] to-[#c084fc] bg-clip-text text-transparent">
-                One inbox.
+                Always on.
               </span>
-              <br />
-              <span className="text-white/90">AI that sounds like&nbsp;you.</span>
             </h1>
           </motion.div>
 
-          {/* Subheadline */}
+          {/* Subheadline — shorter, aspirational */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.3, ease }}
-            className="text-center text-white/55 text-lg md:text-[20px] max-w-[600px] mx-auto mb-12 leading-[1.65] font-light"
+            className="text-center text-white/55 text-lg md:text-[20px] max-w-[540px] mx-auto mb-12 leading-[1.65] font-light"
           >
-            Comments, DMs, and reviews from every platform — one inbox.
-            AI drafts on-brand replies. You approve in one click.
+            One intelligent inbox that responds in your voice — so you never lose another customer.
           </motion.p>
 
-          {/* CTA */}
+          {/* CTA — one solid button + subtle text link */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4, ease }}
             className="flex flex-col items-center gap-5 mb-6"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-6">
               <button
                 onClick={handleScrollToPricing}
                 className="group h-[52px] px-9 rounded-full bg-white text-[#06060a] font-semibold text-[15px] hover:bg-white/95 transition-all duration-500 hover:shadow-[0_0_60px_-8px_rgba(255,255,255,0.25)] flex items-center gap-2.5"
               >
-                Start Free Trial
+                Get Started
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
               </button>
               <button
                 onClick={() => document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" })}
-                className="h-[52px] px-7 rounded-full border border-white/[0.12] text-white/70 font-medium text-[15px] hover:border-white/25 hover:text-white/90 transition-all duration-500"
+                className="text-white/50 font-medium text-[15px] hover:text-white/80 transition-colors duration-400"
               >
-                See how it works
+                See how it works →
               </button>
             </div>
-            <p className="text-[13px] text-white/40 tracking-wide">14-day free trial · No credit card required</p>
           </motion.div>
 
           {/* Product mockup with perspective */}
@@ -287,8 +280,8 @@ export function HeroSection() {
               </div>
             </div>
 
-            {/* Bottom fade */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#06060a] to-transparent pointer-events-none" />
+            {/* Fade-to-black mask for infinite depth */}
+            <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-[#06060a] via-[#06060a]/80 to-transparent pointer-events-none" />
           </motion.div>
         </div>
       </section>

@@ -6,22 +6,22 @@ const ease = [0.16, 1, 0.3, 1] as const;
 const painCards: { icon: LucideIcon; title: string; body: string; stat: string; statLabel: string }[] = [
   {
     icon: MessageSquareOff,
-    title: "Comments pile up. Customers move on.",
-    body: "You're getting traction — but who has time to respond to every comment, DM, and review across 6 platforms?",
+    title: "Messages go unanswered.",
+    body: "You're growing — but who has time to respond to every comment, DM, and review across six platforms?",
     stat: "62%",
     statLabel: "of social messages go unanswered",
   },
   {
     icon: Clock,
-    title: "Slow replies cost you real money.",
-    body: "When someone leaves a review or asks a question, they expect a fast response. Every hour you wait, the chance of winning them back drops.",
+    title: "Every hour costs you.",
+    body: "When someone leaves a review or asks a question, they expect a fast response. Every hour you wait, the chance of winning them drops.",
     stat: "5hrs",
-    statLabel: "is the average first-response time",
+    statLabel: "average first-response time",
   },
   {
     icon: Copy,
-    title: "Generic responses do more harm than good.",
-    body: "'Thanks for your feedback!' doesn't cut it. You need responses that sound like they came from a human who actually read the message.",
+    title: "Generic replies fall flat.",
+    body: "'Thanks for your feedback!' doesn't cut it. You need responses that sound like they came from someone who actually read the message.",
     stat: "4×",
     statLabel: "more engagement from personalized replies",
   },
@@ -29,8 +29,7 @@ const painCards: { icon: LucideIcon; title: string; body: string; stat: string; 
 
 export function PainPointsSection() {
   return (
-    <section className="relative py-36 bg-[#06060a] overflow-hidden">
-      {/* Subtle ambient */}
+    <section className="relative py-40 bg-[#06060a] overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
 
       <div className="max-w-6xl mx-auto px-6">
@@ -42,12 +41,12 @@ export function PainPointsSection() {
           className="text-center max-w-2xl mx-auto mb-20"
         >
           <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#818cf8] mb-5">
-            Sound familiar?
+            The reality
           </p>
           <h2 className="text-[clamp(1.75rem,4.5vw,3rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white">
-            You're growing your business.
+            Your customers are talking.
             <br />
-            <span className="text-white/50">Your inbox is growing faster.</span>
+            <span className="text-white/50">Are you listening?</span>
           </h2>
         </motion.div>
 
@@ -65,10 +64,10 @@ export function PainPointsSection() {
                 <card.icon className="h-[18px] w-[18px] text-white/50 group-hover:text-[#818cf8]/80 transition-colors duration-500" />
               </div>
               <h3 className="font-bold text-[17px] mb-3 tracking-[-0.01em] text-white">{card.title}</h3>
-              <p className="text-[14px] leading-[1.7] text-white/50 flex-1">{card.body}</p>
+              <p className="text-[14px] leading-[1.7] text-white/55 flex-1">{card.body}</p>
               <div className="border-t border-white/[0.06] mt-7 pt-5">
-                <span className="text-[28px] font-extrabold tracking-[-0.02em] bg-gradient-to-r from-[#818cf8] to-[#c084fc] bg-clip-text text-transparent">{card.stat}</span>
-                <p className="text-[12px] text-white/40 mt-1">{card.statLabel}</p>
+                <span className="text-[36px] font-extrabold tracking-[-0.03em] bg-gradient-to-r from-[#818cf8] to-[#c084fc] bg-clip-text text-transparent">{card.stat}</span>
+                <p className="text-[12px] text-white/45 mt-1">{card.statLabel}</p>
               </div>
             </motion.div>
           ))}

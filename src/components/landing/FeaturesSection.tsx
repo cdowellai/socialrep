@@ -29,10 +29,7 @@ function FeatureBlock({
       className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center"
     >
       <div className={reverse ? "lg:order-2" : ""}>
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#818cf8]/[0.08] border border-[#818cf8]/[0.12] mb-6">
-          <Icon className="h-3.5 w-3.5 text-[#818cf8]" />
-          <span className="text-[11px] font-semibold text-[#818cf8] uppercase tracking-[0.12em]">{label}</span>
-        </div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#818cf8]/80 mb-6">{label}</p>
         <h3 className="text-[clamp(1.5rem,3.5vw,2.5rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white mb-5">{title}</h3>
         <p className="text-[15px] text-white/55 mb-8 leading-[1.7]">{description}</p>
         <ul className="space-y-4">
@@ -104,7 +101,7 @@ export function FeaturesSection() {
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   return (
-    <section id="features" className="relative py-36 bg-[#06060a] overflow-hidden">
+    <section id="features" className="relative py-40 bg-[#06060a] overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-[#4338ca]/[0.02] rounded-full blur-[200px] pointer-events-none" />
 
@@ -117,12 +114,12 @@ export function FeaturesSection() {
           className="text-center max-w-2xl mx-auto mb-28"
         >
           <h2 className="text-[clamp(1.75rem,4.5vw,3rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white mb-5">
-            Everything you need.
+            Built for the conversations
             <br />
-            <span className="text-white/50">Nothing you don't.</span>
+            <span className="text-white/50">that matter.</span>
           </h2>
           <p className="text-[16px] text-white/50 max-w-lg mx-auto leading-relaxed">
-            Replace the five tools you're duct-taping together with one platform that actually does the work.
+            One platform that replaces the five tools you're duct-taping together.
           </p>
         </motion.div>
 
@@ -179,7 +176,6 @@ export function FeaturesSection() {
             <div className="relative">
               <div className="absolute -inset-4 bg-[#818cf8]/[0.03] rounded-3xl blur-2xl pointer-events-none" />
               <div className="relative rounded-2xl border border-white/[0.06] bg-[#0c0c14] p-6 shadow-[0_20px_80px_-20px_rgba(99,102,241,0.1),inset_0_1px_0_rgba(255,255,255,0.04)]">
-                {/* KPI cards */}
                 <div className="grid grid-cols-3 gap-3 mb-6">
                   {[
                     { label: "Response Time", value: "1.2h", change: "↓ 74%", icon: TrendingUp },
@@ -198,7 +194,6 @@ export function FeaturesSection() {
                     </div>
                   ))}
                 </div>
-                {/* Chart */}
                 <div className="bg-white/[0.015] rounded-xl p-5 border border-white/[0.04]">
                   <div className="flex items-center justify-between mb-4">
                     <div className="text-[12px] font-semibold text-white/50">Interaction Volume</div>
@@ -242,7 +237,6 @@ export function FeaturesSection() {
             <div className="flex justify-center relative">
               <div className="absolute inset-0 bg-[#818cf8]/[0.02] rounded-3xl blur-3xl pointer-events-none" />
               <div className="relative w-[340px] rounded-2xl border border-white/[0.06] bg-[#0c0c14] overflow-hidden shadow-[0_20px_80px_-20px_rgba(99,102,241,0.12),inset_0_1px_0_rgba(255,255,255,0.04)]">
-                {/* Header */}
                 <div className="bg-gradient-to-r from-[#4338ca] to-[#6366f1] px-5 py-4 relative overflow-hidden">
                   <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.1)_0%,transparent_50%)] pointer-events-none" />
                   <div className="flex items-center gap-3 relative z-10">
@@ -256,7 +250,6 @@ export function FeaturesSection() {
                     </div>
                   </div>
                 </div>
-                {/* Chat */}
                 <div className="p-4 space-y-3 bg-[#0c0c14] min-h-[220px]">
                   <div className="flex gap-2.5">
                     <div className="w-6 h-6 rounded-full bg-[#4338ca]/30 flex-shrink-0 flex items-center justify-center text-[8px] text-white/60 font-bold">B</div>
@@ -276,7 +269,6 @@ export function FeaturesSection() {
                     </div>
                   </div>
                 </div>
-                {/* Input */}
                 <div className="px-4 pb-4 bg-[#0c0c14]">
                   <div className="border border-white/[0.06] rounded-xl px-4 py-3 text-[12px] text-white/25 flex items-center justify-between">
                     <span>Type a message...</span>

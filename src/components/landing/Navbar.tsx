@@ -38,18 +38,32 @@ export function Navbar() {
       <nav
         className={cn(
           "fixed top-0 left-0 right-0 z-50 transition-all duration-700",
-          isScrolled
-            ? "bg-[#06060a]/70 backdrop-blur-2xl border-b border-white/[0.04] shadow-[0_1px_40px_-10px_rgba(0,0,0,0.5)]"
-            : "bg-transparent"
+          isScrolled ? "py-2" : "py-0"
         )}
       >
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center justify-between h-16">
+        <div
+          className={cn(
+            "transition-all duration-700 mx-auto",
+            isScrolled
+              ? "max-w-3xl bg-white/[0.06] backdrop-blur-2xl border border-white/[0.08] rounded-full shadow-[0_4px_40px_-8px_rgba(0,0,0,0.5)]"
+              : "max-w-7xl bg-transparent"
+          )}
+        >
+          <div className={cn(
+            "flex items-center justify-between",
+            isScrolled ? "h-12 px-5" : "h-16 px-6"
+          )}>
             <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-[#4338ca] to-[#7c3aed] flex items-center justify-center shadow-[0_0_20px_-4px_rgba(99,102,241,0.3)] group-hover:shadow-[0_0_28px_-4px_rgba(99,102,241,0.4)] transition-shadow duration-500">
-                <MessageSquare className="h-4 w-4 text-white" />
+              <div className={cn(
+                "rounded-xl bg-gradient-to-br from-[#4338ca] to-[#7c3aed] flex items-center justify-center shadow-[0_0_20px_-4px_rgba(99,102,241,0.3)] group-hover:shadow-[0_0_28px_-4px_rgba(99,102,241,0.4)] transition-all duration-500",
+                isScrolled ? "h-7 w-7" : "h-8 w-8"
+              )}>
+                <MessageSquare className={cn("text-white", isScrolled ? "h-3.5 w-3.5" : "h-4 w-4")} />
               </div>
-              <span className="font-bold text-[16px] text-white tracking-[-0.01em]">SocialRep</span>
+              <span className={cn(
+                "font-bold text-white tracking-[-0.01em] transition-all duration-500",
+                isScrolled ? "text-[14px]" : "text-[16px]"
+              )}>SocialRep</span>
             </Link>
 
             <div className="hidden md:flex items-center gap-8">
@@ -86,7 +100,10 @@ export function Navbar() {
                     Sign in
                   </Button>
                   <button
-                    className="h-9 px-5 rounded-full bg-white text-[#06060a] text-[13px] font-semibold hover:bg-white/90 transition-all duration-300 hover:shadow-[0_0_30px_-6px_rgba(255,255,255,0.2)]"
+                    className={cn(
+                      "rounded-full bg-white text-[#06060a] font-semibold hover:bg-white/90 transition-all duration-300 hover:shadow-[0_0_30px_-6px_rgba(255,255,255,0.2)]",
+                      isScrolled ? "h-8 px-4 text-[12px]" : "h-9 px-5 text-[13px]"
+                    )}
                     onClick={() => document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" })}
                   >
                     Get Started
