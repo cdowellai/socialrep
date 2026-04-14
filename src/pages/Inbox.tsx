@@ -40,7 +40,7 @@ import { useBrandVoice } from "@/hooks/useBrandVoice";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeam } from "@/hooks/useTeam";
 import { useInboxKeyboardShortcuts } from "@/hooks/useInboxKeyboardShortcuts";
-import { seedSampleData } from "@/lib/sampleData";
+
 import { useToast } from "@/hooks/use-toast";
 import { AdvancedFilters } from "@/components/inbox/AdvancedFilters";
 import { BulkActions } from "@/components/inbox/BulkActions";
@@ -128,7 +128,7 @@ export default function InboxPage() {
   const [response, setResponse] = useState("");
   const [suggestedResponse, setSuggestedResponse] = useState("");
   const [responseConfidence, setResponseConfidence] = useState<number | null>(null);
-  const [seeding, setSeeding] = useState(false);
+  
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [matchedRules, setMatchedRules] = useState<string[]>([]);
   const [isInternalNote, setIsInternalNote] = useState(false);
