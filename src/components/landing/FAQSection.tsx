@@ -6,7 +6,7 @@ const ease = [0.16, 1, 0.3, 1] as const;
 const faqs = [
   { q: "Does the AI actually sound like me?", a: "Yes — because you train it. You describe your brand voice, paste real responses you've written, and the AI uses those as its baseline. Every draft matches your tone. Nothing sends without your approval." },
   { q: "What if the AI writes something I don't like?", a: "Every AI response is a draft. You can edit, approve, or discard it. For automated responses like 5-star review replies, you write the templates and set the rules." },
-  { q: "Which platforms are supported?", a: "Full two-way integration with Facebook, Instagram, Google Business, Yelp, and Trustpilot. Monitoring for TikTok, YouTube, LinkedIn, and BBB with full integration rolling out." },
+  { q: "Which platforms are supported?", a: "We support Facebook, Instagram, Google Business, Yelp, and Trustpilot with full two-way integration. Additional platforms including TikTok, YouTube, LinkedIn, and BBB are being expanded regularly." },
   { q: "Can I manage multiple clients?", a: "Yes. Professional supports team collaboration. Agency includes separate workspaces, white-label reports, and 15 team seats — built for agencies." },
   { q: "How long does setup take?", a: "About 15 minutes. Connect platforms (2 min each), train your AI voice (5 min), and you're live. Your inbox populates immediately." },
   { q: "How is this different from Hootsuite?", a: "Hootsuite is for publishing. SocialRep is for responding — managing the other side of social media. AI-drafted responses in your voice, sentiment analytics, and reputation tracking." },
@@ -15,7 +15,7 @@ const faqs = [
 
 export function FAQSection() {
   return (
-    <section className="relative py-28 bg-[#06060a] overflow-hidden">
+    <section id="faq" className="relative py-28 bg-[#06060a] overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
 
       <div className="max-w-2xl mx-auto px-6">

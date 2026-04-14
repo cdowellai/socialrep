@@ -3,13 +3,14 @@ import { MessageSquareOff, Clock, Copy, type LucideIcon } from "lucide-react";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
-const painCards: { icon: LucideIcon; title: string; body: string; stat: string; statLabel: string }[] = [
+const painCards: { icon: LucideIcon; title: string; body: string; stat: string; statLabel: string; source: string }[] = [
   {
     icon: MessageSquareOff,
     title: "Messages go unanswered.",
     body: "You're growing — but who has time to respond to every comment, DM, and review across six platforms?",
     stat: "62%",
     statLabel: "of social messages go unanswered",
+    source: "Sprout Social, 2023",
   },
   {
     icon: Clock,
@@ -17,6 +18,7 @@ const painCards: { icon: LucideIcon; title: string; body: string; stat: string; 
     body: "When someone leaves a review or asks a question, they expect a fast response. Every hour you wait, the chance of winning them drops.",
     stat: "5hrs",
     statLabel: "average first-response time",
+    source: "Sprout Social Index",
   },
   {
     icon: Copy,
@@ -24,6 +26,7 @@ const painCards: { icon: LucideIcon; title: string; body: string; stat: string; 
     body: "'Thanks for your feedback!' doesn't cut it. You need responses that sound like they came from someone who actually read the message.",
     stat: "4×",
     statLabel: "more engagement from personalized replies",
+    source: "McKinsey, 2023",
   },
 ];
 
@@ -68,6 +71,7 @@ export function PainPointsSection() {
               <div className="border-t border-white/[0.06] mt-7 pt-5">
                 <span className="text-[36px] font-extrabold tracking-[-0.03em] bg-gradient-to-r from-[#818cf8] to-[#c084fc] bg-clip-text text-transparent">{card.stat}</span>
                 <p className="text-[12px] text-white/45 mt-1">{card.statLabel}</p>
+                <p className="text-[10px] text-white/25 mt-1.5">Source: {card.source}</p>
               </div>
             </motion.div>
           ))}

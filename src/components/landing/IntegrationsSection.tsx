@@ -1,18 +1,25 @@
 import { motion } from "framer-motion";
-import { Facebook, Instagram, Star, Youtube, Linkedin, MessageCircle } from "lucide-react";
+import { Facebook, Instagram, Youtube, Linkedin, MessageCircle } from "lucide-react";
+import { type ReactNode } from "react";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
-const platforms = [
-  { name: "Facebook", color: "#1877F2", icon: Facebook },
-  { name: "Instagram", color: "#E4405F", icon: Instagram },
-  { name: "Google Business", color: "#4285F4", icon: Star },
-  { name: "Trustpilot", color: "#00B67A", icon: Star },
-  { name: "Yelp", color: "#D32323", icon: Star },
-  { name: "TikTok", color: "#ffffff", icon: MessageCircle },
-  { name: "YouTube", color: "#FF0000", icon: Youtube },
-  { name: "LinkedIn", color: "#0A66C2", icon: Linkedin },
-  { name: "BBB", color: "#003DA5", icon: Star },
+function Monogram({ letter, color }: { letter: string; color: string }) {
+  return (
+    <span className="text-[13px] font-extrabold leading-none" style={{ color }}>{letter}</span>
+  );
+}
+
+const platforms: { name: string; color: string; icon: ReactNode }[] = [
+  { name: "Facebook", color: "#1877F2", icon: <Facebook className="h-4 w-4" style={{ color: "#1877F2" }} /> },
+  { name: "Instagram", color: "#E4405F", icon: <Instagram className="h-4 w-4" style={{ color: "#E4405F" }} /> },
+  { name: "Google Business", color: "#4285F4", icon: <Monogram letter="G" color="#4285F4" /> },
+  { name: "Trustpilot", color: "#00B67A", icon: <Monogram letter="T" color="#00B67A" /> },
+  { name: "Yelp", color: "#D32323", icon: <Monogram letter="Y" color="#D32323" /> },
+  { name: "TikTok", color: "#ffffff", icon: <MessageCircle className="h-4 w-4" style={{ color: "#ffffff" }} /> },
+  { name: "YouTube", color: "#FF0000", icon: <Youtube className="h-4 w-4" style={{ color: "#FF0000" }} /> },
+  { name: "LinkedIn", color: "#0A66C2", icon: <Linkedin className="h-4 w-4" style={{ color: "#0A66C2" }} /> },
+  { name: "BBB", color: "#003DA5", icon: <Monogram letter="B" color="#003DA5" /> },
 ];
 
 export function IntegrationsSection() {
@@ -59,10 +66,7 @@ export function IntegrationsSection() {
                 className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500"
                 style={{ backgroundColor: `${p.color}15` }}
               >
-                <p.icon
-                  className="h-4 w-4 transition-all duration-500"
-                  style={{ color: p.color }}
-                />
+                {p.icon}
               </div>
               <span className="text-[14px] font-medium text-white/70 group-hover:text-white/90 transition-colors duration-500">{p.name}</span>
             </motion.div>
