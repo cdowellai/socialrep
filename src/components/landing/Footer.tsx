@@ -48,6 +48,7 @@ export function Footer() {
           <div>
             <h4 className="text-[12px] font-semibold uppercase tracking-[0.1em] text-white/50 mb-4">Support</h4>
             <ul className="space-y-2.5">
+              <li><a href="#faq" onClick={(e) => handleSmoothScroll(e, "#faq")} className="text-[13px] text-white/40 hover:text-white/70 transition-colors duration-300">FAQ</a></li>
               <li><a href="mailto:support@socialrep.ai" className="text-[13px] text-white/40 hover:text-white/70 transition-colors duration-300">Contact</a></li>
             </ul>
           </div>

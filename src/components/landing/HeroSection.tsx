@@ -65,17 +65,17 @@ export function HeroSection() {
             One intelligent inbox that responds in your voice — so you never lose another customer.
           </motion.p>
 
-          {/* CTA — one solid button + subtle text link */}
+          {/* CTA — stacks on mobile */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4, ease }}
             className="flex flex-col items-center gap-5 mb-6"
           >
-            <div className="flex items-center gap-6">
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
               <button
                 onClick={handleScrollToPricing}
-                className="group h-[52px] px-9 rounded-full bg-white text-[#06060a] font-semibold text-[15px] hover:bg-white/95 transition-all duration-500 hover:shadow-[0_0_60px_-8px_rgba(255,255,255,0.25)] flex items-center gap-2.5"
+                className="group h-[52px] px-9 rounded-full bg-white text-[#06060a] font-semibold text-[15px] hover:bg-white/95 transition-all duration-500 hover:shadow-[0_0_60px_-8px_rgba(255,255,255,0.25)] flex items-center gap-2.5 whitespace-nowrap"
               >
                 Get Started
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
@@ -102,7 +102,7 @@ export function HeroSection() {
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[70%] h-[50%] bg-[#818cf8]/10 blur-[80px] rounded-full pointer-events-none" />
             <div className="absolute -inset-px bg-gradient-to-b from-white/[0.08] via-white/[0.02] to-transparent rounded-2xl pointer-events-none" />
 
-            <div className="relative rounded-2xl border border-white/[0.08] overflow-hidden bg-[#0c0c14] shadow-[0_60px_140px_-30px_rgba(67,56,202,0.25),0_0_0_1px_rgba(255,255,255,0.04),inset_0_1px_0_rgba(255,255,255,0.05)]">
+            <div className="relative rounded-2xl border border-white/[0.08] overflow-hidden bg-[#0c0c14] shadow-[0_60px_140px_-30px_rgba(67,56,202,0.25),0_0_0_1px_rgba(255,255,255,0.04),inset_0_1px_0_rgba(255,255,255,0.05)]" aria-hidden="true">
               {/* macOS title bar */}
               <div className="flex items-center gap-2 px-5 py-3.5 bg-gradient-to-b from-white/[0.03] to-white/[0.01] border-b border-white/[0.06]">
                 <div className="flex gap-2">
@@ -149,8 +149,8 @@ export function HeroSection() {
                   </div>
                 </div>
 
-                {/* Conversation list */}
-                <div className="w-full md:w-[32%] border-r border-white/[0.05] flex flex-col bg-gradient-to-b from-white/[0.01] to-transparent">
+                {/* Conversation list — hidden on mobile, replaced by mobile AI card */}
+                <div className="hidden md:flex w-[32%] border-r border-white/[0.05] flex-col bg-gradient-to-b from-white/[0.01] to-transparent">
                   <div className="p-3 border-b border-white/[0.05]">
                     <div className="flex items-center gap-2 bg-white/[0.03] rounded-xl px-3 py-2.5 text-[11px] text-white/30 border border-white/[0.04]">
                       <Search className="h-3.5 w-3.5" />
@@ -177,7 +177,7 @@ export function HeroSection() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[11px] font-semibold text-white/85 truncate">{conv.name}</span>
-                         <span className="text-[9px] text-white/25">· {conv.platform}</span>
+                           <span className="text-[9px] text-white/25">· {conv.platform}</span>
                           </div>
                           <p className="text-[10px] text-white/35 truncate mt-0.5">{conv.message}</p>
                         </div>
@@ -189,7 +189,44 @@ export function HeroSection() {
                   </div>
                 </div>
 
-                {/* Detail panel */}
+                {/* Mobile-only AI draft card */}
+                <div className="flex md:hidden flex-col flex-1 px-4 py-4 space-y-3">
+                  {/* Customer message */}
+                  <div className="flex gap-2.5">
+                    <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold ring-1 ring-white/10" style={{ backgroundColor: "#8b5cf6" }}>RK</div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-[11px] font-semibold text-white/85">Rachel Kim</span>
+                        <span className="text-[9px] text-white/25">· Instagram</span>
+                      </div>
+                      <div className="bg-white/[0.04] rounded-2xl rounded-tl-md px-3.5 py-2.5 text-[12px] text-white/65 leading-relaxed border border-white/[0.03]">
+                        Hey — do you guys ship to Vancouver?
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* AI Draft */}
+                  <div className="border border-[#818cf8]/15 rounded-2xl bg-gradient-to-br from-[#818cf8]/[0.05] via-[#818cf8]/[0.02] to-transparent p-3.5 shadow-[0_0_40px_-12px_rgba(99,102,241,0.1)]">
+                    <div className="flex items-center gap-2 mb-2.5">
+                      <div className="w-5 h-5 rounded-lg bg-gradient-to-br from-[#818cf8] to-[#a78bfa] flex items-center justify-center shadow-[0_0_12px_-2px_rgba(129,140,248,0.4)]">
+                        <span className="text-[9px] text-white font-bold">✦</span>
+                      </div>
+                      <span className="text-[11px] font-semibold text-[#a78bfa]">AI-Generated Draft</span>
+                      <span className="ml-auto text-[8px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">Ready to send</span>
+                    </div>
+                    <p className="text-[12px] leading-[1.75] mb-3 text-white/55">
+                      Hi Rachel — yes, we ship across Canada! Vancouver orders usually arrive within 3–5 business days. Want me to send you a tracking link once it's out?
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] px-4 py-2 rounded-xl bg-gradient-to-r from-[#4338ca] to-[#6366f1] text-white font-semibold shadow-[0_0_16px_-4px_rgba(99,102,241,0.4)] flex items-center gap-1.5">
+                        <Check className="h-3 w-3" /> Approve & Send
+                      </span>
+                      <span className="text-[11px] px-3 py-2 rounded-xl border border-white/[0.06] text-white/40 font-medium">Edit</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detail panel — desktop */}
                 <div className="hidden md:flex flex-col flex-1">
                   <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.05] bg-gradient-to-r from-white/[0.01] to-transparent">
                     <div className="flex items-center gap-3">
@@ -243,13 +280,13 @@ export function HeroSection() {
                         Hi Rachel — yes, we ship across Canada! Vancouver orders usually arrive within 3–5 business days. Want me to send you a tracking link once it's out?
                       </p>
                       <div className="flex items-center gap-2">
-                        <button className="text-[11px] px-4 py-2 rounded-xl bg-gradient-to-r from-[#4338ca] to-[#6366f1] text-white font-semibold shadow-[0_0_16px_-4px_rgba(99,102,241,0.4)] flex items-center gap-1.5">
+                        <span className="text-[11px] px-4 py-2 rounded-xl bg-gradient-to-r from-[#4338ca] to-[#6366f1] text-white font-semibold shadow-[0_0_16px_-4px_rgba(99,102,241,0.4)] flex items-center gap-1.5">
                           <Check className="h-3 w-3" /> Approve & Send
-                        </button>
-                        <button className="text-[11px] px-3 py-2 rounded-xl border border-white/[0.06] text-white/40 font-medium hover:text-white/60 transition-colors">Edit</button>
-                        <button className="text-[11px] px-3 py-2 rounded-xl text-white/30 font-medium flex items-center gap-1">
+                        </span>
+                        <span className="text-[11px] px-3 py-2 rounded-xl border border-white/[0.06] text-white/40 font-medium">Edit</span>
+                        <span className="text-[11px] px-3 py-2 rounded-xl text-white/30 font-medium flex items-center gap-1">
                           <RefreshCw className="h-3 w-3" /> Regenerate
-                        </button>
+                        </span>
                       </div>
                     </div>
                   </div>
