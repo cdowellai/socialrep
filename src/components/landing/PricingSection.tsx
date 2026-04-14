@@ -167,9 +167,6 @@ export function PricingSection() {
             ))}
           </motion.div>
 
-        <p className="text-center text-[13px] text-white/40 mt-14">
-          Need something custom? <a href="mailto:sales@socialrep.ai" className="text-white/60 hover:text-white/80 underline underline-offset-2 transition-colors duration-300">Contact us</a> for Enterprise pricing.
-        </p>
         </div>
       </section>
 
