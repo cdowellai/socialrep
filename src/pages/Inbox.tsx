@@ -213,30 +213,7 @@ export default function InboxPage() {
     refetchWithFilters();
   }, [filters, refetchWithFilters]);
 
-  const handleLoadSampleData = async () => {
-    if (!user) return;
-    setSeeding(true);
-    try {
-      const result = await seedSampleData(user.id);
-      if (result.success) {
-        toast({
-          title: "Sample data loaded",
-          description: "Your inbox has been populated with sample interactions.",
-        });
-        refetch();
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : "Failed to load sample data",
-        variant: "destructive",
-      });
-    } finally {
-      setSeeding(false);
-    }
-  };
+
 
   const handleGenerateResponse = async () => {
     if (!selectedInteraction) return;
