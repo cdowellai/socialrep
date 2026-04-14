@@ -67,7 +67,7 @@ export function FeaturePaywall({ feature, description, requiredPlan, children }:
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
             <p className="text-xs text-center text-muted-foreground">
-              14-day free trial included • Cancel anytime
+              Cancel anytime
             </p>
           </CardContent>
         </Card>
