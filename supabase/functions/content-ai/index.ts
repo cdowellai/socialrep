@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,12 +26,42 @@ interface ContentAIRequest {
   };
 }
 
+const VALID_ACTIONS = ["generate_draft", "predict_engagement", "suggest_optimal_time", "improve_content"];
+const MAX_CONTENT_LENGTH = 5000;
+const MAX_BRAND_VOICE_LENGTH = 2000;
+const MAX_PLATFORMS = 10;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Authentication check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Authorization required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: "Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -38,6 +69,44 @@ serve(async (req) => {
 
     const request: ContentAIRequest = await req.json();
     const { action, content, source_interaction, platforms, brand_voice, historical_data } = request;
+
+    // Input validation
+    if (!action || !VALID_ACTIONS.includes(action)) {
+      return new Response(
+        JSON.stringify({ error: `Invalid action. Must be one of: ${VALID_ACTIONS.join(", ")}` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (content && (typeof content !== "string" || content.length > MAX_CONTENT_LENGTH)) {
+      return new Response(
+        JSON.stringify({ error: `Content must be a string of at most ${MAX_CONTENT_LENGTH} characters` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (brand_voice && (typeof brand_voice !== "string" || brand_voice.length > MAX_BRAND_VOICE_LENGTH)) {
+      return new Response(
+        JSON.stringify({ error: `Brand voice must be a string of at most ${MAX_BRAND_VOICE_LENGTH} characters` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (platforms && (!Array.isArray(platforms) || platforms.length > MAX_PLATFORMS)) {
+      return new Response(
+        JSON.stringify({ error: `Platforms must be an array of at most ${MAX_PLATFORMS} items` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (source_interaction) {
+      if (typeof source_interaction.content !== "string" || source_interaction.content.length > MAX_CONTENT_LENGTH) {
+        return new Response(
+          JSON.stringify({ error: "Source interaction content is invalid or too long" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     let systemPrompt = "";
     let userPrompt = "";
@@ -134,7 +203,10 @@ Respond with ONLY the improved post content, no explanation.`;
         break;
 
       default:
-        throw new Error(`Unknown action: ${action}`);
+        return new Response(
+          JSON.stringify({ error: `Unknown action: ${action}` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -167,8 +239,7 @@ Respond with ONLY the improved post content, no explanation.`;
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("AI gateway error:", response.status);
       throw new Error(`AI gateway error: ${response.status}`);
     }
 
@@ -180,13 +251,11 @@ Respond with ONLY the improved post content, no explanation.`;
     
     if (action === "predict_engagement" || action === "suggest_optimal_time") {
       try {
-        // Extract JSON from the response
         const jsonMatch = generatedContent.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           result = JSON.parse(jsonMatch[0]);
         }
       } catch {
-        // If parsing fails, return as-is
         result = { content: generatedContent, parse_error: true };
       }
     }
@@ -195,9 +264,8 @@ Respond with ONLY the improved post content, no explanation.`;
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Content AI error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    console.error("Content AI error:", error instanceof Error ? error.message : "Unknown error");
+    return new Response(JSON.stringify({ error: "An internal error occurred" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
