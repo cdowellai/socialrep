@@ -1,74 +1,118 @@
 
 
-## Apple CMO/CBO Critique: Visual Mockups and In-Mockup Copy
+## Deep Audit: Remaining Issues and Fixes
 
-### The Verdict
+### Issue 1: Mobile Hero CTA Layout is Broken
+On mobile (390px), the "Get Started" button and "See how it works →" text link sit side-by-side but the button text wraps to two lines ("Get\nStarted"), creating an awkward stacked look inside a horizontal flex container. The CTA area needs to stack vertically on mobile.
 
-The page has zero actual photography or imagery — every visual is a CSS-rendered UI mockup. That's not inherently wrong (Apple does this with product screenshots), but the execution has several issues that an Apple creative team would flag immediately.
-
----
-
-### Problem 1: The Hero Mockup Copy Feels Generic
-
-The conversation data uses placeholder-quality names and messages that read like a SaaS template demo, not a real product moment. Apple product shots always show *believable, aspirational* content.
-
-**Current issues:**
-- "@sarah_designs" and "@coffeelover99" feel like stock personas
-- "Love this product! Do you ship to Miami? ✨" is too on-the-nose
-- The AI draft response uses a yellow heart emoji (💛) which feels unprofessional
-- "98% confidence" and "Friendly tone" badges clutter the AI draft — Apple would never label the magic, they'd just show it working
-- The customer context bar ("First interaction · Instagram follower · Miami, FL") is so specific it breaks believability
-
-**Fix:** Rewrite all mockup conversation data to feel like *real* messages from real customers of a real business. Remove the meta-labels (confidence score, tone badge) from the AI draft. Let the quality of the response speak for itself.
-
-### Problem 2: The Feature Section Review Cards Use a Fictional Business
-
-"Brew & Co." coffee shop appears across the review cards and chatbot. It's fine as a demo concept, but the copy is too specific and too perfect.
-
-**Current issues:**
-- "The oat milk latte is incredible and the staff always remembers my name" — overly saccharine
-- The AI response "David, that just made our morning!" with a smiley emoji reads like a template
-- The chatbot "Do you have gluten-free options?" → "Yes! We have 8 gluten-free pastries" is too neat
-- The 2-star review from "Lisa M." is good tension, but the "Generate Response" button copy is fine
-
-**Fix:** Make the demo business feel slightly more real and the messages slightly more raw/natural. Tone down the perfection. Apple shows real use — not a fairy tale.
-
-### Problem 3: The Analytics Mockup Has Invisible Data
-
-The bar chart in the Analytics section is nearly invisible — the bars are extremely faint against the dark background. The stat cards (1.2h, 96%, +0.72) are good but the chart beneath them reads as empty space.
-
-**Fix:** Increase bar opacity significantly. Make the chart feel like real, growing data — not a whisper.
-
-### Problem 4: Too Many Tags and Badges in the Hero Mockup
-
-Apple's UI philosophy is "show, don't label." The hero mockup has:
-- Sentiment tags on every conversation (Positive, Urgent, AI Ready, New, Pending)
-- Platform labels next to every name
-- A "98% confidence" badge and "Friendly tone" badge on the AI draft
-- A customer context bar with three data points
-- An "Approve & Send" / "Edit" / "Regenerate" button row
-
-This is feature-dumping in the hero. Apple would show ONE clean interaction with ONE clear AI response — nothing else competing for attention.
-
-**Fix:** Simplify the hero mockup. Reduce conversations to 4 max. Remove the confidence/tone badges from the AI draft. Simplify the context bar.
-
-### Problem 5: The Chatbot Widget Copy Is Too Perfect
-
-The chatbot conversation in the Features section is unrealistically tidy. Real chatbot conversations have some friction.
-
-**Fix:** Make the chatbot exchange slightly more natural — the bot can acknowledge uncertainty or offer a follow-up question.
+**File:** `HeroSection.tsx` — Add `flex-col sm:flex-row` to the CTA button container (line 75), and ensure the button doesn't wrap text with `whitespace-nowrap`.
 
 ---
 
-### Summary of Changes
+### Issue 2: Hero Mockup Shows Only Conversation List on Mobile (No Value)
+On mobile, the detail panel and sidebar are hidden (`hidden md:flex`). Users only see the conversation list — which shows no AI capability. The most important product moment (the AI-drafted response) is completely invisible on mobile. This is the biggest conversion killer on the page.
+
+**Fix:** Add a mobile-only simplified AI draft card below the conversation list that's visible on small screens, showing one conversation + AI response. Or show the detail panel on mobile instead of the conversation list.
+
+**File:** `HeroSection.tsx`
+
+---
+
+### Issue 3: The "Brew & Co." Chatbot Demo Uses a Fictional Brand Name
+The chatbot widget still says "Brew & Co." — a fictional coffee shop. This is fine for demo purposes, but it would feel more premium and universal if it used a generic/neutral brand name or the user's own brand placeholder like "Your Brand" or just the product category.
+
+**Fix:** This is minor. Keep as-is or change to something slightly more generic like "Luna Coffee" to feel less template-y. Low priority.
+
+---
+
+### Issue 4: Integrations Icons Are Generic
+Google Business, Trustpilot, Yelp, BBB, and TikTok all use the same `Star` or `MessageCircle` lucide icon. They don't look like the actual platform logos. Apple would use real brand marks. Since we can't use trademarked logos, at minimum use more distinctive icon choices — or use the first letter of each platform as a styled monogram.
+
+**Fix:** Replace generic `Star` icons with more distinctive representations for each platform. Use colored letter monograms (G, T, Y, B) inside the icon containers.
+
+**File:** `IntegrationsSection.tsx`
+
+---
+
+### Issue 5: Pain Points Stats Are Unattributed
+The stats "62%", "5hrs", and "4×" have no source attribution. These are specific claims that should cite a source — even a small "(Source: Sprout Social)" footnote. Without attribution, they feel made up, which contradicts the "no false social proof" brand rule.
+
+**Fix:** Either add small source citations below each stat, or soften the language to avoid specific claims (e.g., "Most social messages go unanswered" instead of "62%").
+
+**File:** `PainPointsSection.tsx`
+
+---
+
+### Issue 6: FAQ Copy Mentions Specific Platform Support That May Be Inaccurate
+The FAQ says "Full two-way integration with Facebook, Instagram, Google Business, Yelp, and Trustpilot. Monitoring for TikTok, YouTube, LinkedIn, and BBB with full integration rolling out." — this is a product claim that needs to be accurate. If any of these aren't actually integrated yet, this is misleading.
+
+**Fix:** Verify accuracy of platform claims or soften to "We're expanding to new platforms regularly."
+
+**File:** `FAQSection.tsx`
+
+---
+
+### Issue 7: "Contact us" Link for Enterprise Pricing Goes Nowhere
+"Need something custom? Contact us for Enterprise pricing." has no link — it's just text. There should be a mailto link or a link to a contact form.
+
+**Fix:** Wrap "Contact us" in a mailto link to `sales@socialrep.ai` or similar.
+
+**File:** `PricingSection.tsx`
+
+---
+
+### Issue 8: Navbar Pill Effect Covers Content Behind It
+The frosted-glass pill nav has no top padding on the `<nav>` element when not scrolled (`py-0`). When scrolled, it shifts to `py-2`. The page content starts at `pt-32` which works, but the floating pill at the top may visually overlap section headers when scrolling to anchors since there's no `scroll-margin-top` or `scroll-padding-top` set.
+
+**Fix:** Add `scroll-margin-top: 80px` (or `scroll-pt-20`) to anchored sections so smooth-scrolling doesn't hide headings behind the fixed nav.
+
+**File:** `index.css` — Add `scroll-margin-top` to section elements, or set `scroll-padding-top` on `html`.
+
+---
+
+### Issue 9: Footer "Support" Column Has Only One Link
+The Support column has only "Contact" — it looks sparse and unbalanced compared to the other columns. Apple's footer has at least 3-4 items per column.
+
+**Fix:** Add a "FAQ" link (scrolls to FAQ section) and optionally "Status" or "Documentation" to fill out the column.
+
+**File:** `Footer.tsx`
+
+---
+
+### Issue 10: No `aria-label` or Accessibility on Key Interactive Elements
+The hero mockup buttons ("Approve & Send", "Edit", "Regenerate") and the entire mockup are decorative but rendered as real `<button>` elements. Screen readers will try to interact with them. They should have `aria-hidden="true"` or `role="presentation"` on the mockup container.
+
+**Fix:** Add `aria-hidden="true"` to the product mockup container div.
+
+**File:** `HeroSection.tsx`
+
+---
+
+### Issue 11: Missing `<meta>` Description / OG Tags
+The `index.html` likely has a generic title/description. For an Apple-level page, the `<title>`, `<meta name="description">`, and Open Graph tags need to be crafted.
+
+**File:** `index.html`
+
+---
+
+### Summary of All Changes
 
 | File | Changes |
 |------|---------|
-| `HeroSection.tsx` | Rewrite conversation data to feel more authentic; remove confidence/tone badges from AI draft; reduce conversations to 4; simplify context bar; clean up AI response copy |
-| `FeaturesSection.tsx` | Rewrite review card copy for more natural tone; increase analytics chart bar opacity; adjust chatbot conversation to feel more real; tone down the "perfect demo" feel |
+| `HeroSection.tsx` | Fix mobile CTA wrapping; add mobile-visible AI draft; add `aria-hidden` to mockup |
+| `PainPointsSection.tsx` | Add source citations to stats or soften claims |
+| `IntegrationsSection.tsx` | Replace generic Star icons with distinctive monograms |
+| `PricingSection.tsx` | Make "Contact us" a clickable mailto link |
+| `FAQSection.tsx` | Verify/soften platform claims |
+| `Footer.tsx` | Add FAQ link to Support column |
+| `index.css` | Add `scroll-padding-top` to html for anchor offset |
+| `index.html` | Add proper meta description and OG tags |
 
-### What This Does NOT Change
-- Layout, spacing, colors, and structure remain untouched
-- The macOS chrome, sidebar, and overall mockup architecture stay the same
-- This is purely a copy and visual polish pass on the content *inside* the mockups
+### Priority Order
+1. **Mobile hero CTA layout** — broken UX, highest impact
+2. **Mobile mockup showing no AI value** — major conversion gap
+3. **Scroll-padding for nav overlap** — functional bug
+4. **Enterprise pricing link** — dead end
+5. **Integration icons** — polish
+6. **Everything else** — refinement
 
