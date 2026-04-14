@@ -27,7 +27,7 @@ import {
   ThumbsDown,
   Minus,
   RefreshCw,
-  Beaker,
+  
   Loader2,
   Zap,
   StickyNote,
