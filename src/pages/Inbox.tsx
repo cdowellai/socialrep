@@ -27,7 +27,7 @@ import {
   ThumbsDown,
   Minus,
   RefreshCw,
-  Beaker,
+  
   Loader2,
   Zap,
   StickyNote,
@@ -40,7 +40,7 @@ import { useBrandVoice } from "@/hooks/useBrandVoice";
 import { useAuth } from "@/hooks/useAuth";
 import { useTeam } from "@/hooks/useTeam";
 import { useInboxKeyboardShortcuts } from "@/hooks/useInboxKeyboardShortcuts";
-import { seedSampleData } from "@/lib/sampleData";
+
 import { useToast } from "@/hooks/use-toast";
 import { AdvancedFilters } from "@/components/inbox/AdvancedFilters";
 import { BulkActions } from "@/components/inbox/BulkActions";
@@ -128,7 +128,7 @@ export default function InboxPage() {
   const [response, setResponse] = useState("");
   const [suggestedResponse, setSuggestedResponse] = useState("");
   const [responseConfidence, setResponseConfidence] = useState<number | null>(null);
-  const [seeding, setSeeding] = useState(false);
+  
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [matchedRules, setMatchedRules] = useState<string[]>([]);
   const [isInternalNote, setIsInternalNote] = useState(false);
@@ -213,30 +213,7 @@ export default function InboxPage() {
     refetchWithFilters();
   }, [filters, refetchWithFilters]);
 
-  const handleLoadSampleData = async () => {
-    if (!user) return;
-    setSeeding(true);
-    try {
-      const result = await seedSampleData(user.id);
-      if (result.success) {
-        toast({
-          title: "Sample data loaded",
-          description: "Your inbox has been populated with sample interactions.",
-        });
-        refetch();
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : "Failed to load sample data",
-        variant: "destructive",
-      });
-    } finally {
-      setSeeding(false);
-    }
-  };
+
 
   const handleGenerateResponse = async () => {
     if (!selectedInteraction) return;
@@ -587,15 +564,8 @@ export default function InboxPage() {
               <Button variant="outline" size="icon" onClick={refetch} title="Refresh">
                 <RefreshCw className="h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleLoadSampleData}
-                disabled={seeding}
-                title="Load sample data"
-              >
-                <Beaker className={`h-4 w-4 ${seeding ? "animate-pulse" : ""}`} />
-              </Button>
+
+
               <KeyboardShortcutsHelper
                 showDialog={showHelp}
                 onDialogChange={setShowHelp}
@@ -680,12 +650,11 @@ export default function InboxPage() {
                     </>
                   ) : (
                     <>
-                      <Beaker className="h-10 w-10 mb-3 opacity-50" />
-                      <p className="mb-4">No interactions yet</p>
-                      <Button variant="outline" onClick={handleLoadSampleData} disabled={seeding}>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Load Sample Data
-                      </Button>
+                      <MessageSquare className="h-10 w-10 mb-3 opacity-50" />
+                      <p className="text-sm font-medium mb-1">No interactions yet</p>
+                      <p className="text-xs text-center mb-4 px-6 opacity-70">
+                        Interactions will appear here once your connected platforms start receiving messages.
+                      </p>
                     </>
                   )}
                 </div>
