@@ -60,7 +60,7 @@ export function PricingSection() {
   const handleCheckout = async (planId: string, period: "monthly" | "annual") => {
     setLoadingPlan(planId);
     try {
-      const url = await createCheckoutSession(planId, period, true);
+      const url = await createCheckoutSession(planId, period, false);
       if (url) window.location.href = url;
     } catch (error) {
       console.error("Checkout error:", error);
@@ -97,7 +97,7 @@ export function PricingSection() {
               Simple, transparent pricing.
             </h2>
             <p className="text-[16px] text-white/50">
-              14-day free trial on every plan. No credit card required.
+              Choose the plan that fits your business.
             </p>
           </motion.div>
 
@@ -158,7 +158,7 @@ export function PricingSection() {
                 >
                   {loadingPlan === plan.plan?.id ? "Loading..." : (
                     <>
-                      Start Free Trial
+                      Get Started
                       {plan.recommended && <ArrowRight className="w-3.5 h-3.5" />}
                     </>
                   )}
