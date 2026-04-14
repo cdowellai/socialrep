@@ -564,15 +564,8 @@ export default function InboxPage() {
               <Button variant="outline" size="icon" onClick={refetch} title="Refresh">
                 <RefreshCw className="h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleLoadSampleData}
-                disabled={seeding}
-                title="Load sample data"
-              >
-                <Beaker className={`h-4 w-4 ${seeding ? "animate-pulse" : ""}`} />
-              </Button>
+
+
               <KeyboardShortcutsHelper
                 showDialog={showHelp}
                 onDialogChange={setShowHelp}
@@ -657,12 +650,11 @@ export default function InboxPage() {
                     </>
                   ) : (
                     <>
-                      <Beaker className="h-10 w-10 mb-3 opacity-50" />
-                      <p className="mb-4">No interactions yet</p>
-                      <Button variant="outline" onClick={handleLoadSampleData} disabled={seeding}>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Load Sample Data
-                      </Button>
+                      <MessageSquare className="h-10 w-10 mb-3 opacity-50" />
+                      <p className="text-sm font-medium mb-1">No interactions yet</p>
+                      <p className="text-xs text-center mb-4 px-6 opacity-70">
+                        Interactions will appear here once your connected platforms start receiving messages.
+                      </p>
                     </>
                   )}
                 </div>
