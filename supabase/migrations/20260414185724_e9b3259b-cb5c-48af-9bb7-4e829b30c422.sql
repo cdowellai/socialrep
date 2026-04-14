@@ -1,0 +1,1 @@
+DELETE FROM interactions; DELETE FROM reviews;
