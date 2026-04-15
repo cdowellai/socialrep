@@ -25,7 +25,7 @@ import DataDeletion from "./pages/DataDeletion";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ children, allowDemo = false }: { children: React.ReactNode; allowDemo?: boolean }) {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -36,7 +36,7 @@ function ProtectedRoute({ children, allowDemo = false }: { children: React.React
     );
   }
 
-  if (!user && !allowDemo) {
+  if (!user) {
     return <Navigate to="/" replace />;
   }
 

@@ -27,12 +27,6 @@ export function Navbar() {
     { href: "#pricing", label: "Pricing" },
   ];
 
-  const demoLinks = [
-    { to: "/dashboard", label: "Dashboard" },
-    { to: "/dashboard/streams", label: "Streams" },
-    { to: "/dashboard/reviews", label: "Reviews" },
-  ];
-
   const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
     document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
