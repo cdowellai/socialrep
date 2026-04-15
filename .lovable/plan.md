@@ -1,49 +1,39 @@
 
 
-## Interactive Hero Mockup — Live Product Demo
+## Make the Hero Mockup Sidebar Interactive (Not the Navbar)
 
-Transform the static hero mockup into a functional mini-demo that lets visitors experience SocialRep before signing up. This is a powerful product-led growth tactic — Apple does this with their product configurators.
+The demo links (Dashboard, Streams, Reviews) should be removed from the Navbar and instead the sidebar icons *inside the hero mockup* should become clickable, switching the mockup's content panel between different views.
 
-### What becomes interactive
+### What changes
 
-1. **Conversation switching** — Click any conversation in the left panel. The detail panel updates with that person's message and a unique AI-generated draft. Each conversation has its own context (customer info, location, platform badge, message content, AI response).
+**1. Navbar cleanup** — Remove the `demoLinks` array and all related rendering (desktop divider + links, mobile links). Revert to the original nav with only Features, Integrations, Pricing.
 
-2. **AI draft "typing" animation** — When switching conversations, the AI draft area shows a brief typing/shimmer animation before the response appears, simulating real-time AI generation.
+**2. Hero mockup sidebar becomes interactive** — The sidebar icons (Dashboard, Inbox, Streams, Reviews, Leads, Analytics) become clickable. A new `activeView` state controls which "screen" the mockup shows:
 
-3. **Approve & Send** — Clicking shows a satisfying "Sent ✓" animation: the button morphs to a green checkmark, the conversation moves to resolved, and a subtle success pulse radiates outward.
+- **Inbox** (current default) — The existing conversation list + AI draft panel. No changes needed here.
+- **Dashboard** — A mini dashboard mockup showing KPI cards (e.g., "47 conversations", "4.8★ avg rating", "92% response rate", "12m avg response") and a small bar chart or trend line. All static/hardcoded.
+- **Streams** — A mini Kanban-style view with 2–3 columns ("Urgent", "Positive Mentions", "Instagram DMs") each showing 2–3 compact interaction cards.
+- **Reviews** — A mini reviews panel showing 3–4 review cards with star ratings, reviewer names, and short excerpts. Include an average rating badge.
 
-4. **Edit mode** — Clicking "Edit" makes the AI draft text editable (contentEditable or textarea swap). An "Update" button replaces "Edit."
+**3. View switching animation** — Use `AnimatePresence` with the same fade+y-translate pattern already used for conversation switching.
 
-5. **Regenerate** — Clicking triggers the typing animation again and swaps in an alternate AI draft for that conversation.
-
-6. **Reply input** — The "Write a reply..." bar becomes a real input. Typing and hitting enter (or a send button) shows the message appear in the thread.
-
-### Data model (all client-side, no backend)
-
-Each conversation object expands to include:
-- `customerContext` (e.g., "New customer · Vancouver, BC" / "Repeat buyer · Toronto, ON")
-- `aiDraft` (primary AI response)
-- `aiDraftAlt` (alternate response for Regenerate)
-- `sentiment` / `status` for visual indicators
-- `resolved` boolean for post-send state
-
-### Technical approach
-
-- All state managed with `useState` in `HeroSection.tsx` — no new files needed
-- CSS transitions + framer-motion for the typing shimmer and sent animation
-- `selectedIndex` state drives which conversation is active
-- `conversationStates` map tracks per-conversation state (draft text, editing, sent)
-- Mobile view cycles through conversations or shows the first with full interactivity
+**4. App.tsx cleanup** — Remove the `allowDemo` prop from `ProtectedRoute` and the demo routes, reverting to auth-required dashboard access.
 
 ### Files to change
 
 | File | Change |
 |------|--------|
-| `src/components/landing/HeroSection.tsx` | Expand conversation data, add state management, wire up click handlers, add animations |
+| `src/components/landing/Navbar.tsx` | Remove `demoLinks`, remove demo link rendering in desktop and mobile |
+| `src/components/landing/HeroSection.tsx` | Add `activeView` state, make sidebar items clickable, create mini Dashboard/Streams/Reviews view components inline |
+| `src/App.tsx` | Remove `allowDemo` prop from ProtectedRoute and demo routes |
 
-### Animations
+### Mini-view content (all hardcoded, no backend)
 
-- **Typing shimmer**: A gradient pulse across the draft text area (0.8s) using CSS keyframes
-- **Sent confirmation**: Button background transitions to emerald, text changes to "Sent ✓", then fades back after 2s
-- **Conversation switch**: Detail panel content fades out (150ms) → fades in (200ms) with slight y-translate
+**Dashboard view**: 4 KPI cards in a 2×2 grid + a simple sparkline area. Numbers: "47 Conversations", "4.8★ Rating", "92% Response Rate", "12m Avg Response".
+
+**Streams view**: 3 columns (Urgent · 3, Positive · 8, Instagram · 5) each with 2 compact cards showing name, platform pill, and a one-line message preview.
+
+**Reviews view**: Average rating hero (4.8★), then 3 review cards with star rows, reviewer name, platform, and a truncated review body.
+
+Each view matches the existing dark glassmorphism aesthetic with the same spacing, typography, and color tokens already in use.
 
