@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { DEMO_INTERACTIONS } from "@/lib/demoData";
 import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
 type Interaction = Tables<"interactions">;
@@ -12,10 +13,12 @@ export function useInteractions() {
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDemo, setIsDemo] = useState(false);
 
   const fetchInteractions = useCallback(async () => {
     if (!user) {
-      setInteractions([]);
+      setInteractions(DEMO_INTERACTIONS);
+      setIsDemo(true);
       setLoading(false);
       return;
     }
@@ -31,10 +34,19 @@ export function useInteractions() {
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
-      setInteractions(data || []);
+      
+      if (data && data.length > 0) {
+        setInteractions(data);
+        setIsDemo(false);
+      } else {
+        setInteractions(DEMO_INTERACTIONS);
+        setIsDemo(true);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch interactions");
       console.error("Error fetching interactions:", err);
+      setInteractions(DEMO_INTERACTIONS);
+      setIsDemo(true);
     } finally {
       setLoading(false);
     }
@@ -81,6 +93,7 @@ export function useInteractions() {
     interactions,
     loading,
     error,
+    isDemo,
     refetch: fetchInteractions,
     createInteraction,
     updateInteraction,
