@@ -55,11 +55,14 @@ export function DashboardTrendChart({ interactions, loading }: DashboardTrendCha
       <div className="rounded-2xl border border-border/50 bg-card p-8">
         <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Activity Trend</h3>
         <div className="h-[220px] flex flex-col items-center justify-center text-center">
-          <div className="h-12 w-12 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
-            <Activity className="h-6 w-6 text-muted-foreground/40" />
+          <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-5">
+            <Activity className="h-7 w-7 text-primary/60" />
           </div>
-          <p className="text-sm font-medium text-muted-foreground">Activity will appear here</p>
-          <p className="text-xs text-muted-foreground/60 mt-1">once you connect a platform</p>
+          <p className="text-sm font-semibold text-foreground">Activity will appear here</p>
+          <p className="text-xs text-muted-foreground mt-1.5 max-w-[220px]">Connect a platform to start tracking your interaction trends.</p>
+          <a href="/dashboard/settings" className="inline-flex items-center gap-1.5 mt-4 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
+            Connect Platform <span className="text-[10px]">→</span>
+          </a>
         </div>
       </div>
     );
