@@ -101,6 +101,7 @@ const sidebarItems: { icon: typeof LayoutDashboard; label: string; view: ActiveV
 ];
 
 export function HeroSection() {
+  const [activeView, setActiveView] = useState<ActiveView>("inbox");
   const [authModal, setAuthModal] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [convStates, setConvStates] = useState<Record<number, ConversationState>>(() => {
