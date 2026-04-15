@@ -1,39 +1,84 @@
 
 
-## Make the Hero Mockup Sidebar Interactive (Not the Navbar)
+## Apple CMO/CBO Dashboard Rebuild
 
-The demo links (Dashboard, Streams, Reviews) should be removed from the Navbar and instead the sidebar icons *inside the hero mockup* should become clickable, switching the mockup's content panel between different views.
+### The Problem
 
-### What changes
+The current dashboard is functional but lifeless — especially on empty state. Five KPI cards showing "0" with "— 0%" badges, a flat-line chart, and "No data available" text. This is the first thing a user sees after signing up. It needs to feel like opening a new MacBook — pristine, intentional, promising.
 
-**1. Navbar cleanup** — Remove the `demoLinks` array and all related rendering (desktop divider + links, mobile links). Revert to the original nav with only Features, Integrations, Pricing.
+### Design Philosophy
 
-**2. Hero mockup sidebar becomes interactive** — The sidebar icons (Dashboard, Inbox, Streams, Reviews, Leads, Analytics) become clickable. A new `activeView` state controls which "screen" the mockup shows:
+Apple dashboards (Health, Screen Time, Fitness+) share three traits: **generous white space between content blocks**, **progressive disclosure** (show what matters, hide what doesn't), and **contextual empty states that guide action** rather than displaying failure. The current dashboard violates all three.
 
-- **Inbox** (current default) — The existing conversation list + AI draft panel. No changes needed here.
-- **Dashboard** — A mini dashboard mockup showing KPI cards (e.g., "47 conversations", "4.8★ avg rating", "92% response rate", "12m avg response") and a small bar chart or trend line. All static/hardcoded.
-- **Streams** — A mini Kanban-style view with 2–3 columns ("Urgent", "Positive Mentions", "Instagram DMs") each showing 2–3 compact interaction cards.
-- **Reviews** — A mini reviews panel showing 3–4 review cards with star ratings, reviewer names, and short excerpts. Include an average rating badge.
+### What Changes
 
-**3. View switching animation** — Use `AnimatePresence` with the same fade+y-translate pattern already used for conversation switching.
+**1. Intelligent Empty States (the biggest win)**
 
-**4. App.tsx cleanup** — Remove the `allowDemo` prop from `ProtectedRoute` and the demo routes, reverting to auth-required dashboard access.
+When data is zero/empty, the dashboard should not show "0" KPI cards with trend badges. Instead:
+- KPI cards transform into **onboarding action cards** — each one suggests the next step: "Connect a platform", "Import reviews", "Set up AI responses", "Invite your team", "Create your first stream"
+- Each card has a subtle gradient background, an icon, a one-line description, and a CTA button
+- Once real data exists for a metric, the card transitions to the current KPI format
+- This means the dashboard is *always* useful — never a wall of zeros
 
-### Files to change
+**2. Welcome Section — Elevated**
+
+- Time-of-day greeting stays, but becomes larger (text-3xl) with a subtle gradient text treatment on the user's name
+- Subline becomes contextual: new users get "Let's get your reputation engine running." Returning users with data get "Here's what's happening across your platforms."
+- Remove the "View Analytics" button from the header (it's in the sidebar already)
+
+**3. KPI Cards — Refined**
+
+When data exists:
+- Reduce from 5 cards to **4 cards** in a clean 4-column grid (remove "Avg. Response" — it's derivative and clutters)
+- Cards: **Active Conversations** | **Avg. Rating** | **Response Rate** | **Sentiment Score**
+- Larger value typography (text-4xl), label *above* the number (not below — Apple convention), trend pill smaller and more subtle
+- Remove the icon circles — the number IS the icon. Cleaner, more confident
+- Add a micro sparkline (tiny 40px wide line) inside each card showing 7-day trend visually
+
+**4. Charts Section — Simplified**
+
+- Activity Trend chart: when empty, show a subtle illustrated empty state with "Activity will appear here once you connect a platform" — not a flat-line chart with axis numbers
+- Platform Breakdown: when empty, show platform icons in a muted grid with "Connect your first platform" CTA
+- Both charts get slightly more padding and the card titles become smaller/lighter
+
+**5. Recent Interactions — Cleaner**
+
+- When empty: show a single centered illustration-style empty state, not the current icon + two lines of text
+- When populated: tighten the row spacing, make the sentiment dot slightly larger, remove the status icon on the right (redundant with the dot)
+
+**6. Quick Actions — Redesigned as a horizontal strip**
+
+- Move from a sidebar card to a **horizontal row of 4 action pills** between the KPIs and charts
+- Each pill: icon + label, no description text, subtle hover glow
+- This frees the right column for a future "Activity Feed" or keeps the layout 2-column for charts
+
+**7. Animation Polish**
+
+- Stagger timing remains but ease curve tightened to the project standard `[0.16, 1, 0.3, 1]`
+- Empty-to-populated card transitions use `layout` animation from framer-motion for smooth morphing
+
+### Files to Change
 
 | File | Change |
 |------|--------|
-| `src/components/landing/Navbar.tsx` | Remove `demoLinks`, remove demo link rendering in desktop and mobile |
-| `src/components/landing/HeroSection.tsx` | Add `activeView` state, make sidebar items clickable, create mini Dashboard/Streams/Reviews view components inline |
-| `src/App.tsx` | Remove `allowDemo` prop from ProtectedRoute and demo routes |
+| `src/pages/Dashboard.tsx` | Restructure layout: 4-col KPI grid, horizontal quick actions strip, contextual empty states, smarter welcome |
+| `src/components/dashboard/KPICard.tsx` | Redesign: label above value, remove icon circle, add micro sparkline, support "onboarding" variant |
+| `src/components/dashboard/DashboardTrendChart.tsx` | Add graceful empty state with illustration text instead of flat-line chart |
+| `src/components/dashboard/PlatformBreakdownChart.tsx` | Add graceful empty state with platform icons grid |
 
-### Mini-view content (all hardcoded, no backend)
+### Empty State Content
 
-**Dashboard view**: 4 KPI cards in a 2×2 grid + a simple sparkline area. Numbers: "47 Conversations", "4.8★ Rating", "92% Response Rate", "12m Avg Response".
+| Card | Empty Title | Empty CTA |
+|------|-------------|-----------|
+| Active Conversations | Connect your first platform | Connect Platform |
+| Avg. Rating | Start collecting reviews | Set Up Reviews |
+| Response Rate | Enable AI responses | Configure AI |
+| Sentiment Score | Analyze your first interactions | Learn More |
 
-**Streams view**: 3 columns (Urgent · 3, Positive · 8, Instagram · 5) each with 2 compact cards showing name, platform pill, and a one-line message preview.
+### Technical Notes
 
-**Reviews view**: Average rating hero (4.8★), then 3 review cards with star rows, reviewer name, platform, and a truncated review body.
-
-Each view matches the existing dark glassmorphism aesthetic with the same spacing, typography, and color tokens already in use.
+- Micro sparklines: use a simple SVG polyline (no recharts dependency for this), 40×20px, stroke-only, no axes
+- Onboarding card variant uses the same `KPICard` component with a `variant: "onboarding" | "metric"` prop
+- All empty states check `interactions.length === 0` or `reviews.length === 0` to determine which variant to show
+- No new dependencies needed
 
