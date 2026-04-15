@@ -25,7 +25,7 @@ import DataDeletion from "./pages/DataDeletion";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children, allowDemo = false }: { children: React.ReactNode; allowDemo?: boolean }) {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -36,7 +36,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user) {
+  if (!user && !allowDemo) {
     return <Navigate to="/" replace />;
   }
 
@@ -51,7 +51,7 @@ function AppRoutes() {
       <Route
         path="/dashboard"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowDemo>
             <Dashboard />
           </ProtectedRoute>
         }
@@ -59,7 +59,7 @@ function AppRoutes() {
       <Route
         path="/dashboard/inbox"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowDemo>
             <InboxPage />
           </ProtectedRoute>
         }
@@ -67,7 +67,7 @@ function AppRoutes() {
       <Route
         path="/dashboard/streams"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowDemo>
             <StreamsPage />
           </ProtectedRoute>
         }
@@ -75,7 +75,7 @@ function AppRoutes() {
       <Route
         path="/dashboard/reviews"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowDemo>
             <ReviewsPage />
           </ProtectedRoute>
         }

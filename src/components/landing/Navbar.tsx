@@ -27,6 +27,12 @@ export function Navbar() {
     { href: "#pricing", label: "Pricing" },
   ];
 
+  const demoLinks = [
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/dashboard/streams", label: "Streams" },
+    { to: "/dashboard/reviews", label: "Reviews" },
+  ];
+
   const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
     document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
@@ -76,6 +82,16 @@ export function Navbar() {
                 >
                   {link.label}
                 </a>
+              ))}
+              <span className="w-px h-4 bg-white/10" />
+              {demoLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="text-[13px] text-white/55 hover:text-white transition-colors duration-400 font-medium"
+                >
+                  {link.label}
+                </Link>
               ))}
             </div>
 
@@ -135,6 +151,17 @@ export function Navbar() {
                 >
                   {link.label}
                 </a>
+              ))}
+              <div className="w-12 h-px bg-white/[0.08] mx-auto" />
+              {demoLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="block text-[18px] text-white/70 hover:text-white font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
               ))}
               <div className="pt-8 border-t border-white/[0.06] space-y-4">
                 {user ? (
