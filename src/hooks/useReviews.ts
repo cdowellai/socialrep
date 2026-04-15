@@ -104,7 +104,6 @@ export function useReviews(filters?: ReviewFilters) {
 
       const { data, error: fetchError } = await query;
       if (fetchError) throw fetchError;
-      setReviews(data || []);
 
       // Calculate stats from all reviews (unfiltered)
       const { data: allReviews } = await supabase
@@ -112,53 +111,11 @@ export function useReviews(filters?: ReviewFilters) {
         .select("*")
         .eq("user_id", user.id);
 
-      if (allReviews) {
-        const total = allReviews.length;
-        const responded = allReviews.filter((r) => r.response).length;
-        const avgRating = total > 0
-          ? allReviews.reduce((sum, r) => sum + (r.rating || 0), 0) / total
-          : 0;
-
-        // Rating distribution
-        const distribution = [5, 4, 3, 2, 1].map((stars) => {
-          const count = allReviews.filter((r) => r.rating === stars).length;
-          return {
-            stars,
-            count,
-            percentage: total > 0 ? Math.round((count / total) * 100) : 0,
-          };
-        });
-
-        // Platform breakdown
-        const platformMap = new Map<string, { ratings: number[]; count: number }>();
-        allReviews.forEach((r) => {
-          const platform = r.platform;
-          if (!platformMap.has(platform)) {
-            platformMap.set(platform, { ratings: [], count: 0 });
-          }
-          const p = platformMap.get(platform)!;
-          p.count++;
-          if (r.rating) p.ratings.push(r.rating);
-        });
-
-        const platforms = Array.from(platformMap.entries()).map(([name, data]) => ({
-          name: name.charAt(0).toUpperCase() + name.slice(1),
-          rating: data.ratings.length > 0
-            ? Math.round((data.ratings.reduce((a, b) => a + b, 0) / data.ratings.length) * 10) / 10
-            : 0,
-          count: data.count,
-          trend: Math.random() > 0.3 ? "up" : "down",
-        }));
-
-        setStats({
-          averageRating: Math.round(avgRating * 10) / 10,
-          totalReviews: total,
-          responseRate: total > 0 ? Math.round((responded / total) * 100) : 0,
-          pendingCount: total - responded,
-          ratingDistribution: distribution,
-          platforms,
-        });
-      }
+      const reviewsToUse = allReviews && allReviews.length > 0 ? allReviews : DEMO_REVIEWS;
+      const filteredToUse = data && data.length > 0 ? data : DEMO_REVIEWS;
+      
+      setReviews(filteredToUse);
+      computeStatsFromReviews(reviewsToUse);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch reviews");
       console.error("Error fetching reviews:", err);
