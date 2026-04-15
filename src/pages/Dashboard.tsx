@@ -11,8 +11,8 @@ import { useReviews } from "@/hooks/useReviews";
 import { useProfile } from "@/hooks/useProfile";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  MessageSquare, Star, Zap, Brain, Users,
-  Sparkles, ArrowRight, Globe, Settings, BookOpen,
+  MessageSquare, Star, Zap, Brain,
+  Sparkles, ArrowRight, Globe, Settings, Layers, UserPlus,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -139,7 +139,7 @@ export default function Dashboard() {
               <KPICard
                 title="Active Conversations"
                 value={activeConversations}
-                trend={{ value: trends.conversations, isPositive: true }}
+                trend={{ value: trends.conversations, isPositive: trends.conversations <= 0 }}
                 sparklineData={getSparklineData(interactions, "total")}
                 onClick={() => navigate("/dashboard/inbox?status=pending")}
               />
@@ -230,7 +230,9 @@ export default function Dashboard() {
           <div className="flex flex-wrap gap-2">
             {[
               { href: "/dashboard/inbox", icon: MessageSquare, label: "Smart Inbox", badge: activeConversations },
+              { href: "/dashboard/streams", icon: Layers, label: "Streams" },
               { href: "/dashboard/reviews", icon: Star, label: "Reviews" },
+              { href: "/dashboard/leads", icon: UserPlus, label: "Leads" },
               { href: "/dashboard/content", icon: Sparkles, label: "Content" },
               { href: "/dashboard/settings", icon: Settings, label: "Settings" },
             ].map((action) => (
@@ -270,11 +272,17 @@ export default function Dashboard() {
             <div className="px-8 pb-8">
               {recentInteractions.length === 0 ? (
                 <div className="text-center py-16">
-                  <div className="h-12 w-12 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
-                    <MessageSquare className="h-6 w-6 text-muted-foreground/40" />
+                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mx-auto mb-5">
+                    <MessageSquare className="h-7 w-7 text-primary/60" />
                   </div>
-                  <p className="text-sm font-medium text-muted-foreground">No interactions yet</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">They'll appear here once you connect a platform</p>
+                  <p className="text-sm font-semibold text-foreground">No interactions yet</p>
+                  <p className="text-xs text-muted-foreground mt-1.5 max-w-[240px] mx-auto">Connect a platform to start receiving and managing customer interactions.</p>
+                  <Link
+                    to="/dashboard/settings"
+                    className="inline-flex items-center gap-1.5 mt-4 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+                  >
+                    Connect Platform <ArrowRight className="h-3 w-3" />
+                  </Link>
                 </div>
               ) : (
                 <div className="space-y-0.5">
