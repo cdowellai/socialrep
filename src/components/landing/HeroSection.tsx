@@ -311,241 +311,397 @@ export function HeroSection() {
                   </div>
                 </div>
 
-                {/* Conversation list */}
-                <div className="hidden md:flex w-[32%] border-r border-white/[0.05] flex-col bg-gradient-to-b from-white/[0.01] to-transparent">
-                  <div className="p-3 border-b border-white/[0.05]">
-                    <div className="flex items-center gap-2 bg-white/[0.03] rounded-xl px-3 py-2.5 text-[11px] text-white/30 border border-white/[0.04]">
-                      <Search className="h-3.5 w-3.5" />
-                      <span>Search conversations...</span>
-                    </div>
-                  </div>
-                  <div className="flex gap-4 px-4 pt-3 pb-2 text-[11px]">
-                    <span className="font-semibold text-white border-b-2 border-[#818cf8] pb-1.5">All (47)</span>
-                    <span className="text-white/35 pb-1.5">Pending (12)</span>
-                    <span className="text-white/35 pb-1.5">Urgent (3)</span>
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    {conversations.map((c, i) => (
-                      <div
-                        key={i}
-                        onClick={() => handleSelectConversation(i)}
-                        className={`flex items-start gap-2.5 px-3 py-3 cursor-pointer border-l-2 transition-all duration-300 ${
-                          i === selectedIndex
-                            ? "border-l-[#818cf8] bg-[#818cf8]/[0.06]"
-                            : "border-l-transparent hover:bg-white/[0.02]"
-                        } ${convStates[i]?.isSent ? "opacity-50" : ""}`}
-                      >
-                        <div
-                          className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[9px] font-bold shadow-lg ring-1 ring-white/10"
-                          style={{ backgroundColor: c.color }}
-                        >
-                          {c.initials}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[11px] font-semibold text-white/85 truncate">{c.name}</span>
-                            <span className="text-[9px] text-white/25">· {c.platform}</span>
-                            {convStates[i]?.isSent && (
-                              <Check className="h-3 w-3 text-emerald-400 ml-auto flex-shrink-0" />
-                            )}
-                          </div>
-                          <p className="text-[10px] text-white/35 truncate mt-0.5">{c.message}</p>
-                        </div>
-                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                          <span className="text-[9px] text-white/20">{c.time}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Mobile-only AI draft card */}
-                <MobileView
-                  conv={conv}
-                  state={state}
-                  shimmerStyle={shimmerStyle}
-                  onApprove={handleApproveAndSend}
-                  onEdit={handleEdit}
-                  onSaveEdit={handleSaveEdit}
-                  onRegenerate={handleRegenerate}
-                  onDraftChange={(text) => updateState(selectedIndex, { draftText: text })}
-                  editRef={editRef}
-                />
-
-                {/* Detail panel — desktop */}
-                <div className="hidden md:flex flex-col flex-1">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={selectedIndex}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                      className="flex flex-col flex-1"
-                    >
-                      {/* Header */}
-                      <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.05] bg-gradient-to-r from-white/[0.01] to-transparent">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[10px] font-bold ring-2" style={{ backgroundColor: conv.color, boxShadow: `0 0 0 2px ${conv.color}30` }}>
-                            {conv.initials}
-                          </div>
-                          <div>
-                            <span className="font-semibold text-[13px] text-white/90">{conv.name}</span>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[9px] px-2 py-0.5 rounded-full border" style={{ backgroundColor: `${conv.platformColor}15`, color: `${conv.platformColor}cc`, borderColor: `${conv.platformColor}20` }}>
-                                {conv.platform}
-                              </span>
-                            </div>
+                {/* Content area — switches based on activeView */}
+                <AnimatePresence mode="wait">
+                  {activeView === "inbox" ? (
+                    <motion.div key="inbox" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }} className="flex flex-1">
+                      {/* Conversation list */}
+                      <div className="hidden md:flex w-[32%] border-r border-white/[0.05] flex-col bg-gradient-to-b from-white/[0.01] to-transparent">
+                        <div className="p-3 border-b border-white/[0.05]">
+                          <div className="flex items-center gap-2 bg-white/[0.03] rounded-xl px-3 py-2.5 text-[11px] text-white/30 border border-white/[0.04]">
+                            <Search className="h-3.5 w-3.5" />
+                            <span>Search conversations...</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2.5 text-white/25">
-                          <span className="text-[9px] px-2.5 py-1 rounded-lg border border-white/[0.08] hover:border-white/12 transition-colors cursor-default">Assign</span>
-                          <Star className="h-3.5 w-3.5" />
-                          <MoreHorizontal className="h-3.5 w-3.5" />
+                        <div className="flex gap-4 px-4 pt-3 pb-2 text-[11px]">
+                          <span className="font-semibold text-white border-b-2 border-[#818cf8] pb-1.5">All (47)</span>
+                          <span className="text-white/35 pb-1.5">Pending (12)</span>
+                          <span className="text-white/35 pb-1.5">Urgent (3)</span>
                         </div>
-                      </div>
-
-                      {/* Customer context bar */}
-                      <div className="flex items-center gap-3 px-5 py-2 bg-white/[0.01] border-b border-white/[0.04] text-[9px] text-white/25">
-                        <span>{conv.customerContext}</span>
-                        <span className="w-0.5 h-0.5 rounded-full bg-white/15" />
-                        <span>{conv.location}</span>
-                        <span className="ml-auto text-emerald-400/60">● Online</span>
-                      </div>
-
-                      <div className="flex-1 px-5 py-5 space-y-4 overflow-hidden">
-                        {/* Customer message */}
-                        <div className="flex gap-3">
-                          <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold ring-1 ring-white/10" style={{ backgroundColor: conv.color }}>
-                            {conv.initials}
-                          </div>
-                          <div>
-                            <div className="bg-white/[0.04] rounded-2xl rounded-tl-md px-4 py-3 text-[12px] text-white/65 max-w-sm leading-relaxed border border-white/[0.03]">
-                              {conv.message}
-                            </div>
-                            <span className="text-[8px] text-white/20 mt-1.5 block">Today at 2:14 PM</span>
-                          </div>
-                        </div>
-
-                        {/* User replies */}
-                        {state.replies.map((reply, ri) => (
-                          <div key={ri} className="flex gap-3 justify-end">
-                            <div>
-                              <div className="bg-[#818cf8]/10 rounded-2xl rounded-tr-md px-4 py-3 text-[12px] text-white/70 max-w-sm leading-relaxed border border-[#818cf8]/10">
-                                {reply}
+                        <div className="flex-1 overflow-hidden">
+                          {conversations.map((c, i) => (
+                            <div
+                              key={i}
+                              onClick={() => handleSelectConversation(i)}
+                              className={`flex items-start gap-2.5 px-3 py-3 cursor-pointer border-l-2 transition-all duration-300 ${
+                                i === selectedIndex
+                                  ? "border-l-[#818cf8] bg-[#818cf8]/[0.06]"
+                                  : "border-l-transparent hover:bg-white/[0.02]"
+                              } ${convStates[i]?.isSent ? "opacity-50" : ""}`}
+                            >
+                              <div
+                                className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[9px] font-bold shadow-lg ring-1 ring-white/10"
+                                style={{ backgroundColor: c.color }}
+                              >
+                                {c.initials}
                               </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[11px] font-semibold text-white/85 truncate">{c.name}</span>
+                                  <span className="text-[9px] text-white/25">· {c.platform}</span>
+                                  {convStates[i]?.isSent && (
+                                    <Check className="h-3 w-3 text-emerald-400 ml-auto flex-shrink-0" />
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-white/35 truncate mt-0.5">{c.message}</p>
+                              </div>
+                              <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                <span className="text-[9px] text-white/20">{c.time}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Mobile-only AI draft card */}
+                      <MobileView
+                        conv={conv}
+                        state={state}
+                        shimmerStyle={shimmerStyle}
+                        onApprove={handleApproveAndSend}
+                        onEdit={handleEdit}
+                        onSaveEdit={handleSaveEdit}
+                        onRegenerate={handleRegenerate}
+                        onDraftChange={(text) => updateState(selectedIndex, { draftText: text })}
+                        editRef={editRef}
+                      />
+
+                      {/* Detail panel — desktop */}
+                      <div className="hidden md:flex flex-col flex-1">
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={selectedIndex}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                            className="flex flex-col flex-1"
+                          >
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.05] bg-gradient-to-r from-white/[0.01] to-transparent">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[10px] font-bold ring-2" style={{ backgroundColor: conv.color, boxShadow: `0 0 0 2px ${conv.color}30` }}>
+                                  {conv.initials}
+                                </div>
+                                <div>
+                                  <span className="font-semibold text-[13px] text-white/90">{conv.name}</span>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <span className="text-[9px] px-2 py-0.5 rounded-full border" style={{ backgroundColor: `${conv.platformColor}15`, color: `${conv.platformColor}cc`, borderColor: `${conv.platformColor}20` }}>
+                                      {conv.platform}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2.5 text-white/25">
+                                <span className="text-[9px] px-2.5 py-1 rounded-lg border border-white/[0.08] hover:border-white/12 transition-colors cursor-default">Assign</span>
+                                <Star className="h-3.5 w-3.5" />
+                                <MoreHorizontal className="h-3.5 w-3.5" />
+                              </div>
+                            </div>
+
+                            {/* Customer context bar */}
+                            <div className="flex items-center gap-3 px-5 py-2 bg-white/[0.01] border-b border-white/[0.04] text-[9px] text-white/25">
+                              <span>{conv.customerContext}</span>
+                              <span className="w-0.5 h-0.5 rounded-full bg-white/15" />
+                              <span>{conv.location}</span>
+                              <span className="ml-auto text-emerald-400/60">● Online</span>
+                            </div>
+
+                            <div className="flex-1 px-5 py-5 space-y-4 overflow-hidden">
+                              {/* Customer message */}
+                              <div className="flex gap-3">
+                                <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold ring-1 ring-white/10" style={{ backgroundColor: conv.color }}>
+                                  {conv.initials}
+                                </div>
+                                <div>
+                                  <div className="bg-white/[0.04] rounded-2xl rounded-tl-md px-4 py-3 text-[12px] text-white/65 max-w-sm leading-relaxed border border-white/[0.03]">
+                                    {conv.message}
+                                  </div>
+                                  <span className="text-[8px] text-white/20 mt-1.5 block">Today at 2:14 PM</span>
+                                </div>
+                              </div>
+
+                              {/* User replies */}
+                              {state.replies.map((reply, ri) => (
+                                <div key={ri} className="flex gap-3 justify-end">
+                                  <div>
+                                    <div className="bg-[#818cf8]/10 rounded-2xl rounded-tr-md px-4 py-3 text-[12px] text-white/70 max-w-sm leading-relaxed border border-[#818cf8]/10">
+                                      {reply}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+
+                              {/* AI Draft */}
+                              <div className={`border rounded-2xl p-4 transition-all duration-500 ${
+                                state.isSent
+                                  ? "border-emerald-500/30 bg-emerald-500/[0.04]"
+                                  : "border-[#818cf8]/15 bg-gradient-to-br from-[#818cf8]/[0.05] via-[#818cf8]/[0.02] to-transparent shadow-[0_0_40px_-12px_rgba(99,102,241,0.1)]"
+                              }`}
+                                style={state.isSent ? { animation: "sent-pulse 0.6s ease-out" } : {}}
+                              >
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-5 h-5 rounded-lg flex items-center justify-center shadow-[0_0_12px_-2px_rgba(129,140,248,0.4)] ${
+                                      state.isSent ? "bg-gradient-to-br from-emerald-500 to-emerald-400" : "bg-gradient-to-br from-[#818cf8] to-[#a78bfa]"
+                                    }`}>
+                                      <span className="text-[9px] text-white font-bold">{state.isSent ? "✓" : "✦"}</span>
+                                    </div>
+                                    <span className={`text-[11px] font-semibold ${state.isSent ? "text-emerald-400" : "text-[#a78bfa]"}`}>
+                                      {state.isSent ? "Response Sent" : "AI-Generated Draft"}
+                                    </span>
+                                  </div>
+                                  {!state.isSent && (
+                                    <span className="text-[8px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">Ready to send</span>
+                                  )}
+                                </div>
+
+                                {state.isTyping ? (
+                                  <div className="space-y-2 mb-4">
+                                    <div className="h-3 rounded-full w-[90%]" style={shimmerStyle} />
+                                    <div className="h-3 rounded-full w-[75%]" style={shimmerStyle} />
+                                    <div className="h-3 rounded-full w-[60%]" style={shimmerStyle} />
+                                  </div>
+                                ) : state.isEditing ? (
+                                  <textarea
+                                    ref={editRef}
+                                    value={state.draftText}
+                                    onChange={(e) => updateState(selectedIndex, { draftText: e.target.value })}
+                                    className="w-full text-[12px] leading-[1.75] mb-4 text-white/55 bg-transparent border border-white/[0.08] rounded-xl p-3 resize-none focus:outline-none focus:border-[#818cf8]/30"
+                                    rows={3}
+                                  />
+                                ) : (
+                                  <p className="text-[12px] leading-[1.75] mb-4 text-white/55">
+                                    {state.draftText}
+                                  </p>
+                                )}
+
+                                {!state.isSent && !state.isTyping && (
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={handleApproveAndSend}
+                                      className="text-[11px] px-4 py-2 rounded-xl bg-gradient-to-r from-[#4338ca] to-[#6366f1] text-white font-semibold shadow-[0_0_16px_-4px_rgba(99,102,241,0.4)] flex items-center gap-1.5 hover:shadow-[0_0_24px_-4px_rgba(99,102,241,0.6)] transition-shadow cursor-pointer"
+                                    >
+                                      <Check className="h-3 w-3" /> Approve & Send
+                                    </button>
+                                    {state.isEditing ? (
+                                      <button
+                                        onClick={handleSaveEdit}
+                                        className="text-[11px] px-3 py-2 rounded-xl border border-[#818cf8]/20 text-[#818cf8]/70 font-medium cursor-pointer hover:border-[#818cf8]/40 transition-colors"
+                                      >
+                                        Done
+                                      </button>
+                                    ) : (
+                                      <button
+                                        onClick={handleEdit}
+                                        className="text-[11px] px-3 py-2 rounded-xl border border-white/[0.06] text-white/40 font-medium cursor-pointer hover:border-white/[0.12] hover:text-white/60 transition-all"
+                                      >
+                                        Edit
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={handleRegenerate}
+                                      className="text-[11px] px-3 py-2 rounded-xl text-white/30 font-medium flex items-center gap-1 cursor-pointer hover:text-white/50 transition-colors"
+                                    >
+                                      <RefreshCw className="h-3 w-3" /> Regenerate
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Reply bar */}
+                            <div className="px-5 py-3 border-t border-white/[0.05] bg-gradient-to-r from-white/[0.01] to-transparent">
+                              <div className="flex items-center gap-3 bg-white/[0.03] rounded-xl px-4 py-3 border border-white/[0.05] focus-within:border-white/[0.1] transition-colors">
+                                <input
+                                  type="text"
+                                  value={replyText}
+                                  onChange={(e) => setReplyText(e.target.value)}
+                                  onKeyDown={(e) => e.key === "Enter" && handleSendReply()}
+                                  placeholder="Write a reply..."
+                                  className="text-[12px] text-white/70 placeholder:text-white/25 flex-1 bg-transparent outline-none"
+                                />
+                                <div className="flex items-center gap-2">
+                                  {replyText.trim() ? (
+                                    <button
+                                      onClick={handleSendReply}
+                                      className="w-7 h-7 rounded-lg bg-gradient-to-r from-[#4338ca] to-[#6366f1] flex items-center justify-center text-white cursor-pointer hover:shadow-[0_0_12px_rgba(99,102,241,0.4)] transition-shadow"
+                                    >
+                                      <Send className="h-3.5 w-3.5" />
+                                    </button>
+                                  ) : (
+                                    <div className="w-7 h-7 rounded-lg bg-white/[0.04] flex items-center justify-center text-white/25 border border-white/[0.04]">
+                                      <Zap className="h-3.5 w-3.5" />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        </AnimatePresence>
+                      </div>
+                    </motion.div>
+                  ) : activeView === "dashboard" ? (
+                    <motion.div key="dashboard" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }} className="flex-1 p-5 overflow-hidden">
+                      <div className="flex items-center justify-between mb-5">
+                        <h2 className="text-[14px] font-semibold text-white/90">Overview</h2>
+                        <span className="text-[10px] text-white/30 px-2.5 py-1 rounded-lg border border-white/[0.06]">Last 30 days</span>
+                      </div>
+                      {/* KPI Cards */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                        {[
+                          { label: "Conversations", value: "47", change: "+12%", icon: MessageCircle },
+                          { label: "Avg Rating", value: "4.8★", change: "+0.3", icon: StarIcon },
+                          { label: "Response Rate", value: "92%", change: "+5%", icon: TrendingUp },
+                          { label: "Avg Response", value: "12m", change: "-3m", icon: Clock },
+                        ].map((kpi, i) => (
+                          <div key={i} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5">
+                            <div className="flex items-center gap-2 mb-2">
+                              <kpi.icon className="h-3.5 w-3.5 text-white/30" />
+                              <span className="text-[9px] text-white/35 uppercase tracking-wider">{kpi.label}</span>
+                            </div>
+                            <div className="flex items-end gap-2">
+                              <span className="text-[20px] font-bold text-white/90 leading-none">{kpi.value}</span>
+                              <span className="text-[9px] text-emerald-400 mb-0.5">{kpi.change}</span>
                             </div>
                           </div>
                         ))}
-
-                        {/* AI Draft */}
-                        <div className={`border rounded-2xl p-4 transition-all duration-500 ${
-                          state.isSent
-                            ? "border-emerald-500/30 bg-emerald-500/[0.04]"
-                            : "border-[#818cf8]/15 bg-gradient-to-br from-[#818cf8]/[0.05] via-[#818cf8]/[0.02] to-transparent shadow-[0_0_40px_-12px_rgba(99,102,241,0.1)]"
-                        }`}
-                          style={state.isSent ? { animation: "sent-pulse 0.6s ease-out" } : {}}
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-5 h-5 rounded-lg flex items-center justify-center shadow-[0_0_12px_-2px_rgba(129,140,248,0.4)] ${
-                                state.isSent ? "bg-gradient-to-br from-emerald-500 to-emerald-400" : "bg-gradient-to-br from-[#818cf8] to-[#a78bfa]"
-                              }`}>
-                                <span className="text-[9px] text-white font-bold">{state.isSent ? "✓" : "✦"}</span>
-                              </div>
-                              <span className={`text-[11px] font-semibold ${state.isSent ? "text-emerald-400" : "text-[#a78bfa]"}`}>
-                                {state.isSent ? "Response Sent" : "AI-Generated Draft"}
-                              </span>
-                            </div>
-                            {!state.isSent && (
-                              <span className="text-[8px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/10">Ready to send</span>
-                            )}
-                          </div>
-
-                          {state.isTyping ? (
-                            <div className="space-y-2 mb-4">
-                              <div className="h-3 rounded-full w-[90%]" style={shimmerStyle} />
-                              <div className="h-3 rounded-full w-[75%]" style={shimmerStyle} />
-                              <div className="h-3 rounded-full w-[60%]" style={shimmerStyle} />
-                            </div>
-                          ) : state.isEditing ? (
-                            <textarea
-                              ref={editRef}
-                              value={state.draftText}
-                              onChange={(e) => updateState(selectedIndex, { draftText: e.target.value })}
-                              className="w-full text-[12px] leading-[1.75] mb-4 text-white/55 bg-transparent border border-white/[0.08] rounded-xl p-3 resize-none focus:outline-none focus:border-[#818cf8]/30"
-                              rows={3}
-                            />
-                          ) : (
-                            <p className="text-[12px] leading-[1.75] mb-4 text-white/55">
-                              {state.draftText}
-                            </p>
-                          )}
-
-                          {!state.isSent && !state.isTyping && (
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={handleApproveAndSend}
-                                className="text-[11px] px-4 py-2 rounded-xl bg-gradient-to-r from-[#4338ca] to-[#6366f1] text-white font-semibold shadow-[0_0_16px_-4px_rgba(99,102,241,0.4)] flex items-center gap-1.5 hover:shadow-[0_0_24px_-4px_rgba(99,102,241,0.6)] transition-shadow cursor-pointer"
-                              >
-                                <Check className="h-3 w-3" /> Approve & Send
-                              </button>
-                              {state.isEditing ? (
-                                <button
-                                  onClick={handleSaveEdit}
-                                  className="text-[11px] px-3 py-2 rounded-xl border border-[#818cf8]/20 text-[#818cf8]/70 font-medium cursor-pointer hover:border-[#818cf8]/40 transition-colors"
-                                >
-                                  Done
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={handleEdit}
-                                  className="text-[11px] px-3 py-2 rounded-xl border border-white/[0.06] text-white/40 font-medium cursor-pointer hover:border-white/[0.12] hover:text-white/60 transition-all"
-                                >
-                                  Edit
-                                </button>
-                              )}
-                              <button
-                                onClick={handleRegenerate}
-                                className="text-[11px] px-3 py-2 rounded-xl text-white/30 font-medium flex items-center gap-1 cursor-pointer hover:text-white/50 transition-colors"
-                              >
-                                <RefreshCw className="h-3 w-3" /> Regenerate
-                              </button>
-                            </div>
-                          )}
-                        </div>
                       </div>
-
-                      {/* Reply bar */}
-                      <div className="px-5 py-3 border-t border-white/[0.05] bg-gradient-to-r from-white/[0.01] to-transparent">
-                        <div className="flex items-center gap-3 bg-white/[0.03] rounded-xl px-4 py-3 border border-white/[0.05] focus-within:border-white/[0.1] transition-colors">
-                          <input
-                            type="text"
-                            value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && handleSendReply()}
-                            placeholder="Write a reply..."
-                            className="text-[12px] text-white/70 placeholder:text-white/25 flex-1 bg-transparent outline-none"
-                          />
-                          <div className="flex items-center gap-2">
-                            {replyText.trim() ? (
-                              <button
-                                onClick={handleSendReply}
-                                className="w-7 h-7 rounded-lg bg-gradient-to-r from-[#4338ca] to-[#6366f1] flex items-center justify-center text-white cursor-pointer hover:shadow-[0_0_12px_rgba(99,102,241,0.4)] transition-shadow"
-                              >
-                                <Send className="h-3.5 w-3.5" />
-                              </button>
-                            ) : (
-                              <div className="w-7 h-7 rounded-lg bg-white/[0.04] flex items-center justify-center text-white/25 border border-white/[0.04]">
-                                <Zap className="h-3.5 w-3.5" />
-                              </div>
-                            )}
+                      {/* Mini chart */}
+                      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-[11px] font-semibold text-white/70">Interaction Volume</span>
+                          <div className="flex gap-2">
+                            {["1W", "1M", "3M"].map((p) => (
+                              <span key={p} className={`text-[9px] px-2 py-0.5 rounded-md cursor-pointer ${p === "1M" ? "bg-white/[0.06] text-white/70" : "text-white/25 hover:text-white/40"}`}>{p}</span>
+                            ))}
                           </div>
+                        </div>
+                        <div className="flex items-end gap-1 h-[80px]">
+                          {[35, 42, 28, 55, 47, 60, 52, 38, 65, 48, 58, 72, 45, 63].map((h, i) => (
+                            <div key={i} className="flex-1 rounded-t-sm bg-gradient-to-t from-[#4338ca]/40 to-[#818cf8]/60" style={{ height: `${h}%` }} />
+                          ))}
+                        </div>
+                        <div className="flex justify-between mt-2 text-[8px] text-white/20">
+                          <span>Apr 1</span><span>Apr 7</span><span>Apr 14</span>
                         </div>
                       </div>
                     </motion.div>
-                  </AnimatePresence>
-                </div>
+                  ) : activeView === "streams" ? (
+                    <motion.div key="streams" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }} className="flex-1 p-5 overflow-hidden">
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-[14px] font-semibold text-white/90">Streams</h2>
+                        <span className="text-[10px] text-white/30 px-2.5 py-1 rounded-lg border border-white/[0.06]">+ Add Stream</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 h-[350px]">
+                        {[
+                          { name: "Urgent", count: 3, color: "#ef4444", items: [
+                            { name: "Tom N.", platform: "Google", msg: "Order #4821 still hasn't arrived..." },
+                            { name: "Jordan E.", platform: "Facebook", msg: "This isn't what I ordered..." },
+                            { name: "Mike R.", platform: "Instagram", msg: "No response for 3 days now" },
+                          ]},
+                          { name: "Positive", count: 8, color: "#10b981", items: [
+                            { name: "Priya S.", platform: "Google", msg: "Honestly impressed. Packaging was beautiful" },
+                            { name: "Lisa M.", platform: "Instagram", msg: "Love this product! Already reordered" },
+                          ]},
+                          { name: "Instagram", count: 5, color: "#E4405F", items: [
+                            { name: "Rachel K.", platform: "Instagram", msg: "Do you guys ship to Vancouver?" },
+                            { name: "Alex T.", platform: "Instagram", msg: "What sizes do you have in stock?" },
+                          ]},
+                        ].map((col, ci) => (
+                          <div key={ci} className="flex flex-col">
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: col.color }} />
+                              <span className="text-[11px] font-semibold text-white/70">{col.name}</span>
+                              <span className="text-[9px] text-white/25 ml-auto">{col.count}</span>
+                            </div>
+                            <div className="space-y-2 flex-1">
+                              {col.items.map((item, ii) => (
+                                <div key={ii} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 hover:bg-white/[0.04] transition-colors cursor-pointer">
+                                  <div className="flex items-center gap-1.5 mb-1.5">
+                                    <span className="text-[10px] font-semibold text-white/75">{item.name}</span>
+                                    <span className="text-[8px] px-1.5 py-0.5 rounded-full border border-white/[0.06] text-white/30">{item.platform}</span>
+                                  </div>
+                                  <p className="text-[9px] text-white/35 leading-relaxed line-clamp-2">{item.msg}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div key="reviews" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }} className="flex-1 p-5 overflow-hidden">
+                      <div className="flex items-center justify-between mb-5">
+                        <h2 className="text-[14px] font-semibold text-white/90">Reviews</h2>
+                        <span className="text-[10px] text-white/30 px-2.5 py-1 rounded-lg border border-white/[0.06]">Request Review</span>
+                      </div>
+                      {/* Rating hero */}
+                      <div className="flex items-center gap-5 mb-5 p-4 rounded-xl border border-white/[0.06] bg-white/[0.02]">
+                        <div className="text-center">
+                          <div className="text-[32px] font-bold text-white/90 leading-none">4.8</div>
+                          <div className="flex items-center gap-0.5 mt-1.5 justify-center">
+                            {[1,2,3,4,5].map(s => (
+                              <StarIcon key={s} className={`h-3 w-3 ${s <= 4 ? "text-amber-400 fill-amber-400" : "text-amber-400/50 fill-amber-400/50"}`} />
+                            ))}
+                          </div>
+                          <span className="text-[9px] text-white/30 mt-1 block">142 reviews</span>
+                        </div>
+                        <div className="flex-1 space-y-1.5">
+                          {[
+                            { stars: 5, pct: 72 },
+                            { stars: 4, pct: 18 },
+                            { stars: 3, pct: 6 },
+                            { stars: 2, pct: 3 },
+                            { stars: 1, pct: 1 },
+                          ].map(r => (
+                            <div key={r.stars} className="flex items-center gap-2">
+                              <span className="text-[8px] text-white/30 w-3">{r.stars}★</span>
+                              <div className="flex-1 h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
+                                <div className="h-full rounded-full bg-amber-400/60" style={{ width: `${r.pct}%` }} />
+                              </div>
+                              <span className="text-[8px] text-white/20 w-5 text-right">{r.pct}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Review cards */}
+                      <div className="space-y-3">
+                        {[
+                          { name: "Sarah L.", platform: "Google", stars: 5, text: "Incredible customer service. They went above and beyond to resolve my issue within minutes.", time: "2d ago" },
+                          { name: "David K.", platform: "Trustpilot", stars: 4, text: "Great product quality. Shipping was a bit slow but the item itself exceeded expectations.", time: "5d ago" },
+                          { name: "Emma R.", platform: "Google", stars: 5, text: "Best purchase I've made this year. The attention to detail is remarkable.", time: "1w ago" },
+                        ].map((review, ri) => (
+                          <div key={ri} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5 hover:bg-white/[0.04] transition-colors cursor-pointer">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-semibold text-white/75">{review.name}</span>
+                                <span className="text-[8px] px-1.5 py-0.5 rounded-full border border-white/[0.06] text-white/30">{review.platform}</span>
+                              </div>
+                              <span className="text-[8px] text-white/20">{review.time}</span>
+                            </div>
+                            <div className="flex items-center gap-0.5 mb-2">
+                              {[1,2,3,4,5].map(s => (
+                                <StarIcon key={s} className={`h-2.5 w-2.5 ${s <= review.stars ? "text-amber-400 fill-amber-400" : "text-white/10"}`} />
+                              ))}
+                            </div>
+                            <p className="text-[10px] text-white/40 leading-relaxed">{review.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
