@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { filterDemoInteractionsForStream } from "@/lib/demoData";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import type { Stream } from "@/hooks/useStreams";
 
@@ -18,10 +19,14 @@ export function useStreamInteractions({ stream, limit = 50 }: UseStreamInteracti
   const [hasMore, setHasMore] = useState(false);
 
   const fetchInteractions = useCallback(async () => {
-    if (!user) return;
-
-    setLoading(true);
-    try {
+    if (!user) {
+      // Use demo data when not logged in
+      const demoFiltered = filterDemoInteractionsForStream(stream);
+      setInteractions(demoFiltered.slice(0, limit));
+      setHasMore(demoFiltered.length > limit);
+      setLoading(false);
+      return;
+    }
       let query = supabase
         .from("interactions")
         .select("*")
