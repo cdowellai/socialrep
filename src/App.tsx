@@ -51,7 +51,7 @@ function AppRoutes() {
       <Route
         path="/dashboard"
         element={
-          <ProtectedRoute allowDemo>
+          <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
         }
@@ -59,7 +59,7 @@ function AppRoutes() {
       <Route
         path="/dashboard/inbox"
         element={
-          <ProtectedRoute allowDemo>
+          <ProtectedRoute>
             <InboxPage />
           </ProtectedRoute>
         }
@@ -67,7 +67,7 @@ function AppRoutes() {
       <Route
         path="/dashboard/streams"
         element={
-          <ProtectedRoute allowDemo>
+          <ProtectedRoute>
             <StreamsPage />
           </ProtectedRoute>
         }
@@ -75,7 +75,7 @@ function AppRoutes() {
       <Route
         path="/dashboard/reviews"
         element={
-          <ProtectedRoute allowDemo>
+          <ProtectedRoute>
             <ReviewsPage />
           </ProtectedRoute>
         }
