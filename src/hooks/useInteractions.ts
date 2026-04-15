@@ -17,8 +17,8 @@ export function useInteractions() {
 
   const fetchInteractions = useCallback(async () => {
     if (!user) {
-      setInteractions(DEMO_INTERACTIONS);
-      setIsDemo(true);
+      setInteractions([]);
+      setIsDemo(false);
       setLoading(false);
       return;
     }
@@ -35,18 +35,13 @@ export function useInteractions() {
 
       if (fetchError) throw fetchError;
       
-      if (data && data.length > 0) {
-        setInteractions(data);
-        setIsDemo(false);
-      } else {
-        setInteractions(DEMO_INTERACTIONS);
-        setIsDemo(true);
-      }
+      setInteractions(data || []);
+      setIsDemo(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch interactions");
       console.error("Error fetching interactions:", err);
-      setInteractions(DEMO_INTERACTIONS);
-      setIsDemo(true);
+      setInteractions([]);
+      setIsDemo(false);
     } finally {
       setLoading(false);
     }
