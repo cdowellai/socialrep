@@ -87,11 +87,21 @@ export function useStreamInteractions({ stream, limit = 50 }: UseStreamInteracti
 
       if (error) throw error;
 
-      const hasMoreItems = (data?.length || 0) > limit;
-      setHasMore(hasMoreItems);
-      setInteractions((data || []).slice(0, limit));
+      if (data && data.length > 0) {
+        const hasMoreItems = data.length > limit;
+        setHasMore(hasMoreItems);
+        setInteractions(data.slice(0, limit));
+      } else {
+        // Fallback to demo data for this stream
+        const demoFiltered = filterDemoInteractionsForStream(stream);
+        setInteractions(demoFiltered.slice(0, limit));
+        setHasMore(demoFiltered.length > limit);
+      }
     } catch (error) {
       console.error("Error fetching stream interactions:", error);
+      const demoFiltered = filterDemoInteractionsForStream(stream);
+      setInteractions(demoFiltered.slice(0, limit));
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
