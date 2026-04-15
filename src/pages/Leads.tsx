@@ -172,11 +172,20 @@ export default function LeadsPage() {
           </div>
           <div className="flex gap-2">
             <LeadViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-            <Button variant="outline">
+            <Button
+              variant="outline"
+              onClick={() => {
+                toast({
+                  title: "CRM Sync",
+                  description: "CRM integration coming soon. Connect your CRM in Settings → Platforms.",
+                });
+                navigate("/settings");
+              }}
+            >
               <ExternalLink className="h-4 w-4 mr-2" />
               Sync to CRM
             </Button>
-            <Button variant="hero">
+            <Button variant="hero" onClick={() => setAddLeadOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Add Lead
             </Button>
