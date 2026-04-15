@@ -88,14 +88,16 @@ interface ConversationState {
   replies: string[];
 }
 
-const sidebarItems = [
-  { icon: LayoutDashboard, label: "Dashboard", active: false },
-  { icon: Inbox, label: "Inbox", active: true, badge: "12" },
-  { icon: Layers, label: "Streams", active: false },
-  { icon: StarIcon, label: "Reviews", active: false },
-  { icon: Users, label: "Leads", active: false },
-  { icon: BarChart3, label: "Analytics", active: false },
-  { icon: Bot, label: "Chatbot", active: false },
+type ActiveView = "inbox" | "dashboard" | "streams" | "reviews";
+
+const sidebarItems: { icon: typeof LayoutDashboard; label: string; view: ActiveView | null; badge?: string }[] = [
+  { icon: LayoutDashboard, label: "Dashboard", view: "dashboard" },
+  { icon: Inbox, label: "Inbox", view: "inbox", badge: "12" },
+  { icon: Layers, label: "Streams", view: "streams" },
+  { icon: StarIcon, label: "Reviews", view: "reviews" },
+  { icon: Users, label: "Leads", view: null },
+  { icon: BarChart3, label: "Analytics", view: null },
+  { icon: Bot, label: "Chatbot", view: null },
 ];
 
 export function HeroSection() {
