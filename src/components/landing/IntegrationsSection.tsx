@@ -24,9 +24,7 @@ const platforms: { name: string; color: string; icon: ReactNode }[] = [
 
 export function IntegrationsSection() {
   return (
-    <section id="integrations" className="relative py-28 bg-[#06060a] overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
-
+    <section id="integrations" className="relative py-24 bg-[#06060a] overflow-hidden">
       <div className="max-w-6xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -35,8 +33,7 @@ export function IntegrationsSection() {
           transition={{ duration: 1, ease }}
           className="text-center max-w-2xl mx-auto mb-20"
         >
-          <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#818cf8] mb-5">Integrations</p>
-          <h2 className="text-[clamp(1.75rem,4.5vw,3rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white mb-5">
+          <h2 className="text-[clamp(1.5rem,3.5vw,2.5rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white mb-5">
             Every platform.
             <br />
             <span className="text-white/50">One dashboard.</span>
@@ -51,7 +48,7 @@ export function IntegrationsSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.8, delay: 0.1, ease }}
-          className="flex flex-wrap justify-center gap-4 max-w-3xl mx-auto"
+          className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-2xl mx-auto"
         >
           {platforms.map((p, i) => (
             <motion.div
@@ -60,10 +57,10 @@ export function IntegrationsSection() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.05, ease }}
-              className="group inline-flex items-center gap-3.5 px-6 py-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.04] transition-all duration-500 cursor-default"
+              className="group flex items-center gap-3.5 px-5 py-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.04] transition-all duration-500 cursor-default"
             >
               <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500"
+                className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-500 flex-shrink-0"
                 style={{ backgroundColor: `${p.color}15` }}
               >
                 {p.icon}
@@ -72,10 +69,6 @@ export function IntegrationsSection() {
             </motion.div>
           ))}
         </motion.div>
-
-        <p className="text-center text-[13px] text-white/40 mt-14">
-          New platforms added regularly
-        </p>
       </div>
     </section>
   );

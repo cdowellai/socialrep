@@ -9,7 +9,7 @@ const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string
 export function Footer() {
   return (
     <footer className="border-t border-white/[0.06] py-16 bg-[#06060a]">
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-4xl mx-auto px-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-14">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
@@ -20,7 +20,7 @@ export function Footer() {
               <span className="font-bold text-[15px] text-white tracking-[-0.01em]">SocialRep</span>
             </div>
             <p className="text-[13px] text-white/40 leading-relaxed max-w-[220px]">
-              AI-powered reputation management for modern businesses.
+              Your reputation, managed intelligently.
             </p>
           </div>
 

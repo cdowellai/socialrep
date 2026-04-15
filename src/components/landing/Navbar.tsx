@@ -101,8 +101,10 @@ export function Navbar() {
                   </Button>
                   <button
                     className={cn(
-                      "rounded-full bg-white text-[#06060a] font-semibold hover:bg-white/90 transition-all duration-300 hover:shadow-[0_0_30px_-6px_rgba(255,255,255,0.2)]",
-                      isScrolled ? "h-8 px-4 text-[12px]" : "h-9 px-5 text-[13px]"
+                      "rounded-full bg-white text-[#06060a] font-semibold transition-all duration-300 border border-white/10",
+                      isScrolled
+                        ? "h-8 px-4 text-[12px] hover:shadow-[0_0_20px_-6px_rgba(255,255,255,0.15)]"
+                        : "h-9 px-5 text-[13px] hover:shadow-[0_0_24px_-6px_rgba(255,255,255,0.15)]"
                     )}
                     onClick={() => document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" })}
                   >
@@ -119,25 +121,28 @@ export function Navbar() {
         </div>
 
         {isMenuOpen && (
-          <div className="md:hidden border-t border-white/[0.04] bg-[#06060a]/95 backdrop-blur-2xl">
-            <div className="max-w-7xl mx-auto px-6 py-8 space-y-5">
+          <div className="md:hidden fixed inset-0 top-0 bg-[#06060a]/95 backdrop-blur-3xl z-40 flex flex-col items-center justify-center">
+            <button className="absolute top-5 right-5 text-white/60 hover:text-white p-2" onClick={() => setIsMenuOpen(false)}>
+              <X className="h-5 w-5" />
+            </button>
+            <div className="space-y-8 text-center">
               {navLinks.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
-                  className="block text-[15px] text-white/60 hover:text-white font-medium"
+                  className="block text-[18px] text-white/70 hover:text-white font-medium"
                   onClick={(e) => handleSmoothScroll(e, link.href)}
                 >
                   {link.label}
                 </a>
               ))}
-              <div className="pt-5 border-t border-white/[0.04] space-y-3">
+              <div className="pt-8 border-t border-white/[0.06] space-y-4">
                 {user ? (
                   <>
-                    <Button variant="outline" className="w-full border-white/10 text-white" asChild>
+                    <Button variant="outline" className="w-48 border-white/10 text-white" asChild>
                       <Link to="/dashboard">Dashboard</Link>
                     </Button>
-                    <Button variant="ghost" className="w-full text-white/60" onClick={() => signOut()}>
+                    <Button variant="ghost" className="w-48 text-white/60" onClick={() => signOut()}>
                       Sign Out
                     </Button>
                   </>
@@ -145,13 +150,13 @@ export function Navbar() {
                   <>
                     <Button
                       variant="ghost"
-                      className="w-full text-white/60"
+                      className="w-48 text-white/60"
                       onClick={() => { setAuthModal({ isOpen: true, tab: "login" }); setIsMenuOpen(false); }}
                     >
                       Sign in
                     </Button>
                     <button
-                      className="w-full h-11 rounded-full bg-white text-[#06060a] text-[14px] font-semibold"
+                      className="w-48 h-11 rounded-full bg-white text-[#06060a] text-[14px] font-semibold"
                       onClick={() => { document.querySelector("#pricing")?.scrollIntoView({ behavior: "smooth" }); setIsMenuOpen(false); }}
                     >
                       Get Started

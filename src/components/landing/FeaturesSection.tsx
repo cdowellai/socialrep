@@ -35,8 +35,8 @@ function FeatureBlock({
         <ul className="space-y-4">
           {bullets.map((b, i) => (
             <li key={i} className="flex items-start gap-3 text-[14px]">
-              <div className="w-5 h-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Check className="h-3 w-3 text-emerald-400" />
+              <div className="w-5 h-5 rounded-full bg-[#818cf8]/10 border border-[#818cf8]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Check className="h-3 w-3 text-[#818cf8]" />
               </div>
               <span className="text-white/65">{b}</span>
             </li>
@@ -101,8 +101,7 @@ export function FeaturesSection() {
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   return (
-    <section id="features" className="relative py-28 bg-[#06060a] overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+    <section id="features" className="relative py-32 bg-[#06060a] overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-[#4338ca]/[0.02] rounded-full blur-[200px] pointer-events-none" />
 
       <div className="max-w-6xl mx-auto px-6 relative z-10">
@@ -113,7 +112,7 @@ export function FeaturesSection() {
           transition={{ duration: 1, ease }}
           className="text-center max-w-2xl mx-auto mb-28"
         >
-          <h2 className="text-[clamp(1.75rem,4.5vw,3rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white mb-5">
+          <h2 className="text-[clamp(1.5rem,3.5vw,2.5rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white mb-5">
             Built for the conversations
             <br />
             <span className="text-white/50">that matter.</span>
@@ -189,7 +188,7 @@ export function FeaturesSection() {
                       </div>
                       <div className="flex items-baseline gap-2">
                         <span className="text-xl font-bold text-white/85">{m.value}</span>
-                        <span className="text-[10px] font-semibold text-emerald-400">{m.change}</span>
+                        <span className="text-[10px] font-semibold text-[#818cf8]">{m.change}</span>
                       </div>
                     </div>
                   ))}

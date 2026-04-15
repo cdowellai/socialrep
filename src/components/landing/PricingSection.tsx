@@ -81,8 +81,7 @@ export function PricingSection() {
 
   return (
     <>
-      <section id="pricing" className="relative py-28 bg-[#06060a] overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+      <section id="pricing" className="relative py-32 bg-[#06060a] overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[600px] bg-[#4338ca]/[0.03] blur-[150px] rounded-full pointer-events-none" />
 
         <div className="max-w-5xl mx-auto px-6 relative z-10">
@@ -93,7 +92,7 @@ export function PricingSection() {
             transition={{ duration: 1, ease }}
             className="text-center mb-12"
           >
-            <h2 className="text-[clamp(1.75rem,4.5vw,3rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white mb-4">
+            <h2 className="text-[clamp(1.5rem,3.5vw,2.5rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white mb-4">
               Simple, transparent pricing.
             </h2>
             <p className="text-[16px] text-white/50">
@@ -106,7 +105,7 @@ export function PricingSection() {
             <Switch checked={isAnnual} onCheckedChange={setIsAnnual} />
             <span className={`text-[13px] font-medium transition-colors duration-300 ${isAnnual ? "text-white" : "text-white/40"}`}>Annual</span>
             {isAnnual && (
-              <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Save 20%</span>
+              <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#818cf8]/10 text-[#818cf8] border border-[#818cf8]/20">Save 20%</span>
             )}
           </div>
 
@@ -122,10 +121,15 @@ export function PricingSection() {
                 key={index}
                 className={`relative p-7 rounded-2xl flex flex-col transition-all duration-700 ${
                   plan.recommended
-                    ? "bg-white/[0.04] border border-[#818cf8]/20 shadow-[0_16px_80px_-20px_rgba(99,102,241,0.15)] ring-1 ring-[#818cf8]/10 md:scale-[1.03] md:-my-2"
+                    ? "bg-white/[0.06] border border-[#818cf8]/40 shadow-[0_16px_80px_-20px_rgba(99,102,241,0.2)] ring-1 ring-[#818cf8]/15"
                     : "bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.1]"
                 }`}
               >
+                {/* Gradient top-edge highlight for recommended */}
+                {plan.recommended && (
+                  <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-[#818cf8]/60 to-transparent" />
+                )}
+
                 <div className="mb-7">
                   <h3 className="font-bold text-[16px] mb-1 text-white">{plan.name}</h3>
                   <p className="text-[13px] text-white/45 mb-5">{plan.description}</p>
@@ -139,8 +143,8 @@ export function PricingSection() {
                 <ul className="space-y-3 mb-8 flex-1">
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-2.5 text-[13px]">
-                      <div className="w-4 h-4 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Check className="h-2.5 w-2.5 text-emerald-400" />
+                      <div className="w-4 h-4 rounded-full bg-[#818cf8]/10 border border-[#818cf8]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check className="h-2.5 w-2.5 text-[#818cf8]" />
                       </div>
                       <span className="text-white/65">{feature}</span>
                     </li>
