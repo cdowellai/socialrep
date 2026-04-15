@@ -5,6 +5,7 @@ import {
 } from "recharts";
 import type { Tables } from "@/integrations/supabase/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Globe, MessageSquare } from "lucide-react";
 
 type Interaction = Tables<"interactions">;
 
@@ -21,6 +22,15 @@ const PLATFORM_COLORS: Record<string, string> = {
   trustpilot: "#00B67A",
   other: "#6B7280",
 };
+
+const PLATFORM_ICONS = [
+  { name: "Facebook", color: "#1877F2" },
+  { name: "Instagram", color: "#E4405F" },
+  { name: "Google", color: "#4285F4" },
+  { name: "LinkedIn", color: "#0A66C2" },
+  { name: "X", color: "#6B7280" },
+  { name: "TikTok", color: "#25F4EE" },
+];
 
 interface PlatformBreakdownChartProps {
   interactions: Interaction[];
@@ -47,33 +57,52 @@ export function PlatformBreakdownChart({ interactions, loading }: PlatformBreakd
   }, [interactions]);
 
   const total = chartData.reduce((sum, d) => sum + d.value, 0);
+  const isEmpty = interactions.length === 0;
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-border/50 bg-card p-6">
+      <div className="rounded-2xl border border-border/50 bg-card p-8">
         <Skeleton className="h-5 w-40 mb-6" />
         <Skeleton className="h-[220px] w-full rounded-xl" />
       </div>
     );
   }
 
-  if (chartData.length === 0) {
+  if (isEmpty) {
     return (
-      <div className="rounded-2xl border border-border/50 bg-card p-6">
-        <h3 className="text-base font-semibold tracking-tight mb-6">Platform Breakdown</h3>
-        <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
-          No data available
+      <div className="rounded-2xl border border-border/50 bg-card p-8">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Platform Breakdown</h3>
+        <div className="h-[220px] flex flex-col items-center justify-center text-center">
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            {PLATFORM_ICONS.map((p) => (
+              <div key={p.name} className="flex flex-col items-center gap-1.5">
+                <div
+                  className="h-10 w-10 rounded-xl flex items-center justify-center opacity-20"
+                  style={{ backgroundColor: p.color + "20" }}
+                >
+                  <Globe className="h-4 w-4" style={{ color: p.color }} />
+                </div>
+                <span className="text-[10px] text-muted-foreground/40">{p.name}</span>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => navigate("/dashboard/settings")}
+            className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+          >
+            Connect your first platform →
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-card p-6">
+    <div className="rounded-2xl border border-border/50 bg-card p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-base font-semibold tracking-tight">Platform Breakdown</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">{total} total interactions</p>
+          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Platform Breakdown</h3>
+          <p className="text-xs text-muted-foreground/60 mt-1">{total} total interactions</p>
         </div>
       </div>
 
