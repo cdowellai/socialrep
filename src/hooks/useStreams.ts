@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { DEMO_STREAMS } from "@/lib/demoData";
 import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
 export type Stream = Tables<"streams">;
@@ -17,7 +16,7 @@ export function useStreams() {
 
   const fetchStreams = useCallback(async () => {
     if (!user) {
-      setStreams(DEMO_STREAMS);
+      setStreams([]);
       setLoading(false);
       return;
     }
@@ -29,14 +28,10 @@ export function useStreams() {
         .order("position", { ascending: true });
 
       if (error) throw error;
-      if (data && data.length > 0) {
-        setStreams(data);
-      } else {
-        setStreams(DEMO_STREAMS);
-      }
+      setStreams(data || []);
     } catch (error) {
       console.error("Error fetching streams:", error);
-      setStreams(DEMO_STREAMS);
+      setStreams([]);
     } finally {
       setLoading(false);
     }

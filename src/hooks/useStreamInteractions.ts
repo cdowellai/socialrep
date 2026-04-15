@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { filterDemoInteractionsForStream } from "@/lib/demoData";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import type { Stream } from "@/hooks/useStreams";
 
@@ -20,10 +19,8 @@ export function useStreamInteractions({ stream, limit = 50 }: UseStreamInteracti
 
   const fetchInteractions = useCallback(async () => {
     if (!user) {
-      // Use demo data when not logged in
-      const demoFiltered = filterDemoInteractionsForStream(stream);
-      setInteractions(demoFiltered.slice(0, limit));
-      setHasMore(demoFiltered.length > limit);
+      setInteractions([]);
+      setHasMore(false);
       setLoading(false);
       return;
     }
@@ -92,15 +89,12 @@ export function useStreamInteractions({ stream, limit = 50 }: UseStreamInteracti
         setHasMore(hasMoreItems);
         setInteractions(data.slice(0, limit));
       } else {
-        // Fallback to demo data for this stream
-        const demoFiltered = filterDemoInteractionsForStream(stream);
-        setInteractions(demoFiltered.slice(0, limit));
-        setHasMore(demoFiltered.length > limit);
+        setInteractions([]);
+        setHasMore(false);
       }
     } catch (error) {
       console.error("Error fetching stream interactions:", error);
-      const demoFiltered = filterDemoInteractionsForStream(stream);
-      setInteractions(demoFiltered.slice(0, limit));
+      setInteractions([]);
       setHasMore(false);
     } finally {
       setLoading(false);
