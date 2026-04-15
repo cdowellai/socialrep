@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Check, Search, Star, MoreHorizontal, RefreshCw, Zap, LayoutDashboard, Inbox, Layers, Star as StarIcon, Users, BarChart3, Bot, Settings, MessageSquare, Send } from "lucide-react";
+import { ArrowRight, Check, Search, Star, MoreHorizontal, RefreshCw, Zap, LayoutDashboard, Inbox, Layers, Star as StarIcon, Users, BarChart3, Bot, Settings, MessageSquare, Send, TrendingUp, Clock, MessageCircle, Instagram } from "lucide-react";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
