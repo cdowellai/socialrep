@@ -27,6 +27,9 @@ export function useStreamInteractions({ stream, limit = 50 }: UseStreamInteracti
       setLoading(false);
       return;
     }
+
+    setLoading(true);
+    try {
       let query = supabase
         .from("interactions")
         .select("*")
