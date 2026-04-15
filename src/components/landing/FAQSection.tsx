@@ -15,9 +15,7 @@ const faqs = [
 
 export function FAQSection() {
   return (
-    <section id="faq" className="relative py-28 bg-[#06060a] overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
-
+    <section id="faq" className="relative py-20 bg-[#06060a] overflow-hidden">
       <div className="max-w-2xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -26,7 +24,7 @@ export function FAQSection() {
           transition={{ duration: 1, ease }}
           className="text-center mb-16"
         >
-          <h2 className="text-[clamp(1.75rem,4.5vw,2.75rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white">
+          <h2 className="text-[clamp(1.5rem,3vw,2.25rem)] leading-[1.08] tracking-[-0.03em] font-extrabold text-white">
             Common questions
           </h2>
         </motion.div>

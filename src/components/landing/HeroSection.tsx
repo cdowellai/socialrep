@@ -84,7 +84,7 @@ export function HeroSection() {
                 onClick={() => document.querySelector("#features")?.scrollIntoView({ behavior: "smooth" })}
                 className="text-white/50 font-medium text-[15px] hover:text-white/80 transition-colors duration-400"
               >
-                See how it works →
+                Learn more →
               </button>
             </div>
           </motion.div>
