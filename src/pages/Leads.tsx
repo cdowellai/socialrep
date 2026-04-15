@@ -342,6 +342,16 @@ export default function LeadsPage() {
         onClose={() => setDetailOpen(false)}
         onUpdate={handleUpdateLead}
       />
+
+      {/* Add Lead Dialog */}
+      <AddLeadDialog
+        open={addLeadOpen}
+        onOpenChange={setAddLeadOpen}
+        onSubmit={async (lead) => {
+          await createLead(lead);
+          toast({ title: "Lead added", description: `${lead.contact_name} has been added to your pipeline.` });
+        }}
+      />
     </DashboardLayout>
   );
 }
