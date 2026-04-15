@@ -290,7 +290,10 @@ export function HeroSection() {
                   {sidebarItems.map((item, i) => (
                     <div
                       key={i}
-                      className={`relative flex flex-col items-center justify-center w-10 h-10 rounded-xl cursor-default transition-all duration-300 ${item.active ? "bg-white/[0.07] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]" : "text-white/30 hover:text-white/45"}`}
+                      onClick={() => item.view && setActiveView(item.view)}
+                      className={`relative flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 ${
+                        item.view ? "cursor-pointer" : "cursor-default"
+                      } ${item.view === activeView ? "bg-white/[0.07] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]" : "text-white/30 hover:text-white/45"}`}
                     >
                       <item.icon className="h-[14px] w-[14px]" />
                       <span className="text-[7px] mt-0.5 leading-none font-medium">{item.label}</span>
