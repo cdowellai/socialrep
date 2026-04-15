@@ -70,9 +70,8 @@ export function useReviews(filters?: ReviewFilters) {
 
   const fetchReviews = useCallback(async () => {
     if (!user) {
-      // Show demo data when not logged in
-      setReviews(DEMO_REVIEWS);
-      computeStatsFromReviews(DEMO_REVIEWS);
+      setReviews([]);
+      computeStatsFromReviews([]);
       setLoading(false);
       return;
     }
@@ -111,8 +110,8 @@ export function useReviews(filters?: ReviewFilters) {
         .select("*")
         .eq("user_id", user.id);
 
-      const reviewsToUse = allReviews && allReviews.length > 0 ? allReviews : DEMO_REVIEWS;
-      const filteredToUse = data && data.length > 0 ? data : DEMO_REVIEWS;
+      const reviewsToUse = allReviews || [];
+      const filteredToUse = data || [];
       
       setReviews(filteredToUse);
       computeStatsFromReviews(reviewsToUse);
