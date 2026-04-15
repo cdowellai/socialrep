@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,12 +31,14 @@ import {
 } from "lucide-react";
 import { useLeads } from "@/hooks/useLeads";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useToast } from "@/hooks/use-toast";
 import { FeaturePaywall } from "@/components/subscription";
 import {
   LeadDetailPanel,
   LeadScoreTooltip,
   LeadViewToggle,
   LeadKanbanBoard,
+  AddLeadDialog,
   type LeadViewMode,
 } from "@/components/leads";
 import type { Tables, Enums } from "@/integrations/supabase/types";
@@ -52,13 +55,16 @@ const statusConfig: Record<LeadStatus, { label: string; className: string }> = {
 };
 
 export default function LeadsPage() {
-  const { leads, loading, stats, updateLead } = useLeads();
+  const { leads, loading, stats, updateLead, createLead } = useLeads();
   const { hasFeature, loading: subLoading } = useSubscription();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<LeadViewMode>("table");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [addLeadOpen, setAddLeadOpen] = useState(false);
 
   // Check if user has leads feature
   const hasLeadsFeature = hasFeature("leads");
