@@ -1,39 +1,37 @@
 
 
-## Fix Chatbot Widget Blinking
+## Match Chatbot Embed Widget to React Design
 
-### Root Cause
+### The Problem
 
-The `render()` function does `root.innerHTML = ""` and rebuilds the entire DOM tree from scratch. During SSE streaming, `render()` is called **on every single token** received from the AI. This means the entire chat window — header, messages, input field — is destroyed and recreated dozens of times per second. This causes:
+The standalone embed widget (`public/chatbot-widget.js`) renders a minimal layout: colored header bar, single welcome bubble, and input. The React version (`ChatbotWidget.tsx`) has a much richer design with a **home view** featuring a time-based greeting, team avatar stack, "Our team is online" card, and a "Sarah from Support" welcome card — all in a clean light theme with subtle borders instead of a colored header bar. The embed widget needs to match this.
 
-1. **Visual blinking** — the window flashes as it's torn down and rebuilt
-2. **Input focus loss** — the text input is destroyed and recreated each token
-3. **Scroll position reset** — body scroll jumps on each rebuild
+### Key visual differences to fix
 
-### The Fix
+| Element | Current widget | Target (screenshot) |
+|---------|---------------|---------------------|
+| Header | Solid colored background bar | Clean white with title, green dot, subtitle text |
+| Home view | None — jumps straight to chat | Greeting ("Good morning 👋"), team presence card, Sarah welcome card |
+| Avatar stack | None | S/A/J colored circles with overlapping layout |
+| Input | Basic text input + colored send button | Pill-shaped input with subtle border, paper plane icon |
+| Footer | None | "Powered by SocialRep" |
+| Window style | Colored header, flat white body | All-white with rounded cards, subtle borders |
 
-Stop doing full DOM rebuilds during streaming. Instead, use **targeted DOM updates**:
+### Changes — single file
 
-- During streaming, only update the assistant bubble's `innerHTML` with new content
-- Keep a reference to the body element and scroll it, don't recreate it
-- Only do a full `render()` at key state transitions (open/close, send message, stream complete)
+**`public/chatbot-widget.js`**
 
-### Changes — `public/chatbot-widget.js`
+1. **Add home/chat view state** — Track `currentView` ("home" vs "chat"). Show home view by default, switch to chat when user sends first message
 
-1. **Add DOM element references** — Store references to the body container and the current assistant bubble so they can be updated in-place
+2. **Redesign header** — Remove solid colored background. Use white background with border-bottom, title in dark text, green pulsing dot + "We typically reply in a few minutes" subtitle. Add back arrow in chat view
 
-2. **Split render into full vs. partial** — Add an `updateStreamingBubble()` function that only touches the assistant message bubble's innerHTML, without rebuilding the window
+3. **Build home view** — Time-based greeting ("Good morning/afternoon/evening 👋"), subtitle "Ask us anything, or pick a topic below", team presence card with 3 overlapping colored avatar circles (S=violet, A=emerald, J=orange) + "Our team is online / Average reply time: ~2 min", Sarah welcome card with blue avatar + welcome message
 
-3. **Throttle streaming updates** — Use `requestAnimationFrame` to batch multiple SSE chunks into a single DOM update per frame, preventing excessive repaints
+4. **Add footer** — "Powered by SocialRep" text at bottom of window, subtle gray
 
-4. **Update `streamResponse()`** — Instead of calling `render()` on every delta, call the new lightweight `updateStreamingBubble()` and only call full `render()` when the stream ends
+5. **Update input bar styling** — Pill-shaped input with rounded border, send icon as paper plane (no colored background on button, just icon)
 
-5. **Preserve scroll** — Auto-scroll the existing body reference instead of relying on `setTimeout` after a full rebuild
+6. **Update CSS** — New classes for home view cards, avatar stack with negative margins, greeting typography, footer, refined input bar
 
-### Single file change
-| File | What |
-|------|------|
-| `public/chatbot-widget.js` | Refactor render loop: add element refs, partial update function, `requestAnimationFrame` batching |
-
-No backend changes needed.
+No backend changes. No new files.
 
