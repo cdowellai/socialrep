@@ -45,17 +45,38 @@ serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const body = await req.json();
+
+    // Handle settings fetch for embed widget
+    if (body.action === "get_settings") {
+      if (!body.userId || !UUID_REGEX.test(body.userId)) {
+        return new Response(
+          JSON.stringify({ error: "Invalid userId" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const { data: widgetSettings } = await supabase
+        .from("chatbot_settings")
+        .select("widget_title,welcome_message,primary_color,position,is_enabled,collect_name,collect_email")
+        .eq("user_id", body.userId)
+        .single();
+
+      return new Response(
+        JSON.stringify(widgetSettings || {}),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    const body: ChatRequest = await req.json();
-    const { messages, userId, conversationId, visitorId, visitorName, visitorEmail } = body;
+    const { messages, userId, conversationId, visitorId, visitorName, visitorEmail } = body as ChatRequest;
 
     // Basic required field validation
     if (!messages?.length || !userId || !visitorId) {
