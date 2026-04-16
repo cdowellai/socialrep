@@ -1,47 +1,41 @@
 
 
-## Dashboard Audit — Issues Found
+## Fix All Dashboard Button Destinations
 
-After reviewing all four dashboard files, the layout, DashboardLayout, and checking for stale references, here are the issues:
+### The Problem
 
-### 1. Dead file: `src/lib/demoData.ts` (711 lines)
-This file exports `DEMO_INTERACTIONS`, `DEMO_REVIEWS`, `DEMO_STREAMS`, and `filterDemoInteractionsForStream` — none of which are imported anywhere in the codebase anymore. It's 711 lines of dead weight that should be deleted.
+Multiple CTAs across the dashboard navigate to `/dashboard/settings` generically, which always opens the **Profile** tab. Users clicking "Connect Platform" expect to land on the **Platforms** tab. Similarly, "Configure AI" should land on the **Brand AI** or **Automation** tab. The Activity Trend chart also uses a raw `<a>` tag instead of React Router's `<Link>`.
 
-### 2. Unused imports in `src/pages/Dashboard.tsx`
-- `Users`, `BookOpen` from lucide-react — never used in the JSX
-- `Avatar`, `AvatarFallback`, `AvatarImage` are used but `Badge` is also used, so those are fine
+### All Buttons Audited
 
-### 3. Trend direction is hardcoded to `isPositive: true`
-All four KPI cards pass `isPositive: true` regardless of actual trend direction. If conversations spike (more pending = bad), the trend should show as negative. The `isPositive` prop should be contextual:
-- **Active Conversations**: `isPositive: false` (fewer pending = better)
-- **Avg. Rating**: `isPositive: true`
-- **Response Rate**: `isPositive: true`
-- **Sentiment Score**: `isPositive: true`
+| Location | Button/CTA Text | Current Destination | Correct Destination |
+|----------|----------------|--------------------|--------------------|
+| KPI Card (empty) | "Connect Platform" | `/dashboard/settings` (Profile tab) | `/dashboard/settings?tab=platforms` |
+| KPI Card (empty) | "Set Up Reviews" | `/dashboard/reviews` | ✅ Correct |
+| KPI Card (empty) | "Configure AI" | `/dashboard/settings` (Profile tab) | `/dashboard/settings?tab=brand` |
+| KPI Card (empty) | "Learn More" | `/dashboard/analytics` | ✅ Correct |
+| Recent Interactions (empty) | "Connect Platform" | `/dashboard/settings` (Profile tab) | `/dashboard/settings?tab=platforms` |
+| Activity Trend (empty) | "Connect Platform" | `/dashboard/settings` (raw `<a>` tag) | `/dashboard/settings?tab=platforms` (use `<Link>`) |
+| Platform Breakdown (empty) | "Connect your first platform" | `/dashboard/settings` (Profile tab) | `/dashboard/settings?tab=platforms` |
+| Quick Actions strip | All 6 links | Various `/dashboard/*` routes | ✅ All correct |
+| KPI Cards (with data) | onClick navigations | inbox/reviews/analytics | ✅ All correct |
 
-### 4. Quick Actions strip lacks "Streams" and "Leads"
-The horizontal action pills include Inbox, Reviews, Content, Settings — but omit two core features (Streams and Leads) that are in the sidebar. Adding them makes the dashboard a true command center.
+### Changes
 
-### 5. Recent Interactions empty state is bland
-The current empty state is a gray icon + two lines of text. Per the Apple design philosophy already established, this should match the onboarding card aesthetic — subtle gradient background, a more inviting CTA that links to Settings.
+**1. `src/pages/Settings.tsx`** — Read `?tab=` from URL and use it as default tab value
+- Parse `searchParams.get("tab")` via `useSearchParams()`
+- Pass it as `defaultValue` to `<Tabs>` (fallback to `"profile"`)
 
-### 6. Charts empty states lack a connecting CTA button
-The Activity Trend and Platform Breakdown empty states show text but only the Platform Breakdown has a clickable "Connect your first platform →" link. The Activity Trend should also have one for consistency.
+**2. `src/pages/Dashboard.tsx`** — Fix 3 navigation targets
+- "Connect Platform" KPI: `/dashboard/settings?tab=platforms`
+- "Configure AI" KPI: `/dashboard/settings?tab=brand`
+- Recent Interactions empty CTA: `/dashboard/settings?tab=platforms`
 
-### 7. No mobile navigation in top bar
-The top bar shows the SocialRep logo on mobile but has no hamburger menu or way to access sidebar navigation. This is an existing gap but worth noting.
+**3. `src/components/dashboard/DashboardTrendChart.tsx`** — Fix 1 link
+- Replace raw `<a href=...>` with React Router `<Link to="/dashboard/settings?tab=platforms">`
 
----
+**4. `src/components/dashboard/PlatformBreakdownChart.tsx`** — Fix 1 navigation target
+- Change `navigate("/dashboard/settings")` to `navigate("/dashboard/settings?tab=platforms")`
 
-### Plan
-
-| # | Change | File |
-|---|--------|------|
-| 1 | Delete dead demo data file | `src/lib/demoData.ts` |
-| 2 | Remove unused `Users`, `BookOpen` imports | `src/pages/Dashboard.tsx` |
-| 3 | Fix `isPositive` on Active Conversations to `false` | `src/pages/Dashboard.tsx` |
-| 4 | Add Streams and Leads to Quick Actions strip | `src/pages/Dashboard.tsx` |
-| 5 | Upgrade Recent Interactions empty state with gradient card + CTA button | `src/pages/Dashboard.tsx` |
-| 6 | Add "Connect Platform →" CTA to Activity Trend empty state | `src/components/dashboard/DashboardTrendChart.tsx` |
-
-All changes are cosmetic/cleanup — no new dependencies, no database changes.
+No new dependencies. No database changes.
 
