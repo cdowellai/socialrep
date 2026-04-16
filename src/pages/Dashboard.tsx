@@ -278,7 +278,7 @@ export default function Dashboard() {
                   <p className="text-sm font-semibold text-foreground">No interactions yet</p>
                   <p className="text-xs text-muted-foreground mt-1.5 max-w-[240px] mx-auto">Connect a platform to start receiving and managing customer interactions.</p>
                   <Link
-                    to="/dashboard/settings"
+                    to="/dashboard/settings?tab=platforms"
                     className="inline-flex items-center gap-1.5 mt-4 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
                   >
                     Connect Platform <ArrowRight className="h-3 w-3" />
