@@ -720,6 +720,7 @@ export function HeroSection() {
       </section>
 
       <AuthModal isOpen={authModal} onClose={() => setAuthModal(false)} defaultTab="signup" />
+      <SignUpPromptModal open={promptFeature !== null} feature={promptFeature} onClose={() => setPromptFeature(null)} />
     </>
   );
 }
