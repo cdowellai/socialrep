@@ -36,6 +36,9 @@ export default function ChatbotPage() {
     collect_email: false,
     collect_name: false,
     human_handoff_enabled: false,
+    booking_url: "",
+    pricing_url: "",
+    sales_goal: "all" as "purchase" | "book_meeting" | "capture_lead" | "all",
   });
 
   const hasChatbotFeature = hasFeature("chatbot");
@@ -51,6 +54,9 @@ export default function ChatbotPage() {
         collect_email: settings.collect_email,
         collect_name: settings.collect_name,
         human_handoff_enabled: settings.human_handoff_enabled,
+        booking_url: settings.booking_url || "",
+        pricing_url: settings.pricing_url || "",
+        sales_goal: settings.sales_goal || "all",
       });
     }
   }, [settings]);
