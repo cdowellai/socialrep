@@ -1,58 +1,39 @@
 
 
-## Chatbot Embed — Why It Doesn't Work & Fix Plan
+## Fix Chatbot Widget Blinking
 
 ### Root Cause
 
-The embed code tells external websites to load `chatbot-widget.js`, but **that file doesn't exist**. There is no `public/chatbot-widget.js` in the project. The current chatbot is a React component deeply tied to the app's internals — it requires `useAuth()`, React, framer-motion, ReactMarkdown, and a logged-in Supabase session. None of that exists on an external website.
+The `render()` function does `root.innerHTML = ""` and rebuilds the entire DOM tree from scratch. During SSE streaming, `render()` is called **on every single token** received from the AI. This means the entire chat window — header, messages, input field — is destroyed and recreated dozens of times per second. This causes:
 
-Three fundamental blockers:
-
-1. **Missing file** — `public/chatbot-widget.js` was never created
-2. **Auth dependency** — `useChatbot` hook requires `user?.id` from `useAuth()`. On an external site there is no logged-in user. The `userId` in the embed is the *business owner's* ID, not a visitor's
-3. **React dependency** — The widget uses React hooks, framer-motion, ReactMarkdown — unavailable on external sites
+1. **Visual blinking** — the window flashes as it's torn down and rebuilt
+2. **Input focus loss** — the text input is destroyed and recreated each token
+3. **Scroll position reset** — body scroll jumps on each rebuild
 
 ### The Fix
 
-Build a **standalone, zero-dependency embed script** (`public/chatbot-widget.js`) that:
-- Reads `data-user-id` from its own `<script>` tag
-- Injects a self-contained chat widget using vanilla JS + inline CSS (shadow DOM for style isolation)
-- Calls the `/functions/v1/chatbot` edge function directly via `fetch()` with the anon key
-- Streams SSE responses and renders them as HTML
-- Handles pre-chat form collection, typing indicators, and basic markdown rendering — all without React
+Stop doing full DOM rebuilds during streaming. Instead, use **targeted DOM updates**:
 
-Also update the **chatbot edge function** to not require a logged-in session for the visitor path (it already uses `verify_jwt = false` and accepts `visitorId`).
+- During streaming, only update the assistant bubble's `innerHTML` with new content
+- Keep a reference to the body element and scroll it, don't recreate it
+- Only do a full `render()` at key state transitions (open/close, send message, stream complete)
 
-### Changes
+### Changes — `public/chatbot-widget.js`
 
-| # | File | What |
-|---|------|------|
-| 1 | `public/chatbot-widget.js` | **Create** — Standalone vanilla JS widget (~400 lines): shadow DOM container, CSS-in-JS styles matching the current dark theme, fetch-based SSE streaming to the chatbot edge function, pre-chat form, typing animation, basic markdown (bold/italic/links/lists) |
-| 2 | `supabase/functions/chatbot/index.ts` | **Update** — Allow `userId` to serve as the business owner context without requiring the caller to be that user. The function already does ownership validation on `conversationId` but the initial message path needs to work for anonymous visitors hitting the endpoint with just `userId` + `visitorId` |
-| 3 | `src/pages/Chatbot.tsx` | **Update** — Fix the embed code snippet to use the correct Supabase URL for the script source (production URL) instead of `window.location.origin` which only works in the app itself |
+1. **Add DOM element references** — Store references to the body container and the current assistant bubble so they can be updated in-place
 
-### Embed Script Architecture
+2. **Split render into full vs. partial** — Add an `updateStreamingBubble()` function that only touches the assistant message bubble's innerHTML, without rebuilding the window
 
-```text
-chatbot-widget.js
-├── Reads data-user-id from <script> tag
-├── Creates shadow DOM container (style isolation)
-├── Renders: FAB button → Chat window → Pre-chat form → Message thread
-├── fetch() to ${SUPABASE_URL}/functions/v1/chatbot
-│   ├── Headers: Authorization: Bearer ${ANON_KEY}
-│   ├── Body: { userId, visitorId, visitorName?, visitorEmail?, messages }
-│   └── Streams SSE response, parses data: chunks
-├── Simple markdown: **bold**, *italic*, [links](url), - lists
-└── All CSS scoped inside shadow DOM
-```
+3. **Throttle streaming updates** — Use `requestAnimationFrame` to batch multiple SSE chunks into a single DOM update per frame, preventing excessive repaints
 
-### What the visitor experiences
+4. **Update `streamResponse()`** — Instead of calling `render()` on every delta, call the new lightweight `updateStreamingBubble()` and only call full `render()` when the stream ends
 
-1. Floating chat bubble appears (bottom-right by default)
-2. Click → chat window opens with welcome message
-3. If name/email collection is enabled, pre-chat form appears first
-4. Visitor types → message sent to edge function → streamed AI response appears
-5. Works on any website with a single `<script>` tag
+5. **Preserve scroll** — Auto-scroll the existing body reference instead of relying on `setTimeout` after a full rebuild
 
-No new dependencies. The embed script is pure vanilla JS with no build step needed.
+### Single file change
+| File | What |
+|------|------|
+| `public/chatbot-widget.js` | Refactor render loop: add element refs, partial update function, `requestAnimationFrame` batching |
+
+No backend changes needed.
 
