@@ -1,37 +1,66 @@
 
 
-## Match Chatbot Embed Widget to React Design
+The user wants the chatbot to be more sales-oriented (drive purchases, appointments, leads). The question: does `gemini-3-flash-preview` still work for that?
 
-### The Problem
+**My honest take:** Yes, stay on Gemini 3 Flash. The model isn't the bottleneck for sales conversion — the **system prompt** is. A sales-trained Flash model will outperform a generic Pro model every time. Sales chat needs speed (fast replies = higher engagement) more than deep reasoning.
 
-The standalone embed widget (`public/chatbot-widget.js`) renders a minimal layout: colored header bar, single welcome bubble, and input. The React version (`ChatbotWidget.tsx`) has a much richer design with a **home view** featuring a time-based greeting, team avatar stack, "Our team is online" card, and a "Sarah from Support" welcome card — all in a clean light theme with subtle borders instead of a colored header bar. The embed widget needs to match this.
+The real upgrade is rewriting the system prompt in `supabase/functions/chatbot/index.ts` to be sales-focused, plus adding lead capture hooks.
 
-### Key visual differences to fix
+## Sales-Oriented Chatbot Upgrade
 
-| Element | Current widget | Target (screenshot) |
-|---------|---------------|---------------------|
-| Header | Solid colored background bar | Clean white with title, green dot, subtitle text |
-| Home view | None — jumps straight to chat | Greeting ("Good morning 👋"), team presence card, Sarah welcome card |
-| Avatar stack | None | S/A/J colored circles with overlapping layout |
-| Input | Basic text input + colored send button | Pill-shaped input with subtle border, paper plane icon |
-| Footer | None | "Powered by SocialRep" |
-| Window style | Colored header, flat white body | All-white with rounded cards, subtle borders |
+### Why stay on Gemini 3 Flash
 
-### Changes — single file
+Sales chat success depends on: speed of first reply, friendly tone, asking the right qualifying questions, and clean handoff to a human/booking. None of these need a heavyweight reasoning model. Flash gives you sub-second streaming — critical because every extra second of "typing..." drops conversion. Pro models would actually hurt by being slower.
 
-**`public/chatbot-widget.js`**
+The model is fine. The **prompt and flow** are what need work.
 
-1. **Add home/chat view state** — Track `currentView` ("home" vs "chat"). Show home view by default, switch to chat when user sends first message
+### What to change
 
-2. **Redesign header** — Remove solid colored background. Use white background with border-bottom, title in dark text, green pulsing dot + "We typically reply in a few minutes" subtitle. Add back arrow in chat view
+**1. Rewrite system prompt — `supabase/functions/chatbot/index.ts`**
 
-3. **Build home view** — Time-based greeting ("Good morning/afternoon/evening 👋"), subtitle "Ask us anything, or pick a topic below", team presence card with 3 overlapping colored avatar circles (S=violet, A=emerald, J=orange) + "Our team is online / Average reply time: ~2 min", Sarah welcome card with blue avatar + welcome message
+Replace the current generic "helpful support assistant" prompt with a sales-trained one that:
+- Acts as a friendly sales/concierge rep, not a passive FAQ bot
+- Always ends responses with a soft next step (question, CTA, or offer)
+- Qualifies visitors naturally (budget, timeline, use case) without interrogating
+- Pushes toward one of three conversion goals:
+  - **Purchase** — direct them to pricing/checkout
+  - **Book a meeting** — share a booking link
+  - **Capture lead** — get name + email + what they need
+- Knows when to hand off to human (high-intent signals, complex deals)
 
-4. **Add footer** — "Powered by SocialRep" text at bottom of window, subtle gray
+**2. Add conversion CTAs to chatbot settings**
 
-5. **Update input bar styling** — Pill-shaped input with rounded border, send icon as paper plane (no colored background on button, just icon)
+Extend `chatbot_settings` table with optional fields the user can configure in the Settings tab:
+- `booking_url` — Calendly/Cal.com link the bot can share
+- `pricing_url` — link to pricing page
+- `sales_goal` — dropdown: "purchase" / "book_meeting" / "capture_lead" / "all"
 
-6. **Update CSS** — New classes for home view cards, avatar stack with negative margins, greeting typography, footer, refined input bar
+These get injected into the system prompt so the bot knows what to push toward.
 
-No backend changes. No new files.
+**3. Auto-create leads from chats**
+
+When the chatbot collects name + email (via existing pre-chat form OR organically mid-conversation), automatically create a record in the `leads` table with status "new" and the chat transcript as notes. This feeds your existing Leads pipeline.
+
+**4. Update settings UI — `src/components/chatbot/ChatbotSettingsCard.tsx`**
+
+Add a new "Sales Goals" section with the three new fields above.
+
+### Files to change
+
+| File | What |
+|------|------|
+| `supabase/functions/chatbot/index.ts` | Rewrite system prompt to sales mode; inject booking/pricing URLs; auto-create lead when email captured |
+| `src/components/chatbot/ChatbotSettingsCard.tsx` | Add "Sales Goals" section (booking URL, pricing URL, sales goal dropdown) |
+| `src/hooks/useChatbotSettings.ts` | Add new fields to settings interface |
+| Database migration | Add `booking_url`, `pricing_url`, `sales_goal` columns to `chatbot_settings` |
+
+### What stays the same
+
+- Model: `google/gemini-3-flash-preview` ✓
+- Streaming, handoff, knowledge base, embed widget — all unchanged
+- Existing brand voice and welcome message logic — preserved
+
+### Result
+
+Same fast widget, but now it actively guides visitors: "Want to see pricing?" / "I can book you a 15-min call with our team — what works?" / "Mind if I grab your email so we can follow up?" Lead records appear automatically in your Leads pipeline.
 
