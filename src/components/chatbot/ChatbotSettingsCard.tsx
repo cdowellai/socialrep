@@ -4,7 +4,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, UserCheck, Users, Loader2, Target } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Settings, UserCheck, Users, Loader2, Target, Clock } from "lucide-react";
 
 interface LocalSettings {
   widget_title: string;
@@ -18,6 +19,9 @@ interface LocalSettings {
   booking_url: string;
   pricing_url: string;
   sales_goal: "purchase" | "book_meeting" | "capture_lead" | "all";
+  humanize_typing: boolean;
+  typing_chars_per_second: number;
+  max_typing_delay_ms: number;
 }
 
 interface ChatbotSettingsCardProps {
@@ -180,6 +184,84 @@ export function ChatbotSettingsCard({ localSettings, settings, onSettingsChange,
             className="rounded-xl bg-muted/30 border-border/30"
           />
         </div>
+      </div>
+
+      <div className="h-px bg-border/50" />
+
+      {/* Response Timing */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          <Label className="text-sm font-medium">Response Timing</Label>
+        </div>
+        <p className="text-xs text-muted-foreground">Make replies feel more human by scaling delay with response length.</p>
+
+        <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border/30">
+          <div>
+            <Label htmlFor="humanize" className="text-sm">Humanize response timing</Label>
+            <p className="text-xs text-muted-foreground">Longer replies take longer to send</p>
+          </div>
+          <Switch
+            id="humanize"
+            checked={localSettings.humanize_typing}
+            onCheckedChange={(checked) => onSettingsChange({ humanize_typing: checked })}
+          />
+        </div>
+
+        {localSettings.humanize_typing && (
+          <>
+            <div className="space-y-3 p-3 rounded-xl bg-muted/30 border border-border/30">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Typing speed</Label>
+                <span className="text-xs font-medium tabular-nums">
+                  {localSettings.typing_chars_per_second} chars/sec
+                </span>
+              </div>
+              <Slider
+                min={10}
+                max={60}
+                step={5}
+                value={[localSettings.typing_chars_per_second]}
+                onValueChange={([v]) => onSettingsChange({ typing_chars_per_second: v })}
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>Slow / thoughtful</span>
+                <span>Natural</span>
+                <span>Fast</span>
+              </div>
+            </div>
+
+            <div className="space-y-3 p-3 rounded-xl bg-muted/30 border border-border/30">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Max delay cap</Label>
+                <span className="text-xs font-medium tabular-nums">
+                  {(localSettings.max_typing_delay_ms / 1000).toFixed(1)}s
+                </span>
+              </div>
+              <Slider
+                min={2000}
+                max={15000}
+                step={500}
+                value={[localSettings.max_typing_delay_ms]}
+                onValueChange={([v]) => onSettingsChange({ max_typing_delay_ms: v })}
+              />
+            </div>
+
+            <div className="rounded-xl bg-accent/30 border border-accent/50 p-3 text-xs text-muted-foreground">
+              <p className="font-medium text-foreground mb-1">Preview</p>
+              <p>
+                A 200-character reply will appear after ~
+                <span className="font-semibold text-foreground tabular-nums">
+                  {Math.min(
+                    localSettings.max_typing_delay_ms / 1000,
+                    200 / Math.max(1, localSettings.typing_chars_per_second)
+                  ).toFixed(1)}s
+                </span>
+                {" "}of "typing…"
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       <Button onClick={onSave} disabled={saving} className="w-full rounded-xl h-11">

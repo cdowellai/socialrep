@@ -474,52 +474,74 @@ ${knowledgeContext}`;
       throw new Error("AI gateway error");
     }
 
-    // Create a transform stream to capture the full response
+    // Humanize timing settings
+    const humanizeTyping = settings?.humanize_typing ?? true;
+    const charsPerSecond = Math.max(5, Math.min(100, settings?.typing_chars_per_second ?? 25));
+    const maxTypingDelayMs = Math.max(500, Math.min(30000, settings?.max_typing_delay_ms ?? 8000));
+    const baseDelayMs = Math.max(0, settings?.auto_reply_delay_ms ?? 500);
+
+    // Buffer entire AI response so we can compute length-based delay before emitting
     let fullResponse = "";
-    const transformStream = new TransformStream({
-      transform(chunk, controller) {
-        const text = new TextDecoder().decode(chunk);
-        
-        // Parse SSE to extract content
-        const lines = text.split("\n");
-        for (const line of lines) {
-          if (line.startsWith("data: ") && line !== "data: [DONE]") {
-            try {
-              const json = JSON.parse(line.slice(6));
-              const content = json.choices?.[0]?.delta?.content;
-              if (content) {
-                fullResponse += content;
-              }
-            } catch {
-              // Ignore parse errors
-            }
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split("\n");
+      buf = lines.pop() || "";
+      for (const line of lines) {
+        if (line.startsWith("data: ") && line.trim() !== "data: [DONE]") {
+          try {
+            const json = JSON.parse(line.slice(6));
+            const content = json.choices?.[0]?.delta?.content;
+            if (content) fullResponse += content;
+          } catch {
+            // ignore parse errors
           }
         }
-        
-        controller.enqueue(chunk);
-      },
-      async flush() {
-        // Store the complete assistant response
-        if (fullResponse && activeConversationId) {
-          await supabase.from("chatbot_messages").insert({
-            conversation_id: activeConversationId,
-            role: "assistant",
-            content: fullResponse,
-          });
+      }
+    }
 
-          // Update conversation resolution type to bot if still pending
-          await supabase
-            .from("chatbot_conversations")
-            .update({ resolution_type: "bot" })
-            .eq("id", activeConversationId)
-            .eq("resolution_type", "pending");
+    // Compute human-like delay
+    const typingDelayMs = humanizeTyping
+      ? Math.min(maxTypingDelayMs, baseDelayMs + (fullResponse.length / charsPerSecond) * 1000)
+      : baseDelayMs;
+
+    // Persist assistant message + resolution update in parallel with the delay
+    const persistPromise = (async () => {
+      if (fullResponse && activeConversationId) {
+        await supabase.from("chatbot_messages").insert({
+          conversation_id: activeConversationId,
+          role: "assistant",
+          content: fullResponse,
+        });
+        await supabase
+          .from("chatbot_conversations")
+          .update({ resolution_type: "bot" })
+          .eq("id", activeConversationId)
+          .eq("resolution_type", "pending");
+      }
+    })();
+
+    // Stream out: hold typing indicator for computed delay, then emit full content
+    const encoder = new TextEncoder();
+    const outStream = new ReadableStream({
+      async start(controller) {
+        if (typingDelayMs > 0) {
+          await new Promise((r) => setTimeout(r, typingDelayMs));
         }
+        const payload = {
+          choices: [{ delta: { content: fullResponse }, finish_reason: "stop" }],
+        };
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\ndata: [DONE]\n\n`));
+        controller.close();
+        await persistPromise;
       },
     });
 
-    const transformedBody = response.body?.pipeThrough(transformStream);
-
-    return new Response(transformedBody, {
+    return new Response(outStream, {
       headers: {
         ...corsHeaders,
         "Content-Type": "text/event-stream",

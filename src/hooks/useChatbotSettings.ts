@@ -19,6 +19,9 @@ interface ChatbotSettings {
   booking_url: string | null;
   pricing_url: string | null;
   sales_goal: "purchase" | "book_meeting" | "capture_lead" | "all";
+  humanize_typing: boolean;
+  typing_chars_per_second: number;
+  max_typing_delay_ms: number;
 }
 
 const defaultSettings: Omit<ChatbotSettings, "id" | "user_id"> = {
@@ -29,12 +32,15 @@ const defaultSettings: Omit<ChatbotSettings, "id" | "user_id"> = {
   position: "bottom-right",
   collect_email: false,
   collect_name: false,
-  auto_reply_delay_ms: 1000,
+  auto_reply_delay_ms: 500,
   human_handoff_enabled: false,
   handoff_keywords: ["speak to human", "talk to agent", "real person", "customer service", "speak to someone"],
   booking_url: null,
   pricing_url: null,
   sales_goal: "all",
+  humanize_typing: true,
+  typing_chars_per_second: 25,
+  max_typing_delay_ms: 8000,
 };
 
 export function useChatbotSettings() {
