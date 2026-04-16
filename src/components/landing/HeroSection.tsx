@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { SignUpPromptModal } from "@/components/landing/SignUpPromptModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Check, Search, Star, MoreHorizontal, RefreshCw, Zap, LayoutDashboard, Inbox, Layers, Star as StarIcon, Users, BarChart3, Bot, Settings, MessageSquare, Send, TrendingUp, Clock, MessageCircle, Instagram } from "lucide-react";
 
@@ -103,6 +104,7 @@ const sidebarItems: { icon: typeof LayoutDashboard; label: string; view: ActiveV
 export function HeroSection() {
   const [activeView, setActiveView] = useState<ActiveView>("inbox");
   const [authModal, setAuthModal] = useState(false);
+  const [promptFeature, setPromptFeature] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [convStates, setConvStates] = useState<Record<number, ConversationState>>(() => {
     const initial: Record<number, ConversationState> = {};
@@ -290,10 +292,13 @@ export function HeroSection() {
                   {sidebarItems.map((item, i) => (
                     <div
                       key={i}
-                      onClick={() => item.view && setActiveView(item.view)}
-                      className={`relative flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 ${
-                        item.view ? "cursor-pointer" : "cursor-default"
-                      } ${item.view === activeView ? "bg-white/[0.07] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]" : "text-white/30 hover:text-white/45"}`}
+                      onClick={() => {
+                        if (item.view) setActiveView(item.view);
+                        else setPromptFeature(item.label);
+                      }}
+                      className={`relative flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 cursor-pointer ${
+                        item.view === activeView ? "bg-white/[0.07] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]" : "text-white/30 hover:text-white/60 hover:bg-white/[0.03]"
+                      }`}
                     >
                       <item.icon className="h-[14px] w-[14px]" />
                       <span className="text-[7px] mt-0.5 leading-none font-medium">{item.label}</span>
@@ -305,7 +310,10 @@ export function HeroSection() {
                     </div>
                   ))}
                   <div className="mt-auto">
-                    <div className="flex flex-col items-center justify-center w-10 h-10 rounded-xl text-white/20">
+                    <div
+                      onClick={() => setPromptFeature("Settings")}
+                      className="flex flex-col items-center justify-center w-10 h-10 rounded-xl text-white/30 hover:text-white/60 hover:bg-white/[0.03] cursor-pointer transition-all duration-300"
+                    >
                       <Settings className="h-[14px] w-[14px]" />
                     </div>
                   </div>
