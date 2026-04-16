@@ -4,6 +4,7 @@ import {
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Activity } from "lucide-react";
+import { Link } from "react-router-dom";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Interaction = Tables<"interactions">;
@@ -60,9 +61,9 @@ export function DashboardTrendChart({ interactions, loading }: DashboardTrendCha
           </div>
           <p className="text-sm font-semibold text-foreground">Activity will appear here</p>
           <p className="text-xs text-muted-foreground mt-1.5 max-w-[220px]">Connect a platform to start tracking your interaction trends.</p>
-          <a href="/dashboard/settings" className="inline-flex items-center gap-1.5 mt-4 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
+          <Link to="/dashboard/settings?tab=platforms" className="inline-flex items-center gap-1.5 mt-4 text-xs font-semibold text-primary hover:text-primary/80 transition-colors">
             Connect Platform <span className="text-[10px]">→</span>
-          </a>
+          </Link>
         </div>
       </div>
     );

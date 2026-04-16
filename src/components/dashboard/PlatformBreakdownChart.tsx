@@ -87,7 +87,7 @@ export function PlatformBreakdownChart({ interactions, loading }: PlatformBreakd
             ))}
           </div>
           <button
-            onClick={() => navigate("/dashboard/settings")}
+            onClick={() => navigate("/dashboard/settings?tab=platforms")}
             className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
           >
             Connect your first platform →

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ export default function SettingsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { hasFeature } = useSubscription();
+  const [searchParams] = useSearchParams();
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState({
     full_name: "",
@@ -100,7 +102,7 @@ export default function SettingsPage() {
           <p className="text-muted-foreground">Manage your account and preferences</p>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs defaultValue={searchParams.get("tab") || "profile"} className="space-y-6">
           <TabsList className="grid grid-cols-7 w-full">
             <TabsTrigger value="profile">
               <User className="h-4 w-4 mr-2" />
