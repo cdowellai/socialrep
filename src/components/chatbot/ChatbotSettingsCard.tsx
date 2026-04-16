@@ -131,6 +131,57 @@ export function ChatbotSettingsCard({ localSettings, settings, onSettingsChange,
         )}
       </div>
 
+      <div className="h-px bg-border/50" />
+
+      {/* Sales Goals */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Target className="h-4 w-4 text-muted-foreground" />
+          <Label className="text-sm font-medium">Sales Goals</Label>
+        </div>
+        <p className="text-xs text-muted-foreground">Tell the bot what to push visitors toward.</p>
+
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Primary Conversion Goal</Label>
+          <Select
+            value={localSettings.sales_goal || "all"}
+            onValueChange={(v: "purchase" | "book_meeting" | "capture_lead" | "all") => onSettingsChange({ sales_goal: v })}
+          >
+            <SelectTrigger className="rounded-xl bg-muted/30 border-border/30"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Mixed — let the bot decide</SelectItem>
+              <SelectItem value="purchase">Drive purchases</SelectItem>
+              <SelectItem value="book_meeting">Book a meeting</SelectItem>
+              <SelectItem value="capture_lead">Capture lead (name + email)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="pricing_url" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pricing / Checkout URL</Label>
+          <Input
+            id="pricing_url"
+            type="url"
+            value={localSettings.pricing_url || ""}
+            onChange={(e) => onSettingsChange({ pricing_url: e.target.value })}
+            placeholder="https://yoursite.com/pricing"
+            className="rounded-xl bg-muted/30 border-border/30"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="booking_url" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Booking URL</Label>
+          <Input
+            id="booking_url"
+            type="url"
+            value={localSettings.booking_url || ""}
+            onChange={(e) => onSettingsChange({ booking_url: e.target.value })}
+            placeholder="https://calendly.com/your-team"
+            className="rounded-xl bg-muted/30 border-border/30"
+          />
+        </div>
+      </div>
+
       <Button onClick={onSave} disabled={saving} className="w-full rounded-xl h-11">
         {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</> : "Save Settings"}
       </Button>
