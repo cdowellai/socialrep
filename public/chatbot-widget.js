@@ -55,21 +55,17 @@
   /* ── Functions ──────────────────────────────────────────────── */
 
   function fetchSettings() {
-    return fetch(
-      SUPABASE_URL +
-        "/rest/v1/chatbot_settings?user_id=eq." +
-        USER_ID +
-        "&select=widget_title,welcome_message,primary_color,position,is_enabled,collect_name,collect_email&limit=1",
-      {
-        headers: {
-          apikey: ANON_KEY,
-          Authorization: "Bearer " + ANON_KEY,
-        },
-      }
-    )
+    return fetch(SUPABASE_URL + "/functions/v1/chatbot", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + ANON_KEY,
+      },
+      body: JSON.stringify({ action: "get_settings", userId: USER_ID }),
+    })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        if (data && data.length > 0) settings = data[0];
+        if (data && !data.error) settings = data;
       })
       .catch(function () {});
   }
