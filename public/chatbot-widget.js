@@ -31,6 +31,12 @@
   var visitorEmail = "";
   var settings = null;
 
+  /* ── Persistent DOM references (avoid full rebuilds) ────────── */
+  var bodyRef = null;
+  var streamingBubbleRef = null;
+  var rafPending = false;
+  var pendingStreamContent = null;
+
   /* ── Shadow DOM container ───────────────────────────────────── */
   var host = document.createElement("div");
   host.id = "socialrep-chatbot-host";
@@ -89,6 +95,9 @@
 
   function render() {
     if (settings && settings.is_enabled === false) return;
+
+    bodyRef = null;
+    streamingBubbleRef = null;
     root.innerHTML = "";
 
     // FAB
@@ -129,6 +138,7 @@
 
     // Body
     var body = el("div", "sr-body");
+    bodyRef = body;
 
     if (needsPreChat()) {
       body.appendChild(buildPreChatForm(body));
@@ -140,7 +150,7 @@
         body.appendChild(welcomeDiv);
       }
 
-      messages.forEach(function (m) {
+      messages.forEach(function (m, i) {
         var row = el("div", "sr-msg sr-" + m.role);
         var bubble = el("div", "sr-bubble sr-bubble-" + (m.role === "user" ? "u" : "a"));
         if (m.role === "user") {
@@ -149,9 +159,15 @@
         bubble.innerHTML = m.role === "user" ? esc(m.content) : md(m.content);
         row.appendChild(bubble);
         body.appendChild(row);
+
+        // Keep reference to the last assistant bubble if we're streaming
+        if (isLoading && m.role === "assistant" && i === messages.length - 1) {
+          streamingBubbleRef = bubble;
+        }
       });
 
-      if (isLoading) {
+      if (isLoading && !streamingBubbleRef) {
+        // Show typing dots only if no streaming bubble yet
         var dots = el("div", "sr-msg sr-assistant");
         dots.innerHTML = '<div class="sr-bubble sr-bubble-a sr-typing"><span></span><span></span><span></span></div>';
         body.appendChild(dots);
@@ -193,6 +209,22 @@
 
     win.appendChild(body);
     return win;
+  }
+
+  /** Lightweight update — only touches the streaming bubble's content */
+  function updateStreamingBubble(content) {
+    pendingStreamContent = content;
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(function () {
+      rafPending = false;
+      if (streamingBubbleRef && pendingStreamContent !== null) {
+        streamingBubbleRef.innerHTML = md(pendingStreamContent);
+        if (bodyRef) {
+          bodyRef.scrollTop = bodyRef.scrollHeight;
+        }
+      }
+    });
   }
 
   function buildPreChatForm(body) {
@@ -285,13 +317,16 @@
     var buffer = "";
     var assistantContent = "";
 
+    // Add empty assistant message and do ONE full render to create the bubble
     messages.push({ role: "assistant", content: "" });
     var idx = messages.length - 1;
+    render();
 
     function read() {
       return reader.read().then(function (result) {
         if (result.done) {
           isLoading = false;
+          streamingBubbleRef = null;
           render();
           return;
         }
@@ -312,7 +347,8 @@
             if (delta) {
               assistantContent += delta;
               messages[idx].content = assistantContent;
-              render();
+              // Use lightweight update instead of full render
+              updateStreamingBubble(assistantContent);
             }
           } catch (e) {}
         }
@@ -408,3 +444,4 @@
     );
   }
 })();
+
