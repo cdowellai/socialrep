@@ -39,6 +39,9 @@ export default function ChatbotPage() {
     booking_url: "",
     pricing_url: "",
     sales_goal: "all" as "purchase" | "book_meeting" | "capture_lead" | "all",
+    humanize_typing: true,
+    typing_chars_per_second: 25,
+    max_typing_delay_ms: 8000,
   });
 
   const hasChatbotFeature = hasFeature("chatbot");
@@ -57,6 +60,9 @@ export default function ChatbotPage() {
         booking_url: settings.booking_url || "",
         pricing_url: settings.pricing_url || "",
         sales_goal: settings.sales_goal || "all",
+        humanize_typing: settings.humanize_typing ?? true,
+        typing_chars_per_second: settings.typing_chars_per_second ?? 25,
+        max_typing_delay_ms: settings.max_typing_delay_ms ?? 8000,
       });
     }
   }, [settings]);
