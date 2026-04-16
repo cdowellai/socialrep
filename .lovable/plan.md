@@ -1,68 +1,52 @@
 
 
-The user wants the chatbot's response timing to feel more human by scaling delay with response length (longer responses = longer "typing" time, like a real person).
+The user is on `/` (the landing page Index). The screenshot shows the marketing mockup of the dashboard with the sidebar (Dashboard, Inbox, Streams, Reviews, Leads, Analytics, Chatbot). They want clicks on **Leads, Analytics, and Settings** to trigger a "Want to learn more? Sign up now" prompt.
 
-Quick check on current state: `chatbot_settings` already has `auto_reply_delay_ms` (a flat delay). The chatbot edge function streams responses immediately. I need to look at how the widget/chatbot currently handles delay to design this properly.
+Need to find which landing component renders this dashboard mockup.
 
-Looking at the code I've seen:
-- `useChatbotSettings.ts` has `auto_reply_delay_ms: 1000` (flat)
-- The standalone widget streams via SSE immediately
-- The React `ChatbotWidget` shows a `TypingIndicator` while loading
+I'll check `HeroSection.tsx` or `WhatIsSection.tsx` / product visualization components for the sidebar mockup. Based on context this is a code-driven React mockup on the landing page.
 
-The natural human-like model: **typing speed in characters per second**. Average human types ~40 WPM ≈ 5 chars/sec. So delay = `response.length / charsPerSecond * 1000`, capped to a max so very long responses don't take forever.
-
-## Human-Like Response Delay (Length-Based)
+## Plan: "Sign Up to Explore" Prompt on Mockup Sidebar
 
 ### Concept
 
-Replace the flat `auto_reply_delay_ms` with a **typing-speed simulation**. Before showing each AI response, compute a delay based on response length so short replies feel snappy and long replies feel like someone actually typed them.
+When a visitor on the landing page clicks **Leads**, **Analytics**, **Settings** (or any other locked sidebar item) in the dashboard mockup, show a small, elegant popover/modal:
 
-Formula: `delay = min(maxDelayMs, baseDelayMs + (responseLength / charsPerSecond) * 1000)`
+> **Want to see this in action?**  
+> Create your free account to explore Leads, Analytics, and more.  
+> [Start Free Trial] [See Pricing]
 
-### What changes
+### Design (matches midnight/Apple aesthetic)
 
-**1. Database — extend `chatbot_settings`**
+- Centered modal using existing `Dialog` component (already in codebase)
+- Glassmorphic dark card, Plus Jakarta Sans heading
+- Icon at top (Sparkles or Lock) in primary purple
+- Two buttons: primary "Start Free Trial" → scrolls to `#pricing`, secondary "See Pricing" → also scrolls to pricing
+- Framer-motion fade/scale entry with `[0.16, 1, 0.3, 1]` easing
+- Dynamic message: passes the feature name clicked ("Leads" / "Analytics" / "Settings") so headline reads "Want to explore **Leads**?"
 
-Add three new columns (keep `auto_reply_delay_ms` for backward compat, repurpose as base/minimum):
-- `humanize_typing` (boolean, default `true`) — master toggle
-- `typing_chars_per_second` (int, default `25`) — simulated typing speed (15 = slow/thoughtful, 25 = natural, 50 = fast)
-- `max_typing_delay_ms` (int, default `8000`) — cap so 2000-char responses don't stall 30s
+### Routing logic
 
-**2. Settings UI — `ChatbotSettingsCard.tsx`**
+The mockup sidebar items are currently visual only (no nav). I'll wire `onClick` handlers on the Leads, Analytics, and Settings items (plus Chatbot/Streams/Reviews for consistency — anything that isn't the already-shown Inbox/Dashboard view) to open the modal with the feature name.
 
-Add a "Response Timing" section with:
-- Toggle: "Humanize response timing"
-- Slider: "Typing speed" (Slow / Natural / Fast — maps to 15/25/50 cps)
-- Slider: "Max delay cap" (2s – 15s)
-- Live preview: "A 200-character reply will take ~Xs to appear"
+### Conversion alignment
 
-**3. Edge function — `supabase/functions/chatbot/index.ts`**
-
-Two delay options for streaming responses:
-- **Option A (recommended)**: Delay *before* streaming starts — buffer the first ~50 chars, compute estimated total length from those tokens, then begin streaming. Simpler, feels natural.
-- **Option B**: Throttle SSE chunks so total stream time ≈ computed delay. More complex but most realistic.
-
-I'll go with **Option A** — buffer first chunk, send a `typing` event for computed duration, then stream. Keeps the "..." typing indicator visible naturally.
-
-Actually simpler: just delay sending the first SSE token by `computedDelay`. Front-end already shows typing indicator while waiting. Done.
-
-**4. Widget + React component**
-
-No code changes needed in the widget — it already shows typing indicator while waiting for first SSE token. The delay happens server-side, indicator stays up naturally.
+Per the project's conversion funnel rule, both CTAs route to the **Pricing section** (not signup directly), so visitors commit to a tier before account creation. This matches existing landing page behavior.
 
 ### Files to change
 
 | File | What |
 |------|------|
-| Migration | Add `humanize_typing`, `typing_chars_per_second`, `max_typing_delay_ms` to `chatbot_settings` |
-| `supabase/functions/chatbot/index.ts` | Compute typing delay from first response chunk, sleep before streaming |
-| `src/hooks/useChatbotSettings.ts` | Add new fields to settings interface + defaults |
-| `src/components/chatbot/ChatbotSettingsCard.tsx` | Add "Response Timing" section with toggle + sliders + preview |
-| `src/pages/Chatbot.tsx` | Wire new fields through to settings card |
+| `src/components/landing/` (the file rendering the dashboard mockup — likely `HeroSection.tsx` or a product visualization component) | Add click handlers to Leads/Analytics/Settings/etc. sidebar items, manage modal open state |
+| New: `src/components/landing/SignUpPromptModal.tsx` | Reusable modal component with dynamic feature name + CTAs scrolling to pricing |
 
 ### What stays the same
 
-- Model: `google/gemini-3-flash-preview`
-- Streaming, handoff, lead capture, sales prompt — unchanged
-- Embed widget JS — no changes (server controls timing)
+- No new pages, no new routes
+- Inbox + Dashboard mockup items remain non-interactive (they're what's being shown)
+- Existing Navbar "Start Free Trial" button behavior unchanged
+
+### Result
+
+Visitors exploring the landing-page dashboard mockup get a gentle, on-brand nudge toward signup the moment they click any "locked" feature — converting curiosity into pricing-page traffic without breaking the cinematic feel of the landing page.
 
