@@ -16,6 +16,9 @@ interface ChatbotSettings {
   auto_reply_delay_ms: number;
   human_handoff_enabled: boolean;
   handoff_keywords: string[] | null;
+  booking_url: string | null;
+  pricing_url: string | null;
+  sales_goal: "purchase" | "book_meeting" | "capture_lead" | "all";
 }
 
 const defaultSettings: Omit<ChatbotSettings, "id" | "user_id"> = {
@@ -29,6 +32,9 @@ const defaultSettings: Omit<ChatbotSettings, "id" | "user_id"> = {
   auto_reply_delay_ms: 1000,
   human_handoff_enabled: false,
   handoff_keywords: ["speak to human", "talk to agent", "real person", "customer service", "speak to someone"],
+  booking_url: null,
+  pricing_url: null,
+  sales_goal: "all",
 };
 
 export function useChatbotSettings() {

@@ -702,6 +702,7 @@ export type Database = {
       chatbot_settings: {
         Row: {
           auto_reply_delay_ms: number
+          booking_url: string | null
           collect_email: boolean
           collect_name: boolean
           created_at: string
@@ -710,7 +711,9 @@ export type Database = {
           id: string
           is_enabled: boolean
           position: string
+          pricing_url: string | null
           primary_color: string | null
+          sales_goal: string
           updated_at: string
           user_id: string
           welcome_message: string
@@ -718,6 +721,7 @@ export type Database = {
         }
         Insert: {
           auto_reply_delay_ms?: number
+          booking_url?: string | null
           collect_email?: boolean
           collect_name?: boolean
           created_at?: string
@@ -726,7 +730,9 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           position?: string
+          pricing_url?: string | null
           primary_color?: string | null
+          sales_goal?: string
           updated_at?: string
           user_id: string
           welcome_message?: string
@@ -734,6 +740,7 @@ export type Database = {
         }
         Update: {
           auto_reply_delay_ms?: number
+          booking_url?: string | null
           collect_email?: boolean
           collect_name?: boolean
           created_at?: string
@@ -742,7 +749,9 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           position?: string
+          pricing_url?: string | null
           primary_color?: string | null
+          sales_goal?: string
           updated_at?: string
           user_id?: string
           welcome_message?: string

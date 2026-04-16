@@ -207,6 +207,55 @@ serve(async (req) => {
         .eq("id", activeConversationId);
     }
 
+    // Auto-create a lead when we have an email and no lead exists yet for this conversation
+    if (visitorEmail && activeConversationId) {
+      const { data: existingLead } = await supabase
+        .from("leads")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("contact_email", visitorEmail)
+        .maybeSingle();
+
+      if (!existingLead) {
+        const { data: transcriptMsgs } = await supabase
+          .from("chatbot_messages")
+          .select("role, content")
+          .eq("conversation_id", activeConversationId)
+          .order("created_at", { ascending: true });
+
+        const transcriptText = (transcriptMsgs || [])
+          .map((m) => `[${m.role.toUpperCase()}]: ${m.content}`)
+          .join("\n");
+
+        const { data: newLead } = await supabase
+          .from("leads")
+          .insert({
+            user_id: userId,
+            contact_name: visitorName || "Website Visitor",
+            contact_email: visitorEmail,
+            source_platform: "chatbot",
+            status: "new",
+            score: 50,
+            score_engagement: 20,
+            score_sentiment: 15,
+            score_profile: 15,
+            score_recency: 25,
+            notes: `Lead captured from website chatbot.\n\n--- Conversation Transcript ---\n${transcriptText}`,
+          })
+          .select("id")
+          .single();
+
+        if (newLead) {
+          await supabase.from("lead_activities").insert({
+            lead_id: newLead.id,
+            user_id: userId,
+            activity_type: "created",
+            content: "Lead captured from website chatbot",
+          });
+        }
+      }
+    }
+
     // Get chatbot settings for this user
     const { data: settings } = await supabase
       .from("chatbot_settings")
@@ -352,20 +401,42 @@ serve(async (req) => {
       );
     }
 
-    // Build system prompt with knowledge base
-    const systemPrompt = `You are a helpful AI customer support assistant for ${companyName}. 
-Your communication style is: ${brandVoice}
+    // Sales-focused configuration
+    const bookingUrl = settings?.booking_url || null;
+    const pricingUrl = settings?.pricing_url || null;
+    const salesGoal = settings?.sales_goal || "all";
 
-Guidelines:
-- Be helpful, concise, and friendly
-- Answer questions about products, services, and general inquiries
-- If you don't know something specific, offer to connect them with a human by saying "Would you like me to connect you with our team?"
-- Keep responses brief (2-4 sentences) unless more detail is needed
-- Be conversational and personable
-- If they ask about pricing or want to make a purchase, encourage them to get in touch with the team
-- Use the knowledge base information below to provide accurate answers
+    const goalInstructions: Record<string, string> = {
+      purchase: `PRIMARY GOAL: Drive the visitor toward a purchase. When intent is detected, share the pricing/checkout link${pricingUrl ? ` (${pricingUrl})` : ""} and remove friction.`,
+      book_meeting: `PRIMARY GOAL: Get the visitor to book a meeting. When you sense interest, offer the booking link${bookingUrl ? ` (${bookingUrl})` : ""} and suggest grabbing a quick 15-min call.`,
+      capture_lead: `PRIMARY GOAL: Capture a qualified lead. Naturally ask for their name and email so the team can follow up with tailored info.`,
+      all: `PRIMARY GOAL: Convert the visitor — purchase, booked meeting, or captured lead, whichever fits their intent. Read the signals and pick the best next step.`,
+    };
 
-Welcome message: ${settings?.welcome_message || "Hi! How can I help you today?"}
+    const ctaLinks = [
+      pricingUrl ? `- Pricing / checkout: ${pricingUrl}` : null,
+      bookingUrl ? `- Book a meeting: ${bookingUrl}` : null,
+    ].filter(Boolean).join("\n");
+
+    // Build sales-oriented system prompt
+    const systemPrompt = `You are a friendly sales concierge for ${companyName} — not a passive FAQ bot. You help visitors and actively guide them toward the next step.
+Brand voice: ${brandVoice}
+
+${goalInstructions[salesGoal] || goalInstructions.all}
+
+${ctaLinks ? `Available links you can share when relevant:\n${ctaLinks}\n` : ""}
+Sales playbook:
+- Open warm. Be helpful first, then guide. Never pushy.
+- Qualify naturally as you chat: what they're trying to solve, timeline, team size, budget — sprinkle questions, don't interrogate.
+- ALWAYS end your reply with a soft next step: a clarifying question, an offer to share more, a CTA, or a link.
+- When intent is high (asking about price, comparing, "how do I start", "can I try"), push to the conversion goal above. Share the relevant link directly.
+- If the visitor hasn't shared their name/email and the conversation has substance, casually ask: "Mind if I grab your name and email so we can follow up with the right info?"
+- Keep replies short (2-4 sentences). Conversational, not corporate.
+- Use markdown for links: [text](url).
+- If they ask for a human, want a custom quote, or you're stuck, offer handoff: "Want me to connect you with our team?"
+- Use the knowledge base below as your source of truth — never invent product details.
+
+Welcome message reference: ${settings?.welcome_message || "Hi! How can I help you today?"}
 ${knowledgeContext}`;
 
     const aiMessages: ChatMessage[] = [
