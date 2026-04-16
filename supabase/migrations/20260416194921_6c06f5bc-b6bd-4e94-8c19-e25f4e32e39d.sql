@@ -1,0 +1,4 @@
+ALTER TABLE public.chatbot_settings
+  ADD COLUMN IF NOT EXISTS humanize_typing BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS typing_chars_per_second INTEGER NOT NULL DEFAULT 25,
+  ADD COLUMN IF NOT EXISTS max_typing_delay_ms INTEGER NOT NULL DEFAULT 8000;

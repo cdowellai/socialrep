@@ -708,12 +708,15 @@ export type Database = {
           created_at: string
           handoff_keywords: string[] | null
           human_handoff_enabled: boolean
+          humanize_typing: boolean
           id: string
           is_enabled: boolean
+          max_typing_delay_ms: number
           position: string
           pricing_url: string | null
           primary_color: string | null
           sales_goal: string
+          typing_chars_per_second: number
           updated_at: string
           user_id: string
           welcome_message: string
@@ -727,12 +730,15 @@ export type Database = {
           created_at?: string
           handoff_keywords?: string[] | null
           human_handoff_enabled?: boolean
+          humanize_typing?: boolean
           id?: string
           is_enabled?: boolean
+          max_typing_delay_ms?: number
           position?: string
           pricing_url?: string | null
           primary_color?: string | null
           sales_goal?: string
+          typing_chars_per_second?: number
           updated_at?: string
           user_id: string
           welcome_message?: string
@@ -746,12 +752,15 @@ export type Database = {
           created_at?: string
           handoff_keywords?: string[] | null
           human_handoff_enabled?: boolean
+          humanize_typing?: boolean
           id?: string
           is_enabled?: boolean
+          max_typing_delay_ms?: number
           position?: string
           pricing_url?: string | null
           primary_color?: string | null
           sales_goal?: string
+          typing_chars_per_second?: number
           updated_at?: string
           user_id?: string
           welcome_message?: string
