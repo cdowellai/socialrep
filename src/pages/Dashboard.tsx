@@ -151,7 +151,7 @@ export default function Dashboard() {
                 onboardingDescription="Link Facebook, Instagram, Google, or any platform to start receiving interactions."
                 onboardingCta="Connect Platform"
                 onboardingGradient="from-primary/10 to-primary/5"
-                onCtaClick={() => navigate("/dashboard/settings")}
+                onCtaClick={() => navigate("/dashboard/settings?tab=platforms")}
               />
             )}
           </motion.div>
@@ -196,7 +196,7 @@ export default function Dashboard() {
                 onboardingDescription="Let AI draft responses to save time and keep your response rate high."
                 onboardingCta="Configure AI"
                 onboardingGradient="from-accent/20 to-accent/5"
-                onCtaClick={() => navigate("/dashboard/settings")}
+                onCtaClick={() => navigate("/dashboard/settings?tab=brand")}
               />
             )}
           </motion.div>

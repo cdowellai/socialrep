@@ -35,6 +35,7 @@ export default function SettingsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { hasFeature } = useSubscription();
+  const [searchParams] = useSearchParams();
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState({
     full_name: "",
