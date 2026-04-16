@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, UserCheck, Users, Loader2 } from "lucide-react";
+import { Settings, UserCheck, Users, Loader2, Target } from "lucide-react";
 
 interface LocalSettings {
   widget_title: string;
@@ -15,6 +15,9 @@ interface LocalSettings {
   collect_email: boolean;
   collect_name: boolean;
   human_handoff_enabled: boolean;
+  booking_url: string;
+  pricing_url: string;
+  sales_goal: "purchase" | "book_meeting" | "capture_lead" | "all";
 }
 
 interface ChatbotSettingsCardProps {
