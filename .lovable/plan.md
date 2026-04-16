@@ -1,66 +1,68 @@
 
 
-The user wants the chatbot to be more sales-oriented (drive purchases, appointments, leads). The question: does `gemini-3-flash-preview` still work for that?
+The user wants the chatbot's response timing to feel more human by scaling delay with response length (longer responses = longer "typing" time, like a real person).
 
-**My honest take:** Yes, stay on Gemini 3 Flash. The model isn't the bottleneck for sales conversion — the **system prompt** is. A sales-trained Flash model will outperform a generic Pro model every time. Sales chat needs speed (fast replies = higher engagement) more than deep reasoning.
+Quick check on current state: `chatbot_settings` already has `auto_reply_delay_ms` (a flat delay). The chatbot edge function streams responses immediately. I need to look at how the widget/chatbot currently handles delay to design this properly.
 
-The real upgrade is rewriting the system prompt in `supabase/functions/chatbot/index.ts` to be sales-focused, plus adding lead capture hooks.
+Looking at the code I've seen:
+- `useChatbotSettings.ts` has `auto_reply_delay_ms: 1000` (flat)
+- The standalone widget streams via SSE immediately
+- The React `ChatbotWidget` shows a `TypingIndicator` while loading
 
-## Sales-Oriented Chatbot Upgrade
+The natural human-like model: **typing speed in characters per second**. Average human types ~40 WPM ≈ 5 chars/sec. So delay = `response.length / charsPerSecond * 1000`, capped to a max so very long responses don't take forever.
 
-### Why stay on Gemini 3 Flash
+## Human-Like Response Delay (Length-Based)
 
-Sales chat success depends on: speed of first reply, friendly tone, asking the right qualifying questions, and clean handoff to a human/booking. None of these need a heavyweight reasoning model. Flash gives you sub-second streaming — critical because every extra second of "typing..." drops conversion. Pro models would actually hurt by being slower.
+### Concept
 
-The model is fine. The **prompt and flow** are what need work.
+Replace the flat `auto_reply_delay_ms` with a **typing-speed simulation**. Before showing each AI response, compute a delay based on response length so short replies feel snappy and long replies feel like someone actually typed them.
 
-### What to change
+Formula: `delay = min(maxDelayMs, baseDelayMs + (responseLength / charsPerSecond) * 1000)`
 
-**1. Rewrite system prompt — `supabase/functions/chatbot/index.ts`**
+### What changes
 
-Replace the current generic "helpful support assistant" prompt with a sales-trained one that:
-- Acts as a friendly sales/concierge rep, not a passive FAQ bot
-- Always ends responses with a soft next step (question, CTA, or offer)
-- Qualifies visitors naturally (budget, timeline, use case) without interrogating
-- Pushes toward one of three conversion goals:
-  - **Purchase** — direct them to pricing/checkout
-  - **Book a meeting** — share a booking link
-  - **Capture lead** — get name + email + what they need
-- Knows when to hand off to human (high-intent signals, complex deals)
+**1. Database — extend `chatbot_settings`**
 
-**2. Add conversion CTAs to chatbot settings**
+Add three new columns (keep `auto_reply_delay_ms` for backward compat, repurpose as base/minimum):
+- `humanize_typing` (boolean, default `true`) — master toggle
+- `typing_chars_per_second` (int, default `25`) — simulated typing speed (15 = slow/thoughtful, 25 = natural, 50 = fast)
+- `max_typing_delay_ms` (int, default `8000`) — cap so 2000-char responses don't stall 30s
 
-Extend `chatbot_settings` table with optional fields the user can configure in the Settings tab:
-- `booking_url` — Calendly/Cal.com link the bot can share
-- `pricing_url` — link to pricing page
-- `sales_goal` — dropdown: "purchase" / "book_meeting" / "capture_lead" / "all"
+**2. Settings UI — `ChatbotSettingsCard.tsx`**
 
-These get injected into the system prompt so the bot knows what to push toward.
+Add a "Response Timing" section with:
+- Toggle: "Humanize response timing"
+- Slider: "Typing speed" (Slow / Natural / Fast — maps to 15/25/50 cps)
+- Slider: "Max delay cap" (2s – 15s)
+- Live preview: "A 200-character reply will take ~Xs to appear"
 
-**3. Auto-create leads from chats**
+**3. Edge function — `supabase/functions/chatbot/index.ts`**
 
-When the chatbot collects name + email (via existing pre-chat form OR organically mid-conversation), automatically create a record in the `leads` table with status "new" and the chat transcript as notes. This feeds your existing Leads pipeline.
+Two delay options for streaming responses:
+- **Option A (recommended)**: Delay *before* streaming starts — buffer the first ~50 chars, compute estimated total length from those tokens, then begin streaming. Simpler, feels natural.
+- **Option B**: Throttle SSE chunks so total stream time ≈ computed delay. More complex but most realistic.
 
-**4. Update settings UI — `src/components/chatbot/ChatbotSettingsCard.tsx`**
+I'll go with **Option A** — buffer first chunk, send a `typing` event for computed duration, then stream. Keeps the "..." typing indicator visible naturally.
 
-Add a new "Sales Goals" section with the three new fields above.
+Actually simpler: just delay sending the first SSE token by `computedDelay`. Front-end already shows typing indicator while waiting. Done.
+
+**4. Widget + React component**
+
+No code changes needed in the widget — it already shows typing indicator while waiting for first SSE token. The delay happens server-side, indicator stays up naturally.
 
 ### Files to change
 
 | File | What |
 |------|------|
-| `supabase/functions/chatbot/index.ts` | Rewrite system prompt to sales mode; inject booking/pricing URLs; auto-create lead when email captured |
-| `src/components/chatbot/ChatbotSettingsCard.tsx` | Add "Sales Goals" section (booking URL, pricing URL, sales goal dropdown) |
-| `src/hooks/useChatbotSettings.ts` | Add new fields to settings interface |
-| Database migration | Add `booking_url`, `pricing_url`, `sales_goal` columns to `chatbot_settings` |
+| Migration | Add `humanize_typing`, `typing_chars_per_second`, `max_typing_delay_ms` to `chatbot_settings` |
+| `supabase/functions/chatbot/index.ts` | Compute typing delay from first response chunk, sleep before streaming |
+| `src/hooks/useChatbotSettings.ts` | Add new fields to settings interface + defaults |
+| `src/components/chatbot/ChatbotSettingsCard.tsx` | Add "Response Timing" section with toggle + sliders + preview |
+| `src/pages/Chatbot.tsx` | Wire new fields through to settings card |
 
 ### What stays the same
 
-- Model: `google/gemini-3-flash-preview` ✓
-- Streaming, handoff, knowledge base, embed widget — all unchanged
-- Existing brand voice and welcome message logic — preserved
-
-### Result
-
-Same fast widget, but now it actively guides visitors: "Want to see pricing?" / "I can book you a 15-min call with our team — what works?" / "Mind if I grab your email so we can follow up?" Lead records appear automatically in your Leads pipeline.
+- Model: `google/gemini-3-flash-preview`
+- Streaming, handoff, lead capture, sales prompt — unchanged
+- Embed widget JS — no changes (server controls timing)
 
