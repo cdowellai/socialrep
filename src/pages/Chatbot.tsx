@@ -58,11 +58,13 @@ export default function ChatbotPage() {
   const handleSave = () => updateSettings(localSettings);
   const handleSettingsChange = (updates: Partial<typeof localSettings>) => setLocalSettings((s) => ({ ...s, ...updates }));
 
+  const widgetUrl = `https://socialrep.lovable.app/chatbot-widget.js`;
+
   const embedCode = `<!-- SocialRep AI Chatbot Widget -->
 <script>
   (function() {
     var script = document.createElement('script');
-    script.src = '${window.location.origin}/chatbot-widget.js';
+    script.src = '${widgetUrl}';
     script.setAttribute('data-user-id', '${user?.id || "YOUR_USER_ID"}');
     script.async = true;
     document.body.appendChild(script);
