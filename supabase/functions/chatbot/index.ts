@@ -207,6 +207,55 @@ serve(async (req) => {
         .eq("id", activeConversationId);
     }
 
+    // Auto-create a lead when we have an email and no lead exists yet for this conversation
+    if (visitorEmail && activeConversationId) {
+      const { data: existingLead } = await supabase
+        .from("leads")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("contact_email", visitorEmail)
+        .maybeSingle();
+
+      if (!existingLead) {
+        const { data: transcriptMsgs } = await supabase
+          .from("chatbot_messages")
+          .select("role, content")
+          .eq("conversation_id", activeConversationId)
+          .order("created_at", { ascending: true });
+
+        const transcriptText = (transcriptMsgs || [])
+          .map((m) => `[${m.role.toUpperCase()}]: ${m.content}`)
+          .join("\n");
+
+        const { data: newLead } = await supabase
+          .from("leads")
+          .insert({
+            user_id: userId,
+            contact_name: visitorName || "Website Visitor",
+            contact_email: visitorEmail,
+            source_platform: "chatbot",
+            status: "new",
+            score: 50,
+            score_engagement: 20,
+            score_sentiment: 15,
+            score_profile: 15,
+            score_recency: 25,
+            notes: `Lead captured from website chatbot.\n\n--- Conversation Transcript ---\n${transcriptText}`,
+          })
+          .select("id")
+          .single();
+
+        if (newLead) {
+          await supabase.from("lead_activities").insert({
+            lead_id: newLead.id,
+            user_id: userId,
+            activity_type: "created",
+            content: "Lead captured from website chatbot",
+          });
+        }
+      }
+    }
+
     // Get chatbot settings for this user
     const { data: settings } = await supabase
       .from("chatbot_settings")
