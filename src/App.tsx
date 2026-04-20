@@ -22,6 +22,8 @@ import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import DataDeletion from "./pages/DataDeletion";
+import AcceptInvite from "./pages/AcceptInvite";
+import Unsubscribe from "./pages/Unsubscribe";
 
 const queryClient = new QueryClient();
 
@@ -139,6 +141,8 @@ function AppRoutes() {
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/data-deletion" element={<DataDeletion />} />
+      <Route path="/accept-invite" element={<AcceptInvite />} />
+      <Route path="/unsubscribe" element={<Unsubscribe />} />
       {/* Short-path redirects for production URLs */}
       <Route path="/login" element={<Index />} />
       <Route path="/overview" element={<Navigate to="/dashboard" replace />} />
