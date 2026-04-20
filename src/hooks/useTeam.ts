@@ -174,12 +174,12 @@ export function useTeam() {
   const inviteMember = async (email: string, role: TeamRole = "member") => {
     if (!team || !user) throw new Error("No team selected");
 
-    // Check if user already exists
+    // Check if user already exists (RLS may hide other users' profiles — that's OK, we'll fall through to invitation)
     const { data: existingProfile } = await supabase
       .from("profiles")
       .select("user_id")
       .eq("email", email)
-      .single();
+      .maybeSingle();
 
     if (existingProfile) {
       // User exists, add directly to team
@@ -188,7 +188,7 @@ export function useTeam() {
         .select("id")
         .eq("team_id", team.id)
         .eq("user_id", existingProfile.user_id)
-        .single();
+        .maybeSingle();
 
       if (existingMember) {
         throw new Error("User is already a member of this team");
