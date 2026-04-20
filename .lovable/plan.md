@@ -1,52 +1,72 @@
 
 
-The user is on `/` (the landing page Index). The screenshot shows the marketing mockup of the dashboard with the sidebar (Dashboard, Inbox, Streams, Reviews, Leads, Analytics, Chatbot). They want clicks on **Leads, Analytics, and Settings** to trigger a "Want to learn more? Sign up now" prompt.
+## Fix: Team invitation emails not arriving
 
-Need to find which landing component renders this dashboard mockup.
+### Root cause
 
-I'll check `HeroSection.tsx` or `WhatIsSection.tsx` / product visualization components for the sidebar mockup. Based on context this is a code-driven React mockup on the landing page.
+The "Invite member" flow in `src/hooks/useTeam.ts` only inserts a row into the `team_invitations` table. It never sends an email. So invited people who don't already have an account never hear about the invitation.
 
-## Plan: "Sign Up to Explore" Prompt on Mockup Sidebar
+The email domain `notify.socialrep.ai` is already verified and ready, but the app's transactional email layer hasn't been scaffolded yet, and there's no page for invitees to accept an invitation.
 
-### Concept
+### What gets built
 
-When a visitor on the landing page clicks **Leads**, **Analytics**, **Settings** (or any other locked sidebar item) in the dashboard mockup, show a small, elegant popover/modal:
+**1. Set up app email infrastructure**
+- Provision the email queue, suppression handling, and unsubscribe pieces tied to the verified `notify.socialrep.ai` domain.
+- Scaffold the `send-transactional-email` edge function so the app can send branded emails.
 
-> **Want to see this in action?**  
-> Create your free account to explore Leads, Analytics, and more.  
-> [Start Free Trial] [See Pricing]
+**2. Branded "Team invitation" email template**
+- New React Email template `team-invitation` with:
+  - Subject: "You've been invited to join {teamName} on SocialRep"
+  - Inviter name, team name, role, and a primary CTA button "Accept invitation"
+  - SocialRep midnight branding (matching the app's Plus Jakarta Sans + Inter type system, white email background per email rules)
+  - Link expires note (matches `team_invitations.expires_at`)
 
-### Design (matches midnight/Apple aesthetic)
+**3. Wire the invite flow to actually send the email**
+- Update `inviteMember` in `src/hooks/useTeam.ts`:
+  - After inserting into `team_invitations`, fetch the inserted row to get the `token`
+  - Call `supabase.functions.invoke('send-transactional-email', ...)` with:
+    - `templateName: 'team-invitation'`
+    - `recipientEmail`: the invited email
+    - `idempotencyKey: invite-${invitation.id}`
+    - `templateData`: team name, inviter name, role, accept URL
+  - For the "user already exists, auto-added" path, send a lighter "You've been added to {team}" variant (same template, different copy via prop) so they know.
+- Surface real errors in the UI (already partially planned previously) so a failed send doesn't get hidden behind a generic toast.
 
-- Centered modal using existing `Dialog` component (already in codebase)
-- Glassmorphic dark card, Plus Jakarta Sans heading
-- Icon at top (Sparkles or Lock) in primary purple
-- Two buttons: primary "Start Free Trial" → scrolls to `#pricing`, secondary "See Pricing" → also scrolls to pricing
-- Framer-motion fade/scale entry with `[0.16, 1, 0.3, 1]` easing
-- Dynamic message: passes the feature name clicked ("Leads" / "Analytics" / "Settings") so headline reads "Want to explore **Leads**?"
+**4. Acceptance page for invitees**
+- New route: `/accept-invite?token=...`
+- Page logic:
+  - Look up the invitation by token, check expiry
+  - If user is not signed in → prompt them to sign up / log in (preserving the token)
+  - On accept: insert into `team_members` with `accepted_at = now()`, delete the invitation row, redirect to `/dashboard`
+- Add the route to `src/App.tsx` (public route).
 
-### Routing logic
-
-The mockup sidebar items are currently visual only (no nav). I'll wire `onClick` handlers on the Leads, Analytics, and Settings items (plus Chatbot/Streams/Reviews for consistency — anything that isn't the already-shown Inbox/Dashboard view) to open the modal with the feature name.
-
-### Conversion alignment
-
-Per the project's conversion funnel rule, both CTAs route to the **Pricing section** (not signup directly), so visitors commit to a tier before account creation. This matches existing landing page behavior.
+**5. Resend invitation action**
+- Small "Resend" button on pending invitations in `TeamManagement.tsx` that re-invokes `send-transactional-email` for the same token, so users can recover from missed/spammed emails without recreating the invite.
 
 ### Files to change
 
-| File | What |
-|------|------|
-| `src/components/landing/` (the file rendering the dashboard mockup — likely `HeroSection.tsx` or a product visualization component) | Add click handlers to Leads/Analytics/Settings/etc. sidebar items, manage modal open state |
-| New: `src/components/landing/SignUpPromptModal.tsx` | Reusable modal component with dynamic feature name + CTAs scrolling to pricing |
+| File | Change |
+|------|--------|
+| Email infra | Provision queue + scaffold `send-transactional-email` against `notify.socialrep.ai` |
+| `supabase/functions/_shared/transactional-email-templates/team-invitation.tsx` | New branded React Email template |
+| `supabase/functions/_shared/transactional-email-templates/registry.ts` | Register `team-invitation` |
+| `src/hooks/useTeam.ts` | Send email after creating invitation; send "added" email for existing-user path; expose detailed errors |
+| `src/components/settings/TeamManagement.tsx` | Show real error messages; add "Resend" button on pending invitations |
+| `src/pages/AcceptInvite.tsx` | New page that validates token and joins the team |
+| `src/App.tsx` | Register `/accept-invite` route |
 
 ### What stays the same
 
-- No new pages, no new routes
-- Inbox + Dashboard mockup items remain non-interactive (they're what's being shown)
-- Existing Navbar "Start Free Trial" button behavior unchanged
+- `notify.socialrep.ai` domain (already verified, no DNS work needed)
+- Existing `team_invitations` table, token, and expiry logic
+- Owner/admin invite permissions and seat limits
+- Auth flow and dashboard
 
 ### Result
 
-Visitors exploring the landing-page dashboard mockup get a gentle, on-brand nudge toward signup the moment they click any "locked" feature — converting curiosity into pricing-page traffic without breaking the cinematic feel of the landing page.
+When an account owner invites a teammate:
+- A branded SocialRep email lands in the invitee's inbox within seconds
+- Clicking "Accept invitation" takes them through signup/login (if needed) and drops them straight into the right team
+- The inviter can resend the email if it didn't land
+- If anything fails, the toast shows the real reason instead of a generic failure
 
