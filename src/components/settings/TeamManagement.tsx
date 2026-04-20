@@ -110,6 +110,7 @@ export function TeamManagement() {
     isOwner,
     updateTeamName,
     inviteMember,
+    resendInvitation,
     updateMemberRole,
     removeMember,
     cancelInvitation,
@@ -542,8 +543,17 @@ export function TeamManagement() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => {
-                              toast({ title: "Invite resent", description: `Invitation resent to ${inv.email}` });
+                            <DropdownMenuItem onClick={async () => {
+                              try {
+                                await resendInvitation(inv.id);
+                                toast({ title: "Invite resent", description: `Invitation resent to ${inv.email}` });
+                              } catch (err) {
+                                toast({
+                                  title: "Could not resend",
+                                  description: err instanceof Error ? err.message : "Unknown error",
+                                  variant: "destructive",
+                                });
+                              }
                             }}>
                               <RefreshCw className="h-4 w-4 mr-2" /> Resend Invite
                             </DropdownMenuItem>

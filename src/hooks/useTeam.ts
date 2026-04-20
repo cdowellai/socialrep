@@ -171,10 +171,51 @@ export function useTeam() {
     setTeam({ ...team, name });
   };
 
+  const sendInvitationEmail = async (
+    invitationId: string,
+    email: string,
+    role: TeamRole,
+    variant: "invite" | "added",
+    token?: string,
+  ) => {
+    const acceptUrl = token
+      ? `${window.location.origin}/accept-invite?token=${token}`
+      : `${window.location.origin}/dashboard`;
+
+    const inviterName =
+      (user?.user_metadata as any)?.full_name ||
+      user?.email?.split("@")[0] ||
+      "A teammate";
+
+    const { error: fnError } = await supabase.functions.invoke(
+      "send-transactional-email",
+      {
+        body: {
+          templateName: "team-invitation",
+          recipientEmail: email,
+          idempotencyKey: `invite-${invitationId}-${variant}`,
+          templateData: {
+            teamName: team?.name ?? "the team",
+            inviterName,
+            role,
+            acceptUrl,
+            expiresInDays: 7,
+            variant,
+          },
+        },
+      },
+    );
+
+    if (fnError) {
+      throw new Error(
+        `Invitation saved, but the email could not be sent: ${fnError.message}`,
+      );
+    }
+  };
+
   const inviteMember = async (email: string, role: TeamRole = "member") => {
     if (!team || !user) throw new Error("No team selected");
 
-    // Check if user already exists (RLS may hide other users' profiles — that's OK, we'll fall through to invitation)
     const { data: existingProfile } = await supabase
       .from("profiles")
       .select("user_id")
@@ -182,7 +223,6 @@ export function useTeam() {
       .maybeSingle();
 
     if (existingProfile) {
-      // User exists, add directly to team
       const { data: existingMember } = await supabase
         .from("team_members")
         .select("id")
@@ -194,32 +234,49 @@ export function useTeam() {
         throw new Error("User is already a member of this team");
       }
 
-      const { error } = await supabase
+      const { data: inserted, error } = await supabase
         .from("team_members")
         .insert({
           team_id: team.id,
           user_id: existingProfile.user_id,
           role,
           invited_by: user.id,
-          accepted_at: new Date().toISOString(), // Auto-accept for existing users
-        });
+          accepted_at: new Date().toISOString(),
+        })
+        .select("id")
+        .single();
 
       if (error) throw error;
+
+      try {
+        await sendInvitationEmail(inserted.id, email, role, "added");
+      } catch (e) {
+        console.warn("Could not send 'added' email", e);
+      }
     } else {
-      // Create invitation for new user
-      const { error } = await supabase
+      const { data: invitation, error } = await supabase
         .from("team_invitations")
         .insert({
           team_id: team.id,
           email,
           role,
           invited_by: user.id,
-        });
+        })
+        .select("id, token")
+        .single();
 
       if (error) throw error;
+
+      await sendInvitationEmail(invitation.id, email, role, "invite", invitation.token);
     }
 
     await fetchTeam();
+  };
+
+  const resendInvitation = async (invitationId: string) => {
+    const inv = invitations.find((i) => i.id === invitationId);
+    if (!inv) throw new Error("Invitation not found");
+    await sendInvitationEmail(inv.id, inv.email, inv.role, "invite", inv.token);
   };
 
   const updateMemberRole = async (memberId: string, role: TeamRole) => {
@@ -266,6 +323,7 @@ export function useTeam() {
     refetch: fetchTeam,
     updateTeamName,
     inviteMember,
+    resendInvitation,
     updateMemberRole,
     removeMember,
     cancelInvitation,
