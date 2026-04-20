@@ -732,11 +732,11 @@ serve(async (req) => {
           const igAccountId = platform.platform_account_id;
           const pageToken = platform.access_token; // Instagram uses FB Page token
 
-          // FIX: Fetch Instagram media and comments
+          // FIX: Fetch Instagram media + comments in ONE call (BOUNDED)
           console.log(`[sync] Fetching Instagram media for account ${igAccountId}...`);
           try {
             const mediaRes = await fetch(
-              `${META_GRAPH_URL}/${encodeURIComponent(igAccountId)}/media?fields=id,caption,timestamp,comments_count&limit=25&access_token=${encodeURIComponent(pageToken)}`
+              `${META_GRAPH_URL}/${encodeURIComponent(igAccountId)}/media?fields=id,caption,timestamp,comments_count,comments.limit(25){id,text,username,timestamp}&limit=15&access_token=${encodeURIComponent(pageToken)}`
             );
             const mediaData = await mediaRes.json();
 
@@ -744,55 +744,47 @@ serve(async (req) => {
               console.error(`[sync] Instagram media error:`, JSON.stringify(mediaData.error));
               errorDetails.push({ endpoint: "ig_media", platform: "instagram", code: mediaData.error.code, message: mediaData.error.message });
             } else {
+              const allComments: Array<{ media: any; comment: any }> = [];
               for (const media of mediaData.data || []) {
-                if (!media.comments_count || media.comments_count === 0) continue;
+                for (const comment of media.comments?.data || []) allComments.push({ media, comment });
+              }
+              totalComments += allComments.length;
 
-                // Fetch comments for this media
-                const commentsRes = await fetch(
-                  `${META_GRAPH_URL}/${encodeURIComponent(media.id)}/comments?fields=id,text,username,timestamp&limit=100&access_token=${encodeURIComponent(pageToken)}`
-                );
-                const commentsData = await commentsRes.json();
+              if (allComments.length > 0) {
+                const ids = allComments.map((c) => c.comment.id);
+                const { data: existingRows } = await supabase
+                  .from("interactions")
+                  .select("external_id")
+                  .eq("user_id", user.id)
+                  .in("external_id", ids);
+                const existingSet = new Set((existingRows || []).map((r: any) => r.external_id));
 
-                if (commentsData.error) {
-                  errorDetails.push({ endpoint: "ig_comments", media_id: media.id, code: commentsData.error.code, message: commentsData.error.message });
-                  continue;
-                }
+                const toInsert = allComments
+                  .filter(({ comment }) => !existingSet.has(comment.id))
+                  .map(({ media, comment }) => ({
+                    user_id: user.id,
+                    external_id: comment.id,
+                    platform: "instagram" as const,
+                    interaction_type: "comment" as const,
+                    content: comment.text || "",
+                    author_name: comment.username || "Instagram User",
+                    author_handle: comment.username || null,
+                    post_url: `https://instagram.com/p/${media.id}`,
+                    created_at: comment.timestamp,
+                    status: "pending" as const,
+                  }));
 
-                for (const comment of commentsData.data || []) {
-                  totalComments++;
-                  const { data: existing } = await supabase
+                skippedCount += allComments.length - toInsert.length;
+
+                if (toInsert.length > 0) {
+                  const { error: insertErr, count } = await supabase
                     .from("interactions")
-                    .select("id")
-                    .eq("external_id", comment.id)
-                    .eq("user_id", user.id)
-                    .maybeSingle();
-
-                  if (existing) { skippedCount++; continue; }
-
-                  const { error: insertErr } = await supabase
-                    .from("interactions")
-                    .insert({
-                      user_id: user.id,
-                      external_id: comment.id,
-                      platform: "instagram",
-                      interaction_type: "comment",
-                      content: comment.text || "",
-                      author_name: comment.username || "Instagram User",
-                      author_handle: comment.username || null,
-                      post_url: `https://instagram.com/p/${media.id}`,
-                      created_at: comment.timestamp,
-                      status: "pending",
-                    });
-
+                    .insert(toInsert, { count: "exact" });
                   if (insertErr) {
-                    if (!insertErr.message?.includes("duplicate")) {
-                      errorDetails.push({ endpoint: "insert_ig_comment", message: insertErr.message });
-                      syncErrors++;
-                    } else {
-                      skippedCount++;
-                    }
+                    errorDetails.push({ endpoint: "insert_ig_comment", message: insertErr.message });
+                    syncErrors++;
                   } else {
-                    newComments++;
+                    newComments += count ?? toInsert.length;
                   }
                 }
               }
@@ -802,62 +794,57 @@ serve(async (req) => {
             errorDetails.push({ endpoint: "ig_media_fetch", message: String(err) });
           }
 
-          // FIX: Fetch Instagram Direct Messages (requires instagram_manage_messages permission)
+          // FIX: Fetch Instagram DMs in ONE call (BOUNDED)
           try {
             const igDmsRes = await fetch(
-              `${META_GRAPH_URL}/${encodeURIComponent(igAccountId)}/conversations?fields=id,participants,updated_time&limit=25&access_token=${encodeURIComponent(pageToken)}`
+              `${META_GRAPH_URL}/${encodeURIComponent(igAccountId)}/conversations?fields=id,updated_time,messages.limit(10){id,message,from,created_time}&limit=15&access_token=${encodeURIComponent(pageToken)}`
             );
             const igDmsData = await igDmsRes.json();
 
             if (igDmsData.error) {
               errorDetails.push({ endpoint: "ig_conversations", platform: "instagram", code: igDmsData.error.code, message: igDmsData.error.message });
             } else {
+              const allMsgs: Array<{ convo: any; msg: any }> = [];
               for (const convo of igDmsData.data || []) {
-                const msgsRes = await fetch(
-                  `${META_GRAPH_URL}/${encodeURIComponent(convo.id)}/messages?fields=id,message,from,created_time&limit=25&access_token=${encodeURIComponent(pageToken)}`
-                );
-                const msgsData = await msgsRes.json();
+                for (const msg of convo.messages?.data || []) allMsgs.push({ convo, msg });
+              }
+              totalMessages += allMsgs.length;
 
-                if (msgsData.error) {
-                  errorDetails.push({ endpoint: "ig_conversation_messages", conversation_id: convo.id, code: msgsData.error.code, message: msgsData.error.message });
-                  continue;
-                }
+              if (allMsgs.length > 0) {
+                const ids = allMsgs.map(({ msg }) => msg.id).filter(Boolean);
+                const { data: existingRows } = await supabase
+                  .from("interactions")
+                  .select("external_id")
+                  .eq("user_id", user.id)
+                  .in("external_id", ids);
+                const existingSet = new Set((existingRows || []).map((r: any) => r.external_id));
 
-                for (const msg of msgsData.data || []) {
-                  totalMessages++;
-                  const { data: existing } = await supabase
+                const toInsert = allMsgs
+                  .filter(({ msg }) => msg.id && !existingSet.has(msg.id))
+                  .map(({ convo, msg }) => ({
+                    user_id: user.id,
+                    external_id: msg.id,
+                    platform: "instagram" as const,
+                    interaction_type: "dm" as const,
+                    content: msg.message || "",
+                    author_name: msg.from?.name || msg.from?.username || "Instagram User",
+                    author_handle: msg.from?.username || msg.from?.id || null,
+                    created_at: msg.created_time,
+                    status: "pending" as const,
+                    metadata: { conversation_id: convo.id },
+                  }));
+
+                skippedCount += allMsgs.length - toInsert.length;
+
+                if (toInsert.length > 0) {
+                  const { error: insertErr, count } = await supabase
                     .from("interactions")
-                    .select("id")
-                    .eq("external_id", msg.id)
-                    .eq("user_id", user.id)
-                    .maybeSingle();
-
-                  if (existing) { skippedCount++; continue; }
-
-                  const { error: insertErr } = await supabase
-                    .from("interactions")
-                    .insert({
-                      user_id: user.id,
-                      external_id: msg.id,
-                      platform: "instagram",
-                      interaction_type: "dm",
-                      content: msg.message || "",
-                      author_name: msg.from?.name || msg.from?.username || "Instagram User",
-                      author_handle: msg.from?.username || msg.from?.id || null,
-                      created_at: msg.created_time,
-                      status: "pending",
-                      metadata: { conversation_id: convo.id },
-                    });
-
+                    .insert(toInsert, { count: "exact" });
                   if (insertErr) {
-                    if (!insertErr.message?.includes("duplicate")) {
-                      errorDetails.push({ endpoint: "insert_ig_dm", message: insertErr.message });
-                      syncErrors++;
-                    } else {
-                      skippedCount++;
-                    }
+                    errorDetails.push({ endpoint: "insert_ig_dm", message: insertErr.message });
+                    syncErrors++;
                   } else {
-                    newMessages++;
+                    newMessages += count ?? toInsert.length;
                   }
                 }
               }
