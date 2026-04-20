@@ -580,12 +580,13 @@ serve(async (req) => {
           // FIX: Added since parameter to only fetch recent content (last 30 days)
           const since = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
 
-          // 1. Fetch posts + comments with pagination
+          // 1. Fetch posts + comments (BOUNDED to avoid 150s edge function timeout)
           console.log(`[sync] Fetching feed for Facebook page ${pageId}...`);
-          let feedUrl: string | null = `${META_GRAPH_URL}/${encodeURIComponent(pageId)}/feed?fields=id,message,from,created_time,comments.limit(100){id,message,from,created_time,parent}&limit=25&since=${since}&access_token=${encodeURIComponent(pageToken)}`;
+          let feedUrl: string | null = `${META_GRAPH_URL}/${encodeURIComponent(pageId)}/feed?fields=id,message,from,created_time,comments.limit(50){id,message,from,created_time,parent}&limit=25&since=${since}&access_token=${encodeURIComponent(pageToken)}`;
           let feedPages = 0;
+          const MAX_FEED_PAGES = 2;
 
-          while (feedUrl && feedPages < 10) {
+          while (feedUrl && feedPages < MAX_FEED_PAGES) {
             feedPages++;
             try {
               const feedRes = await fetch(feedUrl);
@@ -598,44 +599,49 @@ serve(async (req) => {
                 break;
               }
 
+              const allComments: Array<{ post: any; comment: any }> = [];
               for (const post of feedData.data || []) {
                 if (!post.comments?.data) continue;
-                for (const comment of post.comments.data) {
-                  totalComments++;
-                  const { data: existing } = await supabase
+                for (const comment of post.comments.data) allComments.push({ post, comment });
+              }
+              totalComments += allComments.length;
+
+              if (allComments.length > 0) {
+                const ids = allComments.map((c) => c.comment.id);
+                const { data: existingRows } = await supabase
+                  .from("interactions")
+                  .select("external_id")
+                  .eq("user_id", user.id)
+                  .in("external_id", ids);
+                const existingSet = new Set((existingRows || []).map((r: any) => r.external_id));
+
+                const toInsert = allComments
+                  .filter(({ comment }) => !existingSet.has(comment.id))
+                  .map(({ post, comment }) => ({
+                    user_id: user.id,
+                    external_id: comment.id,
+                    platform: "facebook" as const,
+                    interaction_type: "comment" as const,
+                    content: comment.message || "",
+                    author_name: comment.from?.name || "Facebook User",
+                    author_handle: comment.from?.id || null,
+                    post_url: `https://facebook.com/${post.id}`,
+                    created_at: comment.created_time,
+                    status: "pending" as const,
+                  }));
+
+                skippedCount += allComments.length - toInsert.length;
+
+                if (toInsert.length > 0) {
+                  const { error: insertErr, count } = await supabase
                     .from("interactions")
-                    .select("id")
-                    .eq("external_id", comment.id)
-                    .eq("user_id", user.id)
-                    .maybeSingle();
-
-                  if (existing) { skippedCount++; continue; }
-
-                  const { error: insertErr } = await supabase
-                    .from("interactions")
-                    .insert({
-                      user_id: user.id,
-                      external_id: comment.id,
-                      platform: "facebook",
-                      interaction_type: "comment",
-                      content: comment.message || "",
-                      author_name: comment.from?.name || "Facebook User",
-                      author_handle: comment.from?.id || null,
-                      post_url: `https://facebook.com/${post.id}`,
-                      created_at: comment.created_time,
-                      status: "pending",
-                    });
-
+                    .insert(toInsert, { count: "exact" });
                   if (insertErr) {
-                    if (!insertErr.message?.includes("duplicate")) {
-                      console.error("[sync] Insert comment error:", JSON.stringify(insertErr));
-                      errorDetails.push({ endpoint: "insert_comment", message: insertErr.message });
-                      syncErrors++;
-                    } else {
-                      skippedCount++;
-                    }
+                    console.error("[sync] Bulk insert comments error:", JSON.stringify(insertErr));
+                    errorDetails.push({ endpoint: "insert_comment", message: insertErr.message });
+                    syncErrors++;
                   } else {
-                    newComments++;
+                    newComments += count ?? toInsert.length;
                   }
                 }
               }
@@ -649,88 +655,68 @@ serve(async (req) => {
             }
           }
 
-          // 2. Fetch Facebook Messenger conversations (DMs)
+          // 2. Fetch Messenger conversations + messages in ONE call (bounded)
           console.log(`[sync] Fetching conversations for Facebook page ${pageId}...`);
-          let convoUrl: string | null = `${META_GRAPH_URL}/${encodeURIComponent(pageId)}/conversations?fields=id,participants,updated_time&limit=25&access_token=${encodeURIComponent(pageToken)}`;
-          let convoPages = 0;
+          try {
+            const convoRes = await fetch(
+              `${META_GRAPH_URL}/${encodeURIComponent(pageId)}/conversations?fields=id,updated_time,messages.limit(10){id,message,from,created_time}&limit=15&access_token=${encodeURIComponent(pageToken)}`
+            );
+            const convoData = await convoRes.json();
 
-          while (convoUrl && convoPages < 10) {
-            convoPages++;
-            try {
-              const convoRes = await fetch(convoUrl);
-              const convoData = await convoRes.json();
-
-              if (convoData.error) {
-                console.error(`[sync] Conversations error for page ${pageId}:`, JSON.stringify(convoData.error));
-                errorDetails.push({ endpoint: "conversations", platform: "facebook", code: convoData.error.code, message: convoData.error.message });
-                break;
-              }
-
+            if (convoData.error) {
+              console.error(`[sync] Conversations error for page ${pageId}:`, JSON.stringify(convoData.error));
+              errorDetails.push({ endpoint: "conversations", platform: "facebook", code: convoData.error.code, message: convoData.error.message });
+            } else {
+              const allMsgs: Array<{ convo: any; msg: any }> = [];
               for (const convo of convoData.data || []) {
-                let msgsUrl: string | null = `${META_GRAPH_URL}/${encodeURIComponent(convo.id)}/messages?fields=id,message,from,created_time&limit=25&access_token=${encodeURIComponent(pageToken)}`;
+                for (const msg of convo.messages?.data || []) allMsgs.push({ convo, msg });
+              }
+              totalMessages += allMsgs.length;
 
-                while (msgsUrl) {
-                  const msgsRes = await fetch(msgsUrl);
-                  const msgsData = await msgsRes.json();
+              if (allMsgs.length > 0) {
+                const ids = allMsgs.map(({ convo, msg }) => msg.id || `dm_${convo.id}_${msg.created_time}`);
+                const { data: existingRows } = await supabase
+                  .from("interactions")
+                  .select("external_id")
+                  .eq("user_id", user.id)
+                  .in("external_id", ids);
+                const existingSet = new Set((existingRows || []).map((r: any) => r.external_id));
 
-                  if (msgsData.error) {
-                    errorDetails.push({ endpoint: "conversation_messages", conversation_id: convo.id, code: msgsData.error.code, message: msgsData.error.message });
-                    break;
+                const toInsert = allMsgs
+                  .map(({ convo, msg }) => ({ convo, msg, msgExternalId: msg.id || `dm_${convo.id}_${msg.created_time}` }))
+                  .filter(({ msgExternalId }) => !existingSet.has(msgExternalId))
+                  .map(({ convo, msg, msgExternalId }) => ({
+                    user_id: user.id,
+                    external_id: msgExternalId,
+                    platform: "facebook" as const,
+                    interaction_type: "dm" as const,
+                    content: msg.message || "",
+                    author_name: msg.from?.name || "Facebook User",
+                    author_handle: msg.from?.id || null,
+                    created_at: msg.created_time,
+                    status: "pending" as const,
+                    metadata: { conversation_id: convo.id, sender_psid: msg.from?.id || null },
+                  }));
+
+                skippedCount += allMsgs.length - toInsert.length;
+
+                if (toInsert.length > 0) {
+                  const { error: insertErr, count } = await supabase
+                    .from("interactions")
+                    .insert(toInsert, { count: "exact" });
+                  if (insertErr) {
+                    console.error("[sync] Bulk insert DMs error:", JSON.stringify(insertErr));
+                    errorDetails.push({ endpoint: "insert_dm", message: insertErr.message });
+                    syncErrors++;
+                  } else {
+                    newMessages += count ?? toInsert.length;
                   }
-
-                  for (const msg of msgsData.data || []) {
-                    totalMessages++;
-                    const msgExternalId = msg.id || `dm_${convo.id}_${msg.created_time}`;
-
-                    const { data: existing } = await supabase
-                      .from("interactions")
-                      .select("id")
-                      .eq("external_id", msgExternalId)
-                      .eq("user_id", user.id)
-                      .maybeSingle();
-
-                    if (existing) { skippedCount++; continue; }
-
-                    const senderPsid = msg.from?.id || null;
-
-                    const { error: insertErr } = await supabase
-                      .from("interactions")
-                      .insert({
-                        user_id: user.id,
-                        external_id: msgExternalId,
-                        platform: "facebook",
-                        interaction_type: "dm",
-                        content: msg.message || "",
-                        author_name: msg.from?.name || "Facebook User",
-                        author_handle: senderPsid,
-                        created_at: msg.created_time,
-                        status: "pending",
-                        metadata: { conversation_id: convo.id, sender_psid: senderPsid },
-                      });
-
-                    if (insertErr) {
-                      if (!insertErr.message?.includes("duplicate")) {
-                        console.error("[sync] Insert DM error:", JSON.stringify(insertErr));
-                        errorDetails.push({ endpoint: "insert_dm", message: insertErr.message });
-                        syncErrors++;
-                      } else {
-                        skippedCount++;
-                      }
-                    } else {
-                      newMessages++;
-                    }
-                  }
-
-                  msgsUrl = msgsData.paging?.next || null;
                 }
               }
-
-              convoUrl = convoData.paging?.next || null;
-            } catch (err) {
-              console.error(`[sync] Conversation fetch error:`, err);
-              errorDetails.push({ endpoint: "conversation_fetch", message: String(err) });
-              break;
             }
+          } catch (err) {
+            console.error(`[sync] Conversation fetch error:`, err);
+            errorDetails.push({ endpoint: "conversation_fetch", message: String(err) });
           }
 
           await supabase
